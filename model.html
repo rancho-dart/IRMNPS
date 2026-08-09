@@ -323,14 +323,10 @@
             top: 0px;
             bottom: 0px;
             width: 1.5px;
-            background: #30363d;
+            background: #8b949e;
             transform: translateX(-50%);
             transition: background 0.4s;
             border-radius: 2px;
-        }
-
-        .ruler-line.active {
-            background: #58a6ff44;
         }
 
         /* 十字线 - 水平线 + 竖线标记 */
@@ -347,21 +343,14 @@
             pointer-events: none;
         }
 
-        /* 水平线 - 从左侧延伸到右侧 */
+        /* 水平线 - 从左侧延伸到右侧（虚线） */
         .ruler-cross .hline {
             position: absolute;
             left: 5%;
             right: 5%;
-            height: 1px;
-            background: #30363d;
-            transition: background 0.4s;
-        }
-
-        .ruler-cross .hline.active {
-            background: #58a6ff66;
-        }
-        .ruler-cross .hline.active-glow {
-            background: #f0883e66;
+            height: 0;
+            border-top: 1px dashed #8b949e;
+            transition: border-color 0.4s;
         }
 
         /* 竖线标记 - 在25%位置的一个小竖线 */
@@ -370,39 +359,25 @@
             left: 25%;
             width: 1.5px;
             height: 12px;
-            background: #30363d;
+            background: #8b949e;
             transform: translateX(-50%) translateY(-50%);
             top: 50%;
             transition: background 0.4s;
             border-radius: 1px;
         }
 
-        .ruler-cross .vmark.active {
-            background: #58a6ff;
-        }
-        .ruler-cross .vmark.active-glow {
-            background: #f0883e;
-        }
-
-        /* 文字标签 */
+        /* 文字标签（统一白色，不随状态变化） */
         .ruler-label {
             position: absolute;
             left: 32%;
             font-size: 10px;
-            color: #484f58;
+            color: #ffffff;
             font-weight: 400;
             letter-spacing: 0.3px;
-            transition: color 0.4s, top 0.4s ease;
+            transition: top 0.4s ease;
             white-space: nowrap;
             transform: translateY(-50%);
             z-index: 1;
-        }
-
-        .ruler-label.active {
-            color: #f0f6fc;
-        }
-        .ruler-label.active-glow {
-            color: #f0883e;
         }
 
         .hint {
@@ -600,9 +575,9 @@
                     </div>
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
-                        <div class="inner-row net-layer null-layer">
+                        <div class="inner-row net-layer ">
                             <span class="tag">🌐 网络</span>
-                            <span class="desc"><span class="null-box">无</span></span>
+                            <span class="desc"><span class="hl">信号整形、放大、再生、转接（中继器、光放大器、光纤配线架）</span> <span class="dim">（极简网络层）</span></span>
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 链路</span>
@@ -636,10 +611,10 @@
                 </div>
 
                 <!-- 4个文字标签 -->
-                <span class="ruler-label" id="label-transport">⬆ 传输层</span>
-                <span class="ruler-label" id="label-network">🌐 网络层</span>
-                <span class="ruler-label" id="label-link">📦 数据链路层</span>
-                <span class="ruler-label" id="label-bearing">⬇ 承载层</span>
+                <span class="ruler-label" id="label-transport">传输层</span>
+                <span class="ruler-label" id="label-network">网络层</span>
+                <span class="ruler-label" id="label-link">数据链路层</span>
+                <span class="ruler-label" id="label-bearing">承载层</span>
             </div>
         </div>
 
@@ -727,36 +702,66 @@
         };
 
         // ============================================================
-        //  获取协议栈中各层的边界位置（百分比）
+        //  获取协议栈中各层"稳定状态"的边界位置（百分比）
         //  注意：十字线 top 的百分比是相对 .ruler-body 定位的，
         //  因此这里直接以 rulerBody 为参照做像素级换算，
         //  避免因左右面板高度/边框/内边距差异导致不对齐。
+        //
+        //  为什么按"稳定布局"计算而不是实时测量？
+        //  实时测量在 .layer 的高度过渡（44px↔88px）进行中调用
+        //  会拿到中间态几何，导致十字线先被定位到错误的"压缩"
+        //  位置，过渡结束后才被 transitionend 纠正回来，表现为
+        //  "先缩至最小再展开"的跳动。改为按最终布局直接计算后，
+        //  十字线会一次性对准目标位置，跳过这段中间动画。
         // ============================================================
+
+        // 布局常量（收起态层高 / 层间距 / 右侧面板上下边框），
+        // 从计算样式读取以兼容响应式断点；在初始化时采集。
+        let LAYOUT = captureLayout();
+
+        function captureLayout() {
+            const stack = document.getElementById('stack');
+            // 收起态高度取所有层的最小值：过渡中的层高度更大，
+            // 取最小值可稳定得到 44px（窄屏 38px）
+            const collapsed = Math.min(...Array.from(layerEls).map(l =>
+                parseFloat(getComputedStyle(l).height) || 0
+            )) || 44;
+            const gap = parseFloat(getComputedStyle(stack).rowGap) ||
+                        parseFloat(getComputedStyle(stack).gap) || 8;
+            const borderV = (parseFloat(getComputedStyle(rulerPanel).borderTopWidth) || 0) +
+                            (parseFloat(getComputedStyle(rulerPanel).borderBottomWidth) || 0);
+            return { collapsed, gap, borderV };
+        }
+
         function getLayerBoundaries() {
             const stack = document.getElementById('stack');
             const rulerRect = rulerBody.getBoundingClientRect();
-            const totalHeight = rulerRect.height;
+            // 栈顶相对标尺顶部的偏移（两层均位于各自面板顶部，此值为常量，约 -2px）
+            const stackTop = stack.getBoundingClientRect().top - rulerRect.top;
+            const { collapsed, gap, borderV } = LAYOUT;
+            const expanded = collapsed * 2; // .layer.active 高度 = 收起态 × 2
 
-            if (totalHeight === 0) return [];
+            const activeEl = document.querySelector('.layer.active');
+            const activeIdx = activeEl ? Array.prototype.indexOf.call(layerEls, activeEl) : -1;
+
+            // 稳定状态下标尺总高度 = 栈总高 - 右侧面板上下边框
+            const n = layerEls.length;
+            const finalStackH = activeIdx >= 0
+                ? expanded + (n - 1) * collapsed + (n - 1) * gap
+                : n * collapsed + (n - 1) * gap;
+            const finalRulerH = finalStackH - borderV;
+            if (finalRulerH <= 0) return [];
 
             const boundaries = [];
-            layerEls.forEach((el) => {
-                const rect = el.getBoundingClientRect();
-                const top = (rect.top - rulerRect.top) / totalHeight;
-                const bottom = (rect.bottom - rulerRect.top) / totalHeight;
-
-                // 计算 divider：取 layer-body 的中间位置
-                const body = el.querySelector('.layer-body');
-                let divider = top + (bottom - top) * 0.5;
-                if (body) {
-                    const bodyRect = body.getBoundingClientRect();
-                    const bodyTop = (bodyRect.top - rulerRect.top) / totalHeight;
-                    const bodyBottom = (bodyRect.bottom - rulerRect.top) / totalHeight;
-                    divider = (bodyTop + bodyBottom) / 2;
-                }
-                boundaries.push({ top, bottom, divider });
+            let y = 0;
+            layerEls.forEach((el, j) => {
+                const h = (j === activeIdx) ? expanded : collapsed;
+                const top = (stackTop + y) / finalRulerH;
+                const bottom = (stackTop + y + h) / finalRulerH;
+                // divider 取层的垂直中点（layer-body 与层等高，中点一致）
+                boundaries.push({ top, bottom, divider: (top + bottom) / 2 });
+                y += h + gap;
             });
-
             return boundaries;
         }
 
@@ -909,9 +914,31 @@
 
         // ============================================================
         //  交互
+        //  复位采用"宽限延迟"：鼠标在协议之间移动时，即使短暂
+        //  经过层间空隙/面板间隙，也不会立刻触发复位（缩至最小），
+        //  而是等待宽限期结束且仍没有悬停在任何协议层上才复位。
+        //  这样协议间的切换会直接从 A 状态过渡到 B 状态，
+        //  跳过"先缩至最小再展开"的中间动画。
         // ============================================================
+        let resetTimer = null;
+
+        function scheduleReset(delay) {
+            clearTimeout(resetTimer);
+            resetTimer = setTimeout(() => {
+                const hovered = document.querySelector('.layer:hover');
+                if (hovered) return;
+                layerEls.forEach(l => {
+                    l.classList.remove('active', 'inactive');
+                });
+                updateAll(null);
+            }, delay);
+        }
+
         layerEls.forEach((layer) => {
             layer.addEventListener('mouseenter', function(e) {
+                // 进入新协议：取消任何待执行的复位
+                clearTimeout(resetTimer);
+
                 const protocol = this.dataset.protocol;
                 if (!protocol) return;
 
@@ -929,15 +956,8 @@
             });
 
             layer.addEventListener('mouseleave', function(e) {
-                setTimeout(() => {
-                    const hovered = document.querySelector('.layer:hover');
-                    if (!hovered) {
-                        layerEls.forEach(l => {
-                            l.classList.remove('active', 'inactive');
-                        });
-                        updateAll(null);
-                    }
-                }, 50);
+                // 250ms 宽限期：期间进入其他协议则取消复位
+                scheduleReset(250);
             });
         });
 
@@ -968,21 +988,16 @@
 
         const container = document.querySelector('.container');
         container.addEventListener('mouseleave', function() {
-            setTimeout(() => {
-                const hovered = document.querySelector('.layer:hover');
-                if (!hovered) {
-                    layerEls.forEach(l => {
-                        l.classList.remove('active', 'inactive');
-                    });
-                    updateAll(null);
-                }
-            }, 40);
+            // 离开容器视为真正离开，用更短的宽限期尽快复位
+            scheduleReset(40);
         });
 
         let resizeTimer;
         window.addEventListener('resize', function() {
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => {
+                // 重新采集布局常量（窄屏断点会改变层高）
+                LAYOUT = captureLayout();
                 const activeLayer = document.querySelector('.layer.active');
                 if (activeLayer) {
                     const protocol = activeLayer.dataset.protocol;
