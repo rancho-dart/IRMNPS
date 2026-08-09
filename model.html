@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>递归对等模型 - 交互式可视化</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0d1117;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            width: 100%;
+            background: #161b22;
+            border-radius: 20px;
+            padding: 40px 40px 50px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            border: 1px solid #30363d;
+        }
+
+        h1 {
+            text-align: center;
+            font-weight: 600;
+            font-size: 26px;
+            color: #f0f6fc;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #8b949e;
+            font-size: 15px;
+            margin-bottom: 35px;
+            border-bottom: 1px solid #21262d;
+            padding-bottom: 18px;
+        }
+
+        .subtitle strong {
+            color: #f0f6fc;
+        }
+
+        .main-layout {
+            display: flex;
+            gap: 40px;
+            align-items: stretch;
+        }
+
+        /* ---------- 左侧：协议栈 ---------- */
+        .left-panel {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .stack {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+        }
+
+        .layer {
+            background: #0d1117;
+            border: 2px solid #30363d;
+            border-radius: 14px;
+            transition: all 0.4s ease;
+            cursor: default;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: row;
+            align-items: stretch;
+            overflow: visible;
+            height: 44px;
+            position: relative;
+        }
+
+        .layer.active {
+            border-color: #58a6ff88;
+            box-shadow: 0 6px 20px rgba(88, 166, 255, 0.12);
+            height: 88px;
+        }
+
+        .layer.inactive {
+            opacity: 0.25;
+            filter: grayscale(0.7);
+            border-color: #1c2128;
+        }
+
+        .layer:hover {
+            border-color: #58a6ff55;
+        }
+
+        .layer-physical {
+            border-color: #3d3d4a;
+        }
+        .layer-physical .layer-name-bar {
+            border-right-color: #2d2d3a;
+        }
+
+        .layer-name-bar {
+            flex: 0 0 80px;
+            min-width: 70px;
+            background: #0d1117;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 0 10px;
+            border-right: 1px solid #21262d;
+            transition: background 0.3s;
+            flex-shrink: 0;
+            z-index: 2;
+        }
+
+        .layer.active .layer-name-bar {
+            background: #161b22;
+        }
+
+        .layer-name-bar .icon {
+            font-size: 18px;
+        }
+
+        .layer-name-bar .name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #f0f6fc;
+            white-space: nowrap;
+        }
+
+        .layer-name-bar .badge {
+            font-size: 9px;
+            color: #8b949e;
+            background: #21262d;
+            padding: 1px 8px;
+            border-radius: 10px;
+            border: 1px solid #30363d;
+            white-space: nowrap;
+            display: none;
+        }
+
+        .layer.active .layer-name-bar .badge {
+            display: inline-block;
+        }
+
+        .layer-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 4px 16px;
+            gap: 4px;
+            height: 44px;
+            transition: all 0.4s ease;
+            position: relative;
+        }
+
+        .layer.active .layer-body {
+            height: 88px;
+            padding: 8px 16px;
+            justify-content: center;
+        }
+
+        .layer-body .collapsed-hint {
+            color: #484f58;
+            font-size: 13px;
+            text-align: center;
+            letter-spacing: 0.5px;
+            transition: opacity 0.3s;
+        }
+
+        .layer.active .layer-body .collapsed-hint {
+            opacity: 0;
+            height: 0;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        .layer-body .inner-row {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 4px 12px;
+            border-radius: 6px;
+            background: #0d1117;
+            border-left: 3px solid #30363d;
+            transition: border-color 0.3s;
+            font-size: 13px;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 2;
+            height: 32px;
+        }
+
+        .layer.active .layer-body .inner-row {
+            display: flex;
+        }
+
+        .inner-row.net-layer {
+            border-left-color: #58a6ff;
+        }
+        .inner-row.net-layer .tag {
+            color: #58a6ff;
+        }
+
+        .inner-row.link-layer {
+            border-left-color: #3fb950;
+        }
+        .inner-row.link-layer .tag {
+            color: #3fb950;
+        }
+
+        .inner-row.null-layer {
+            border-left-color: #3d3d4a;
+            opacity: 0.5;
+        }
+        .inner-row.null-layer .tag {
+            color: #6e7681;
+        }
+
+        .inner-row .tag {
+            font-size: 11px;
+            font-weight: 500;
+            color: #8b949e;
+            min-width: 44px;
+            flex-shrink: 0;
+        }
+
+        .inner-row .desc {
+            font-size: 13px;
+            color: #f0f6fc;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 8px;
+        }
+
+        .inner-row .desc .hl {
+            color: #58a6ff;
+            background: #1c2333;
+            padding: 0 10px;
+            border-radius: 10px;
+            border: 1px solid #2d3a4f;
+            font-size: 12px;
+        }
+
+        .inner-row .desc .dim {
+            color: #8b949e;
+            font-size: 12px;
+        }
+
+        .inner-row .desc .null-box {
+            border: 1.5px dashed #484f58;
+            color: #6e7681;
+            padding: 0 12px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        /* ---------- 左侧展开时的分隔线 ---------- */
+        .layer-divider {
+            display: none;
+            position: absolute;
+            left: 80px;
+            right: 0;
+            height: 1px;
+            background: #58a6ff44;
+            z-index: 3;
+            pointer-events: none;
+            transition: all 0.4s ease;
+        }
+
+        .layer.active .layer-divider {
+            display: block;
+        }
+
+        /* ---------- 右侧：标尺（无标题栏） ---------- */
+        .right-panel {
+            flex: 0 0 170px;
+            min-width: 150px;
+            background: #0d1117;
+            border-radius: 16px;
+            border: 2px solid #30363d;
+            display: flex;
+            flex-direction: column;
+            transition: border-color 0.3s;
+            position: relative;
+            overflow: visible;
+        }
+
+        .right-panel.active {
+            border-color: #58a6ff66;
+        }
+
+        .ruler-body {
+            flex: 1;
+            padding: 8px 12px 8px 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            min-height: 200px;
+            transition: all 0.4s ease;
+        }
+
+        /* 主竖线 - 在左1/4处 */
+        .ruler-line {
+            position: absolute;
+            left: 25%;
+            top: 0px;
+            bottom: 0px;
+            width: 1.5px;
+            background: #30363d;
+            transform: translateX(-50%);
+            transition: background 0.4s;
+            border-radius: 2px;
+        }
+
+        .ruler-line.active {
+            background: #58a6ff44;
+        }
+
+        /* 十字线 - 水平线 + 竖线标记 */
+        .ruler-cross {
+            position: absolute;
+            left: 0;
+            right: 0;
+            z-index: 2;
+            height: 0;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            transition: all 0.4s ease;
+            pointer-events: none;
+        }
+
+        /* 水平线 - 从左侧延伸到右侧 */
+        .ruler-cross .hline {
+            position: absolute;
+            left: 5%;
+            right: 5%;
+            height: 1px;
+            background: #30363d;
+            transition: background 0.4s;
+        }
+
+        .ruler-cross .hline.active {
+            background: #58a6ff66;
+        }
+        .ruler-cross .hline.active-glow {
+            background: #f0883e66;
+        }
+
+        /* 竖线标记 - 在25%位置的一个小竖线 */
+        .ruler-cross .vmark {
+            position: absolute;
+            left: 25%;
+            width: 1.5px;
+            height: 12px;
+            background: #30363d;
+            transform: translateX(-50%) translateY(-50%);
+            top: 50%;
+            transition: background 0.4s;
+            border-radius: 1px;
+        }
+
+        .ruler-cross .vmark.active {
+            background: #58a6ff;
+        }
+        .ruler-cross .vmark.active-glow {
+            background: #f0883e;
+        }
+
+        /* 文字标签 */
+        .ruler-label {
+            position: absolute;
+            left: 32%;
+            font-size: 10px;
+            color: #484f58;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+            transition: color 0.4s, top 0.4s ease;
+            white-space: nowrap;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+
+        .ruler-label.active {
+            color: #f0f6fc;
+        }
+        .ruler-label.active-glow {
+            color: #f0883e;
+        }
+
+        .hint {
+            text-align: center;
+            color: #8b949e;
+            font-size: 13px;
+            margin-top: 28px;
+            padding-top: 16px;
+            border-top: 1px solid #21262d;
+        }
+
+        .hint span {
+            display: inline-block;
+            background: #21262d;
+            padding: 4px 16px;
+            border-radius: 20px;
+            color: #c9d1d9;
+        }
+
+        @media (max-width: 820px) {
+            .main-layout {
+                flex-direction: column;
+                gap: 25px;
+            }
+            .right-panel {
+                flex: none;
+                min-height: 160px;
+            }
+            .ruler-body {
+                min-height: 140px;
+                padding: 6px 10px;
+            }
+            .ruler-label {
+                font-size: 9px;
+                left: 38%;
+            }
+            .ruler-cross .vmark {
+                height: 10px;
+            }
+            .container {
+                padding: 20px 12px 30px;
+            }
+            .layer {
+                height: 38px;
+            }
+            .layer.active {
+                height: 76px;
+            }
+            .layer-name-bar {
+                flex: 0 0 55px;
+                min-width: 48px;
+                padding: 0 6px;
+                gap: 4px;
+            }
+            .layer-name-bar .name {
+                font-size: 12px;
+            }
+            .layer-name-bar .icon {
+                font-size: 14px;
+            }
+            .layer-body {
+                height: 38px;
+                padding: 2px 10px;
+            }
+            .layer.active .layer-body {
+                height: 76px;
+                padding: 6px 10px;
+            }
+            .inner-row {
+                padding: 2px 8px;
+                gap: 6px;
+                height: 28px;
+            }
+            .inner-row .tag {
+                font-size: 10px;
+                min-width: 36px;
+            }
+            .inner-row .desc {
+                font-size: 11px;
+            }
+            .inner-row .desc .hl {
+                font-size: 10px;
+                padding: 0 6px;
+            }
+            .layer-divider {
+                left: 55px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🧩 递归对等模型</h1>
+    <div class="subtitle">
+        每个协议自身拥有 <strong>四层结构</strong> · 悬停左侧协议层，右侧标尺动态对齐
+    </div>
+
+    <div class="main-layout">
+
+        <!-- ====== 左侧：协议栈 ====== -->
+        <div class="left-panel">
+            <div class="stack" id="stack">
+
+                <!-- 应用层 -->
+                <div class="layer" id="layer-app" data-protocol="app">
+                    <div class="layer-name-bar">
+                        <span class="icon">📦</span>
+                        <span class="name">应用层</span>
+                        <span class="badge">HTTP</span>
+                    </div>
+                    <div class="layer-body">
+                        <span class="collapsed-hint">— 悬停展开 —</span>
+                        <div class="inner-row net-layer null-layer">
+                            <span class="tag">🌐 网络</span>
+                            <span class="desc"><span class="null-box">空</span></span>
+                        </div>
+                        <div class="inner-row link-layer">
+                            <span class="tag">📦 链路</span>
+                            <span class="desc"><span class="hl">URL/方法</span> <span class="hl">状态码</span></span>
+                        </div>
+                    </div>
+                    <div class="layer-divider" id="divider-app"></div>
+                </div>
+
+                <!-- TCP -->
+                <div class="layer" id="layer-tcp" data-protocol="tcp">
+                    <div class="layer-name-bar">
+                        <span class="icon">🔗</span>
+                        <span class="name">TCP</span>
+                        <span class="badge">传输控制</span>
+                    </div>
+                    <div class="layer-body">
+                        <span class="collapsed-hint">— 悬停展开 —</span>
+                        <div class="inner-row net-layer null-layer">
+                            <span class="tag">🌐 网络</span>
+                            <span class="desc"><span class="null-box">空（不转发）</span></span>
+                        </div>
+                        <div class="inner-row link-layer">
+                            <span class="tag">📦 链路</span>
+                            <span class="desc"><span class="hl">校验和</span> <span class="hl">重传</span> <span class="hl">流控</span> <span class="hl">端口复用</span></span>
+                        </div>
+                    </div>
+                    <div class="layer-divider" id="divider-tcp"></div>
+                </div>
+
+                <!-- IP -->
+                <div class="layer" id="layer-ip" data-protocol="ip">
+                    <div class="layer-name-bar">
+                        <span class="icon">🌍</span>
+                        <span class="name">IP</span>
+                        <span class="badge">互联网协议</span>
+                    </div>
+                    <div class="layer-body">
+                        <span class="collapsed-hint">— 悬停展开 —</span>
+                        <div class="inner-row net-layer">
+                            <span class="tag">🌐 网络</span>
+                            <span class="desc"><span class="hl">路由器跨网段转发</span></span>
+                        </div>
+                        <div class="inner-row link-layer">
+                            <span class="tag">📦 链路</span>
+                            <span class="desc"><span class="hl">分片重组</span> <span class="hl">协议号复用</span> <span class="hl">头部校验</span></span>
+                        </div>
+                    </div>
+                    <div class="layer-divider" id="divider-ip"></div>
+                </div>
+
+                <!-- 以太网 -->
+                <div class="layer" id="layer-eth" data-protocol="eth">
+                    <div class="layer-name-bar">
+                        <span class="icon">🔌</span>
+                        <span class="name">以太网</span>
+                        <span class="badge">IEEE 802.3</span>
+                    </div>
+                    <div class="layer-body">
+                        <span class="collapsed-hint">— 悬停展开 —</span>
+                        <div class="inner-row net-layer">
+                            <span class="tag">🌐 网络</span>
+                            <span class="desc"><span class="hl">网桥泛洪转发</span> <span class="dim">（简单网络层）</span></span>
+                        </div>
+                        <div class="inner-row link-layer">
+                            <span class="tag">📦 链路</span>
+                            <span class="desc"><span class="hl">CRC校验</span> <span class="hl">碰撞检测</span> <span class="hl">MAC寻址</span></span>
+                        </div>
+                    </div>
+                    <div class="layer-divider" id="divider-eth"></div>
+                </div>
+
+                <!-- 物理层 -->
+                <div class="layer layer-physical" id="layer-physical" data-protocol="physical">
+                    <div class="layer-name-bar">
+                        <span class="icon">⚡</span>
+                        <span class="name">物理层</span>
+                        <span class="badge">介质</span>
+                    </div>
+                    <div class="layer-body">
+                        <span class="collapsed-hint">— 悬停展开 —</span>
+                        <div class="inner-row net-layer null-layer">
+                            <span class="tag">🌐 网络</span>
+                            <span class="desc"><span class="null-box">无</span></span>
+                        </div>
+                        <div class="inner-row link-layer">
+                            <span class="tag">📦 链路</span>
+                            <span class="desc"><span class="hl">铜缆</span> <span class="hl">光纤</span> <span class="hl">无线电</span> <span class="dim">（被动介质）</span></span>
+                        </div>
+                    </div>
+                    <div class="layer-divider" id="divider-physical"></div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ====== 右侧：标尺（无标题栏） ====== -->
+        <div class="right-panel" id="rulerPanel">
+            <div class="ruler-body" id="rulerBody">
+                <!-- 主竖线 -->
+                <div class="ruler-line" id="rulerLine"></div>
+
+                <!-- 3条十字线 -->
+                <div class="ruler-cross" id="cross-network-transport">
+                    <div class="hline" id="hline-network-transport"></div>
+                    <div class="vmark" id="vmark-network-transport"></div>
+                </div>
+                <div class="ruler-cross" id="cross-link-network">
+                    <div class="hline" id="hline-link-network"></div>
+                    <div class="vmark" id="vmark-link-network"></div>
+                </div>
+                <div class="ruler-cross" id="cross-bearing-link">
+                    <div class="hline" id="hline-bearing-link"></div>
+                    <div class="vmark" id="vmark-bearing-link"></div>
+                </div>
+
+                <!-- 4个文字标签 -->
+                <span class="ruler-label" id="label-transport">⬆ 传输层</span>
+                <span class="ruler-label" id="label-network">🌐 网络层</span>
+                <span class="ruler-label" id="label-link">📦 数据链路层</span>
+                <span class="ruler-label" id="label-bearing">⬇ 承载层</span>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="hint">
+        <span>🖱 <strong>悬停</strong> 左侧协议层，右侧标尺动态对齐</span>
+    </div>
+</div>
+
+<script>
+    (function() {
+
+        // 协议索引: 0=应用层, 1=TCP, 2=IP, 3=以太网, 4=物理层
+
+        // 每个协议的标尺映射：
+        // network_transport: 网络层↔传输层 分界 → 对准当前协议层的上边界 (top)
+        // link_network: 数据链路层↔网络层 分界 → 对准当前协议层内部横线 (divider)
+        // bearing_link: 承载层↔数据链路层 分界 → 对准当前协议层的下边界 (bottom)
+        const RULER_MAPPINGS = {
+            'app': {
+                network_transport: { targetIndex: 0, boundary: 'top', state: null },
+                link_network: { targetIndex: 0, boundary: 'divider', state: 'highlight' },
+                bearing_link: { targetIndex: 0, boundary: 'bottom', state: 'highlight' }
+            },
+            'tcp': {
+                network_transport: { targetIndex: 1, boundary: 'top', state: null },
+                link_network: { targetIndex: 1, boundary: 'divider', state: 'glow' },
+                bearing_link: { targetIndex: 1, boundary: 'bottom', state: 'highlight' }
+            },
+            'ip': {
+                network_transport: { targetIndex: 2, boundary: 'top', state: 'glow' },
+                link_network: { targetIndex: 2, boundary: 'divider', state: 'glow' },
+                bearing_link: { targetIndex: 2, boundary: 'bottom', state: 'highlight' }
+            },
+            'eth': {
+                network_transport: { targetIndex: 3, boundary: 'top', state: 'glow' },
+                link_network: { targetIndex: 3, boundary: 'divider', state: 'glow' },
+                bearing_link: { targetIndex: 3, boundary: 'bottom', state: 'highlight' }
+            },
+            'physical': {
+                network_transport: { targetIndex: 4, boundary: 'top', state: null },
+                link_network: { targetIndex: 4, boundary: 'divider', state: 'highlight' },
+                bearing_link: { targetIndex: 4, boundary: 'bottom', state: null }
+            }
+        };
+
+        const layerEls = document.querySelectorAll('.layer');
+        const hlines = {
+            network_transport: document.getElementById('hline-network-transport'),
+            link_network: document.getElementById('hline-link-network'),
+            bearing_link: document.getElementById('hline-bearing-link')
+        };
+        const vmarks = {
+            network_transport: document.getElementById('vmark-network-transport'),
+            link_network: document.getElementById('vmark-link-network'),
+            bearing_link: document.getElementById('vmark-bearing-link')
+        };
+        const crosses = {
+            network_transport: document.getElementById('cross-network-transport'),
+            link_network: document.getElementById('cross-link-network'),
+            bearing_link: document.getElementById('cross-bearing-link')
+        };
+        const labels = {
+            transport: document.getElementById('label-transport'),
+            network: document.getElementById('label-network'),
+            link: document.getElementById('label-link'),
+            bearing: document.getElementById('label-bearing')
+        };
+        const dividers = {
+            app: document.getElementById('divider-app'),
+            tcp: document.getElementById('divider-tcp'),
+            ip: document.getElementById('divider-ip'),
+            eth: document.getElementById('divider-eth'),
+            physical: document.getElementById('divider-physical')
+        };
+        const rulerLine = document.getElementById('rulerLine');
+        const rulerPanel = document.getElementById('rulerPanel');
+        const rulerBody = document.getElementById('rulerBody');
+
+        const DEFAULT_POSITIONS = {
+            network_transport: 0.25,
+            link_network: 0.50,
+            bearing_link: 0.75
+        };
+
+        // ============================================================
+        //  获取协议栈中各层的边界位置（百分比）
+        //  注意：十字线 top 的百分比是相对 .ruler-body 定位的，
+        //  因此这里直接以 rulerBody 为参照做像素级换算，
+        //  避免因左右面板高度/边框/内边距差异导致不对齐。
+        // ============================================================
+        function getLayerBoundaries() {
+            const stack = document.getElementById('stack');
+            const rulerRect = rulerBody.getBoundingClientRect();
+            const totalHeight = rulerRect.height;
+
+            if (totalHeight === 0) return [];
+
+            const boundaries = [];
+            layerEls.forEach((el) => {
+                const rect = el.getBoundingClientRect();
+                const top = (rect.top - rulerRect.top) / totalHeight;
+                const bottom = (rect.bottom - rulerRect.top) / totalHeight;
+
+                // 计算 divider：取 layer-body 的中间位置
+                const body = el.querySelector('.layer-body');
+                let divider = top + (bottom - top) * 0.5;
+                if (body) {
+                    const bodyRect = body.getBoundingClientRect();
+                    const bodyTop = (bodyRect.top - rulerRect.top) / totalHeight;
+                    const bodyBottom = (bodyRect.bottom - rulerRect.top) / totalHeight;
+                    divider = (bodyTop + bodyBottom) / 2;
+                }
+                boundaries.push({ top, bottom, divider });
+            });
+
+            return boundaries;
+        }
+
+        function updateRuler(protocolKey) {
+            const mapping = RULER_MAPPINGS[protocolKey];
+            if (!mapping) {
+                const crossNames = ['network_transport', 'link_network', 'bearing_link'];
+                crossNames.forEach(name => {
+                    const hline = hlines[name];
+                    const vmark = vmarks[name];
+                    const cross = crosses[name];
+                    hline.className = 'hline';
+                    vmark.className = 'vmark';
+                    const defaultPos = DEFAULT_POSITIONS[name] * 100;
+                    cross.style.top = defaultPos + '%';
+                });
+                const defaultLabelPositions = {
+                    transport: 12.5,
+                    network: 37.5,
+                    link: 62.5,
+                    bearing: 87.5
+                };
+                Object.keys(labels).forEach(key => {
+                    labels[key].className = 'ruler-label';
+                    labels[key].style.top = defaultLabelPositions[key] + '%';
+                });
+                rulerLine.className = 'ruler-line';
+                rulerPanel.classList.remove('active');
+                return;
+            }
+
+            rulerPanel.classList.add('active');
+            rulerLine.className = 'ruler-line active';
+
+            const boundaries = getLayerBoundaries();
+            if (boundaries.length === 0) return;
+
+            const crossNames = ['network_transport', 'link_network', 'bearing_link'];
+            crossNames.forEach(name => {
+                const hline = hlines[name];
+                const vmark = vmarks[name];
+                const cross = crosses[name];
+                const data = mapping[name];
+                const targetIdx = data.targetIndex;
+                const boundary = data.boundary;
+                const state = data.state;
+
+                let offset;
+                if (targetIdx >= 0 && targetIdx < boundaries.length) {
+                    const b = boundaries[targetIdx];
+                    if (boundary === 'top') {
+                        offset = b.top;
+                    } else if (boundary === 'bottom') {
+                        offset = b.bottom;
+                    } else {
+                        offset = b.divider;
+                    }
+                } else {
+                    offset = DEFAULT_POSITIONS[name];
+                }
+                offset = Math.max(0.01, Math.min(0.99, offset));
+
+                const percent = offset * 100;
+                cross.style.top = percent + '%';
+
+                hline.className = 'hline';
+                vmark.className = 'vmark';
+
+                if (state === 'highlight') {
+                    hline.classList.add('active');
+                    vmark.classList.add('active');
+                } else if (state === 'glow') {
+                    hline.classList.add('active-glow');
+                    vmark.classList.add('active-glow');
+                }
+            });
+
+            // 获取3条十字线的实际位置
+            const crossPositions = {};
+            crossNames.forEach(name => {
+                const cross = crosses[name];
+                const pos = parseFloat(cross.style.top) / 100;
+                crossPositions[name] = isNaN(pos) ? 0.25 : pos;
+            });
+
+            // 更新4个文字标签的位置
+            const labelPositions = {
+                transport: (0 + crossPositions.network_transport) / 2,
+                network: (crossPositions.network_transport + crossPositions.link_network) / 2,
+                link: (crossPositions.link_network + crossPositions.bearing_link) / 2,
+                bearing: (crossPositions.bearing_link + 1) / 2
+            };
+
+            const labelStates = {
+                transport: mapping.network_transport.state,
+                network: mapping.network_transport.state,
+                link: mapping.link_network.state,
+                bearing: mapping.bearing_link.state
+            };
+
+            Object.keys(labels).forEach(key => {
+                const label = labels[key];
+                const state = labelStates[key];
+                const pos = labelPositions[key];
+                const clampedPos = Math.max(0.02, Math.min(0.98, pos));
+                label.style.top = (clampedPos * 100) + '%';
+                label.className = 'ruler-label';
+                if (state === 'highlight') {
+                    label.classList.add('active');
+                } else if (state === 'glow') {
+                    label.classList.add('active-glow');
+                }
+            });
+        }
+
+        // 更新左侧分隔线
+        function updateDividers(protocolKey) {
+            Object.keys(dividers).forEach(key => {
+                const div = dividers[key];
+                div.style.display = 'none';
+            });
+
+            if (!protocolKey || !RULER_MAPPINGS[protocolKey]) return;
+
+            const activeLayer = document.querySelector('.layer.active');
+            if (!activeLayer) return;
+
+            const protocol = activeLayer.dataset.protocol;
+            if (protocol !== protocolKey) return;
+
+            const divider = dividers[protocolKey];
+            if (!divider) return;
+
+            divider.style.display = 'block';
+            divider.style.top = '50%';
+            divider.style.transform = 'translateY(-50%)';
+        }
+
+        // 使用 requestAnimationFrame 确保布局稳定
+        function updateAll(protocolKey) {
+            // 先让浏览器完成布局更新
+            requestAnimationFrame(() => {
+                // 再等一帧确保所有尺寸已经稳定
+                requestAnimationFrame(() => {
+                    updateRuler(protocolKey);
+                    updateDividers(protocolKey);
+                });
+            });
+        }
+
+        // ============================================================
+        //  交互
+        // ============================================================
+        layerEls.forEach((layer) => {
+            layer.addEventListener('mouseenter', function(e) {
+                const protocol = this.dataset.protocol;
+                if (!protocol) return;
+
+                layerEls.forEach(l => {
+                    l.classList.remove('active', 'inactive');
+                });
+                this.classList.add('active');
+                layerEls.forEach(l => {
+                    if (l !== this) {
+                        l.classList.add('inactive');
+                    }
+                });
+
+                updateAll(protocol);
+            });
+
+            layer.addEventListener('mouseleave', function(e) {
+                setTimeout(() => {
+                    const hovered = document.querySelector('.layer:hover');
+                    if (!hovered) {
+                        layerEls.forEach(l => {
+                            l.classList.remove('active', 'inactive');
+                        });
+                        updateAll(null);
+                    }
+                }, 50);
+            });
+        });
+
+        // ============================================================
+        //  高度过渡结束后重新对齐
+        //  .layer.active 的高度由 44px 过渡到 88px 需要 0.4s，
+        //  若在过渡中途测量会得到不准确的百分比，因此在高度过渡
+        //  结束后（几何已稳定）再重算一次，确保最终完全对齐。
+        // ============================================================
+        let recalcScheduled = false;
+        layerEls.forEach((layer) => {
+            layer.addEventListener('transitionend', function(e) {
+                if (e.target !== this) return;
+                if (e.propertyName !== 'height') return;
+                if (!this.classList.contains('active')) return;
+                if (recalcScheduled) return;
+                recalcScheduled = true;
+                setTimeout(() => {
+                    recalcScheduled = false;
+                    const activeLayer = document.querySelector('.layer.active');
+                    const protocol = activeLayer && activeLayer.dataset.protocol;
+                    if (protocol && RULER_MAPPINGS[protocol]) {
+                        updateAll(protocol);
+                    }
+                }, 50);
+            });
+        });
+
+        const container = document.querySelector('.container');
+        container.addEventListener('mouseleave', function() {
+            setTimeout(() => {
+                const hovered = document.querySelector('.layer:hover');
+                if (!hovered) {
+                    layerEls.forEach(l => {
+                        l.classList.remove('active', 'inactive');
+                    });
+                    updateAll(null);
+                }
+            }, 40);
+        });
+
+        let resizeTimer;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                const activeLayer = document.querySelector('.layer.active');
+                if (activeLayer) {
+                    const protocol = activeLayer.dataset.protocol;
+                    if (protocol) {
+                        updateAll(protocol);
+                    }
+                }
+            }, 200);
+        });
+
+        // ============================================================
+        //  默认：IP 高亮
+        // ============================================================
+        setTimeout(() => {
+            const ipLayer = document.getElementById('layer-ip');
+            if (ipLayer) {
+                layerEls.forEach(l => l.classList.remove('active', 'inactive'));
+                ipLayer.classList.add('active');
+                layerEls.forEach(l => {
+                    if (l !== ipLayer) {
+                        l.classList.add('inactive');
+                    }
+                });
+                updateAll('ip');
+            }
+        }, 500);
+
+    })();
+</script>
+
+</body>
+</html>
