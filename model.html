@@ -111,13 +111,22 @@
             border-right-color: #2d2d3a;
         }
 
+        /* 静态层（数据层）：扁平、不可展开，用虚线边框区分 */
+        .layer-static {
+            border-style: dashed;
+            border-color: #3d3d4a;
+        }
+        .layer-static .layer-name-bar {
+            border-right-color: #2d2d3a;
+        }
+
         .layer-name-bar {
-            flex: 0 0 80px;
-            min-width: 70px;
+            flex: 0 0 var(--namebar-w, 120px);
+            min-width: 0;
             background: #0d1117;
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             gap: 6px;
             padding: 0 10px;
             border-right: 1px solid #21262d;
@@ -163,13 +172,13 @@
             justify-content: center;
             padding: 4px 16px;
             gap: 4px;
-            height: 44px;
+            height: 40px; /* 层高 44 - 上下边框 4，使两行在层内垂直居中 */
             transition: all 0.4s ease;
             position: relative;
         }
 
         .layer.active .layer-body {
-            height: 88px;
+            height: 84px; /* 层高 88 - 上下边框 4，使两行在层内垂直居中 */
             padding: 8px 16px;
             justify-content: center;
         }
@@ -188,6 +197,7 @@
             overflow: hidden;
             margin: 0;
             padding: 0;
+            display: none; /* 彻底移出 flex 布局，避免残留 gap 使两行下移 */
         }
 
         .layer-body .inner-row {
@@ -274,7 +284,7 @@
         .layer-divider {
             display: none;
             position: absolute;
-            left: 80px;
+            left: var(--namebar-w, 120px);
             right: 0;
             height: 1px;
             background: #58a6ff44;
@@ -303,6 +313,20 @@
 
         .right-panel.active {
             border-color: #58a6ff66;
+        }
+
+        /* 无悬停时：标尺以很暗的色调显示 */
+        .right-panel.dimmed .ruler-line {
+            background: #21262d;
+        }
+        .right-panel.dimmed .ruler-cross .hline {
+            border-top-color: #21262d;
+        }
+        .right-panel.dimmed .ruler-cross .vmark {
+            background: #21262d;
+        }
+        .right-panel.dimmed .ruler-label {
+            color: #484f58;
         }
 
         .ruler-body {
@@ -374,7 +398,7 @@
             color: #ffffff;
             font-weight: 400;
             letter-spacing: 0.3px;
-            transition: top 0.4s ease;
+            transition: top 0.4s ease, color 0.4s ease;
             white-space: nowrap;
             transform: translateY(-50%);
             z-index: 1;
@@ -427,8 +451,6 @@
                 height: 76px;
             }
             .layer-name-bar {
-                flex: 0 0 55px;
-                min-width: 48px;
                 padding: 0 6px;
                 gap: 4px;
             }
@@ -439,11 +461,11 @@
                 font-size: 14px;
             }
             .layer-body {
-                height: 38px;
+                height: 34px; /* 层高 38 - 上下边框 4 */
                 padding: 2px 10px;
             }
             .layer.active .layer-body {
-                height: 76px;
+                height: 72px; /* 层高 76 - 上下边框 4 */
                 padding: 6px 10px;
             }
             .inner-row {
@@ -462,9 +484,6 @@
                 font-size: 10px;
                 padding: 0 6px;
             }
-            .layer-divider {
-                left: 55px;
-            }
         }
     </style>
 </head>
@@ -473,7 +492,7 @@
 <div class="container">
     <h1>🧩 递归对等模型</h1>
     <div class="subtitle">
-        每个协议自身拥有 <strong>四层结构</strong> · 悬停左侧协议层，右侧标尺动态对齐
+        每个中间层协议自身拥有 <strong>四层结构</strong> <p>每个协议内部可拆分为数据链路层（实现直接相邻的节点间通信）和网络层（在不直接相邻的节点间转发）。<p>所有上层协议统一作为传输层，所有下层协议统一视为承载层。<p>最下层没有承载层，最上层的数据层不再有内部层次，作为两个递归方向的终止条件。
     </div>
 
     <div class="main-layout">
@@ -482,12 +501,25 @@
         <div class="left-panel">
             <div class="stack" id="stack">
 
-                <!-- 应用层 -->
+                <!-- 数据层（静态：不展开，无链路层/网络层） -->
+                <div class="layer layer-static" id="layer-data" data-protocol="data">
+                    <div class="layer-name-bar">
+                        <span class="icon">📄</span>
+                        <span class="name">数据层</span>
+                        <span class="badge">原始数据</span>
+                    </div>
+                    <div class="layer-body">
+                        <span class="collapsed-hint">— 原始数据 —</span>
+                    </div>
+                    <div class="layer-divider" id="divider-data"></div>
+                </div>
+
+                <!-- HTTP层 -->
                 <div class="layer" id="layer-app" data-protocol="app">
                     <div class="layer-name-bar">
                         <span class="icon">📦</span>
-                        <span class="name">应用层</span>
-                        <span class="badge">HTTP</span>
+                        <span class="name">HTTP层</span>
+                        <span class="badge">超文本传输</span>
                     </div>
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
@@ -497,7 +529,7 @@
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 链路</span>
-                            <span class="desc"><span class="hl">URL/方法</span> <span class="hl">状态码</span></span>
+                            <span class="desc"><span class="hl">URL/方法</span> <span class="hl">状态码</span> <span class="dim">（传输数据，不理解内容）</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-app"></div>
@@ -566,32 +598,53 @@
                     <div class="layer-divider" id="divider-eth"></div>
                 </div>
 
-                <!-- 物理层 -->
+                <!-- 编码调制层 -->
                 <div class="layer layer-physical" id="layer-physical" data-protocol="physical">
                     <div class="layer-name-bar">
                         <span class="icon">⚡</span>
-                        <span class="name">物理层</span>
-                        <span class="badge">介质</span>
+                        <span class="name">编码调制层</span>
+                        <span class="badge">编码·调制</span>
                     </div>
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
-                        <div class="inner-row net-layer ">
+                        <div class="inner-row net-layer">
                             <span class="tag">🌐 网络</span>
-                            <span class="desc"><span class="hl">信号整形、放大、再生、转接（中继器、光放大器、光纤配线架）</span> <span class="dim">（极简网络层）</span></span>
+                            <span class="desc"><span class="hl">信号整形、放大、再生、转接（中继器、光放大器）</span> <span class="dim">（极简网络层 · 仅单向转发）</span></span>
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 链路</span>
-                            <span class="desc"><span class="hl">铜缆</span> <span class="hl">光纤</span> <span class="hl">无线电</span> <span class="dim">（被动介质）</span></span>
+                            <span class="desc"><span class="hl">数字 ↔ 物理信号映射</span> <span class="dim">（编码调制：NRZ/曼彻斯特/ASK/FSK/PSK/QAM）</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-physical"></div>
+                </div>
+
+                <!-- 介质层 -->
+                <div class="layer" id="layer-medium" data-protocol="medium">
+                    <div class="layer-name-bar">
+                        <span class="icon">🧵</span>
+                        <span class="name">介质层</span>
+                        <span class="badge">传输介质</span>
+                    </div>
+                    <div class="layer-body">
+                        <span class="collapsed-hint">— 悬停展开 —</span>
+                        <div class="inner-row net-layer">
+                            <span class="tag">🌐 网络</span>
+                            <span class="desc"><span class="hl">光纤熔接</span> <span class="hl">机械接续</span> <span class="hl">光纤配线架</span> <span class="dim">（介质续接/管理）</span></span>
+                        </div>
+                        <div class="inner-row link-layer">
+                            <span class="tag">📦 链路</span>
+                            <span class="desc"><span class="hl">铜线</span> <span class="hl">光纤</span> <span class="hl">同轴电缆</span> <span class="dim">（传输介质）</span></span>
+                        </div>
+                    </div>
+                    <div class="layer-divider" id="divider-medium"></div>
                 </div>
 
             </div>
         </div>
 
         <!-- ====== 右侧：标尺（无标题栏） ====== -->
-        <div class="right-panel" id="rulerPanel">
+        <div class="right-panel dimmed" id="rulerPanel">
             <div class="ruler-body" id="rulerBody">
                 <!-- 主竖线 -->
                 <div class="ruler-line" id="rulerLine"></div>
@@ -621,44 +674,56 @@
     </div>
 
     <div class="hint">
-        <span>🖱 <strong>悬停</strong> 左侧协议层，右侧标尺动态对齐</span>
+        <span>🖱 <strong>悬停</strong> 左侧协议层，右侧标尺动态展示当前协议视角下的协议栈</span>
     </div>
 </div>
 
 <script>
     (function() {
 
-        // 协议索引: 0=应用层, 1=TCP, 2=IP, 3=以太网, 4=物理层
+        // 协议索引: 0=数据层(静态), 1=HTTP层, 2=TCP, 3=IP, 4=以太网, 5=编码调制层, 6=介质层
 
         // 每个协议的标尺映射：
         // network_transport: 网络层↔传输层 分界 → 对准当前协议层的上边界 (top)
         // link_network: 数据链路层↔网络层 分界 → 对准当前协议层内部横线 (divider)
         // bearing_link: 承载层↔数据链路层 分界 → 对准当前协议层的下边界 (bottom)
         const RULER_MAPPINGS = {
-            'app': {
-                network_transport: { targetIndex: 0, boundary: 'top', state: null },
-                link_network: { targetIndex: 0, boundary: 'divider', state: 'highlight' },
-                bearing_link: { targetIndex: 0, boundary: 'bottom', state: 'highlight' }
+            // 数据层：扁平、无内部结构，将全部下层视为承载层
+            // → 三条分界都对准数据层的下边界（承载层起始处）
+            'data': {
+                network_transport: { targetIndex: 0, boundary: 'bottom', state: null },
+                link_network: { targetIndex: 0, boundary: 'bottom', state: null },
+                bearing_link: { targetIndex: 0, boundary: 'bottom', state: null }
             },
-            'tcp': {
+            'app': {
                 network_transport: { targetIndex: 1, boundary: 'top', state: null },
-                link_network: { targetIndex: 1, boundary: 'divider', state: 'glow' },
+                link_network: { targetIndex: 1, boundary: 'divider', state: 'highlight' },
                 bearing_link: { targetIndex: 1, boundary: 'bottom', state: 'highlight' }
             },
-            'ip': {
-                network_transport: { targetIndex: 2, boundary: 'top', state: 'glow' },
+            'tcp': {
+                network_transport: { targetIndex: 2, boundary: 'top', state: null },
                 link_network: { targetIndex: 2, boundary: 'divider', state: 'glow' },
                 bearing_link: { targetIndex: 2, boundary: 'bottom', state: 'highlight' }
             },
-            'eth': {
+            'ip': {
                 network_transport: { targetIndex: 3, boundary: 'top', state: 'glow' },
                 link_network: { targetIndex: 3, boundary: 'divider', state: 'glow' },
                 bearing_link: { targetIndex: 3, boundary: 'bottom', state: 'highlight' }
             },
+            'eth': {
+                network_transport: { targetIndex: 4, boundary: 'top', state: 'glow' },
+                link_network: { targetIndex: 4, boundary: 'divider', state: 'glow' },
+                bearing_link: { targetIndex: 4, boundary: 'bottom', state: 'highlight' }
+            },
             'physical': {
-                network_transport: { targetIndex: 4, boundary: 'top', state: null },
-                link_network: { targetIndex: 4, boundary: 'divider', state: 'highlight' },
-                bearing_link: { targetIndex: 4, boundary: 'bottom', state: null }
+                network_transport: { targetIndex: 5, boundary: 'top', state: null },
+                link_network: { targetIndex: 5, boundary: 'divider', state: 'highlight' },
+                bearing_link: { targetIndex: 5, boundary: 'bottom', state: null }
+            },
+            'medium': {
+                network_transport: { targetIndex: 6, boundary: 'top', state: null },
+                link_network: { targetIndex: 6, boundary: 'divider', state: 'highlight' },
+                bearing_link: { targetIndex: 6, boundary: 'bottom', state: null }
             }
         };
 
@@ -685,11 +750,13 @@
             bearing: document.getElementById('label-bearing')
         };
         const dividers = {
+            data: document.getElementById('divider-data'),
             app: document.getElementById('divider-app'),
             tcp: document.getElementById('divider-tcp'),
             ip: document.getElementById('divider-ip'),
             eth: document.getElementById('divider-eth'),
-            physical: document.getElementById('divider-physical')
+            physical: document.getElementById('divider-physical'),
+            medium: document.getElementById('divider-medium')
         };
         const rulerLine = document.getElementById('rulerLine');
         const rulerPanel = document.getElementById('rulerPanel');
@@ -756,17 +823,51 @@
             let y = 0;
             layerEls.forEach((el, j) => {
                 const h = (j === activeIdx) ? expanded : collapsed;
-                const top = (stackTop + y) / finalRulerH;
-                const bottom = (stackTop + y + h) / finalRulerH;
-                // divider 取层的垂直中点（layer-body 与层等高，中点一致）
-                boundaries.push({ top, bottom, divider: (top + bottom) / 2 });
+                const layerTopPx = stackTop + y;
+                // top/bottom 使用层本身边界（完整高度），保证右侧标尺区域不被压缩
+                const top = layerTopPx / finalRulerH;
+                const bottom = (layerTopPx + h) / finalRulerH;
+                // divider 定位到两行间隙中点（两行居中后即层中点），与左侧分隔线对齐
+                const divider = (layerTopPx + LAYER_BORDER_TOP + DIVIDER_OFFSET) / finalRulerH;
+                boundaries.push({ top, bottom, divider });
                 y += h + gap;
             });
             return boundaries;
         }
 
+        // ============================================================
+        //  根据各层名称栏的完整内容（图标 + 名称 + 徽标）宽度，
+        //  自动计算最左列的宽度，并通过 CSS 变量 --namebar-w 统一应用，
+        //  避免硬编码宽度导致长名称溢出。
+        // ============================================================
+        function updateNameBarWidth() {
+            let maxW = 0;
+            layerEls.forEach((l) => {
+                const bar = l.querySelector('.layer-name-bar');
+                const badge = l.querySelector('.badge');
+                if (!bar || !badge) return;
+                // 临时显示徽标、并让名称栏按内容自动撑宽，测量自然宽度后恢复
+                const prevBadge = badge.style.display;
+                const prevFlex = bar.style.flex;
+                badge.style.display = 'inline-block';
+                bar.style.flex = '0 0 auto';
+                maxW = Math.max(maxW, bar.getBoundingClientRect().width);
+                bar.style.flex = prevFlex;
+                badge.style.display = prevBadge;
+            });
+            document.documentElement.style.setProperty('--namebar-w', Math.ceil(maxW) + 'px');
+        }
+
         function updateRuler(protocolKey) {
             const mapping = RULER_MAPPINGS[protocolKey];
+            // 最上层（应用层）之上没有传输层；最下层（介质层）之下没有承载层。
+            // 悬停这两层时，标尺中隐藏对应的"传输层"/"承载层"标签。
+            const firstLayer = layerEls[0];
+            const lastLayer = layerEls[layerEls.length - 1];
+            const isTopLayer = !!(mapping && protocolKey === firstLayer.dataset.protocol);
+            const isBottomLayer = !!(mapping && protocolKey === lastLayer.dataset.protocol);
+            // 数据层：扁平、无内部结构，只保留承载层
+            const isFlatLayer = protocolKey === 'data';
             if (!mapping) {
                 const crossNames = ['network_transport', 'link_network', 'bearing_link'];
                 crossNames.forEach(name => {
@@ -775,6 +876,7 @@
                     const cross = crosses[name];
                     hline.className = 'hline';
                     vmark.className = 'vmark';
+                    cross.style.display = ''; // 复位时恢复所有分界线可见
                     const defaultPos = DEFAULT_POSITIONS[name] * 100;
                     cross.style.top = defaultPos + '%';
                 });
@@ -787,13 +889,16 @@
                 Object.keys(labels).forEach(key => {
                     labels[key].className = 'ruler-label';
                     labels[key].style.top = defaultLabelPositions[key] + '%';
+                    labels[key].style.display = ''; // 复位时恢复所有标签可见
                 });
                 rulerLine.className = 'ruler-line';
                 rulerPanel.classList.remove('active');
+                rulerPanel.classList.add('dimmed'); // 无悬停：标尺变暗
                 return;
             }
 
             rulerPanel.classList.add('active');
+            rulerPanel.classList.remove('dimmed'); // 有悬停：标尺恢复清晰
             rulerLine.className = 'ruler-line active';
 
             const boundaries = getLayerBoundaries();
@@ -829,6 +934,12 @@
 
                 hline.className = 'hline';
                 vmark.className = 'vmark';
+
+                // 传输层不存在时（最上层）隐藏其上方分界线 network_transport；
+                // 承载层不存在时（最下层）隐藏其上方分界线 bearing_link
+                const hideCross = (name === 'network_transport' && isTopLayer) ||
+                                  (name === 'bearing_link' && isBottomLayer);
+                cross.style.display = hideCross ? 'none' : '';
 
                 if (state === 'highlight') {
                     hline.classList.add('active');
@@ -869,6 +980,19 @@
                 const clampedPos = Math.max(0.02, Math.min(0.98, pos));
                 label.style.top = (clampedPos * 100) + '%';
                 label.className = 'ruler-label';
+                // 数据层（扁平）：无传输/网络/链路子层，只保留承载层
+                if (isFlatLayer) {
+                    label.style.display = (key === 'bearing') ? '' : 'none';
+                } else {
+                    // 先恢复所有标签可见（避免残留数据层隐藏的状态）
+                    label.style.display = '';
+                    // 最上层之上没有传输层、最下层之下没有承载层 → 隐藏对应标签
+                    if (key === 'transport') {
+                        label.style.display = isTopLayer ? 'none' : '';
+                    } else if (key === 'bearing') {
+                        label.style.display = isBottomLayer ? 'none' : '';
+                    }
+                }
                 if (state === 'highlight') {
                     label.classList.add('active');
                 } else if (state === 'glow') {
@@ -878,6 +1002,39 @@
         }
 
         // 更新左侧分隔线
+        // 分隔线相对层顶部（内边距盒）的固定偏移（px）：
+        // = "网络层"与"数据链路层"两行间隙中心 − 层顶部。
+        // 所有可展开层内部结构一致，因此该偏移是常量，与层在栈中的位置无关，
+        // 只需在初始化/缩放时测量一次。直接使用常量可避免过渡中测量导致的
+        // "先升后降"的中间动画。
+        let DIVIDER_OFFSET = 46;      // 分隔线相对层内边距盒顶部的偏移（updateDividers 用）
+        let LAYER_BORDER_TOP = 2;     // 层上边框宽度（getLayerBoundaries 换算分隔线绝对位置用）
+
+        function measureDividerOffset() {
+            const sample = document.getElementById('layer-app');
+            const body = sample && sample.querySelector('.layer-body');
+            const netRow = body && body.querySelector('.inner-row.net-layer');
+            const linkRow = body && body.querySelector('.inner-row.link-layer');
+            if (!sample || !body || !netRow || !linkRow) return 46;
+            // 临时禁用层与 body 的过渡并展开，直接读取最终布局
+            // （同步测量后恢复，无闪烁）
+            const prevSampleTrans = sample.style.transition;
+            const prevBodyTrans = body.style.transition;
+            sample.style.transition = 'none';
+            body.style.transition = 'none';
+            sample.classList.add('active');
+            const layerRect = sample.getBoundingClientRect();
+            const borderTop = parseFloat(getComputedStyle(sample).borderTopWidth) || 0;
+            const netRect = netRow.getBoundingClientRect();
+            const linkRect = linkRow.getBoundingClientRect();
+            const gapMid = (netRect.bottom + linkRect.top) / 2;
+            sample.classList.remove('active');
+            sample.style.transition = prevSampleTrans;
+            body.style.transition = prevBodyTrans;
+            LAYER_BORDER_TOP = borderTop;
+            return Math.round(gapMid - (layerRect.top + borderTop));
+        }
+
         function updateDividers(protocolKey) {
             Object.keys(dividers).forEach(key => {
                 const div = dividers[key];
@@ -896,7 +1053,8 @@
             if (!divider) return;
 
             divider.style.display = 'block';
-            divider.style.top = '50%';
+            // 直接使用固定偏移（最终位置），不测量过渡中的几何
+            divider.style.top = DIVIDER_OFFSET + 'px';
             divider.style.transform = 'translateY(-50%)';
         }
 
@@ -941,6 +1099,16 @@
 
                 const protocol = this.dataset.protocol;
                 if (!protocol) return;
+
+                // 静态层（数据层）：不展开、没有内部结构，
+                // 悬停时清除高亮，并在标尺中展示"所有下层 = 承载层"
+                if (this.classList.contains('layer-static')) {
+                    layerEls.forEach(l => {
+                        l.classList.remove('active', 'inactive');
+                    });
+                    updateAll(this.dataset.protocol); // 'data'
+                    return;
+                }
 
                 layerEls.forEach(l => {
                     l.classList.remove('active', 'inactive');
@@ -996,8 +1164,10 @@
         window.addEventListener('resize', function() {
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => {
-                // 重新采集布局常量（窄屏断点会改变层高）
+                // 重新采集布局常量（窄屏断点会改变层高）、最左列宽度与分隔线偏移
                 LAYOUT = captureLayout();
+                updateNameBarWidth();
+                DIVIDER_OFFSET = measureDividerOffset();
                 const activeLayer = document.querySelector('.layer.active');
                 if (activeLayer) {
                     const protocol = activeLayer.dataset.protocol;
@@ -1009,21 +1179,16 @@
         });
 
         // ============================================================
-        //  默认：IP 高亮
+        //  初始化：自动计算最左列宽度
         // ============================================================
-        setTimeout(() => {
-            const ipLayer = document.getElementById('layer-ip');
-            if (ipLayer) {
-                layerEls.forEach(l => l.classList.remove('active', 'inactive'));
-                ipLayer.classList.add('active');
-                layerEls.forEach(l => {
-                    if (l !== ipLayer) {
-                        l.classList.add('inactive');
-                    }
-                });
-                updateAll('ip');
-            }
-        }, 500);
+        updateNameBarWidth();
+        DIVIDER_OFFSET = measureDividerOffset();
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(updateNameBarWidth);
+        }
+
+        // 初始为无悬停状态：不自动高亮任何协议，
+        // 右侧标尺保持 dimmed 暗色调，等待用户悬停。
 
     })();
 </script>
