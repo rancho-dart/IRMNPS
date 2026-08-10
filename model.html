@@ -630,11 +630,11 @@
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row net-layer">
                             <span class="tag">🌐 网络</span>
-                            <span class="desc"><span class="hl">光纤熔接</span> <span class="hl">机械接续</span> <span class="hl">光纤配线架</span> <span class="dim">（介质续接/管理）</span></span>
+                            <span class="desc"><span class="hl">光纤熔接</span> <span class="hl">机械接续</span> <span class="hl">无线中继转发</span> <span class="dim">（配线架/基站/微波中继/卫星转发器）</span></span>
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 链路</span>
-                            <span class="desc"><span class="hl">铜线</span> <span class="hl">光纤</span> <span class="hl">同轴电缆</span> <span class="dim">（传输介质）</span></span>
+                            <span class="desc"><span class="hl">铜线</span> <span class="hl">光纤</span> <span class="hl">同轴电缆</span> <span class="hl">电磁波</span> <span class="dim">（传输介质 · 含无线）</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-medium"></div>
@@ -1189,6 +1189,9 @@
 
         // 初始为无悬停状态：不自动高亮任何协议，
         // 右侧标尺保持 dimmed 暗色调，等待用户悬停。
+        // 页面加载后立即应用标尺的中性布局，让标签与分界线
+        // 一开始就位于默认位置，而不是在首次悬停前堆叠在标尺顶部。
+        updateRuler(null);
 
     })();
 </script>
