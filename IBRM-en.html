@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Isomorphic Bidirectional Recursive Model for Network Protocols - Interactive Visualization</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f6f8fa;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; /* centered via margin:auto; avoids clipping the left side on narrow windows */
+            justify-content: center;
+            min-height: 100vh;
+            padding: 30px 20px;
+            overflow-x: auto; /* allows horizontal scrolling on narrow windows; container keeps min width */
+        }
+
+        .container {
+            /* Min window width = comfortable width; scales up on large screens (max 1600px) */
+            min-width: 1100px;
+            max-width: 1600px;
+            width: 100%;
+            margin: 0 auto; /* horizontally centered; can scroll fully from the left on narrow windows */
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 40px 40px 50px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+            border: 1px solid #d0d7de;
+        }
+
+        h1 {
+            text-align: center;
+            font-weight: 600;
+            font-size: 26px;
+            color: #1f2328;
+            letter-spacing: 0.5px;
+            margin-bottom: 35px; /* gap between main title and the protocol stack */
+        }
+
+        .subtitle {
+            text-align: left; /* three lines left-aligned */
+            color: #656d76;
+            font-size: 13px; /* font size reduced one step (15px → 13px) */
+            margin-top: 28px;
+            margin-bottom: 0;
+            border-top: 1px solid #d0d7de;
+            padding-top: 16px;
+        }
+
+        .subtitle strong {
+            color: #1f2328;
+        }
+
+        /* bullet style: three-line list */
+        .subtitle ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .subtitle li {
+            position: relative;
+            padding-left: 18px;
+            line-height: 1.6;
+            margin: 5px 0;
+        }
+        .subtitle li::before {
+            content: "▪"; /* bullet */
+            position: absolute;
+            left: 0;
+            top: 2px;
+            color: #0969da;
+            font-size: 12px;
+        }
+
+        .main-layout {
+            display: flex;
+            gap: 40px;
+            align-items: stretch;
+        }
+
+        /* ---------- Left: protocol stack ---------- */
+        .left-panel {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .stack {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+        }
+
+        .layer {
+            background: #ffffff;
+            border: 2px solid #d0d7de;
+            border-radius: 14px;
+            transition: all 0.4s ease;
+            cursor: default;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            display: flex;
+            flex-direction: row;
+            align-items: stretch;
+            overflow: visible;
+            height: 44px;
+            position: relative;
+        }
+
+        .layer.active {
+            border-color: #0969da55;
+            box-shadow: 0 6px 20px rgba(9, 105, 218, 0.12);
+            height: 88px;
+        }
+
+        /* Network layer: 2×2 table (header Control/Forwarding plane, second row = contents) */
+        .inner-row.net-layer .desc.cp-table {
+            display: flex;
+            flex-direction: column;
+            flex-wrap: nowrap;
+            flex: 1;
+            min-width: 0;
+            gap: 0;
+            align-self: stretch;
+            border: 1px solid #d0d7de;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .cp-table .cp-row {
+            display: flex;
+            min-width: 0;
+        }
+        .cp-table .cp-row + .cp-row {
+            border-top: 1px solid #d0d7de;
+        }
+        .cp-table .cp-cell {
+            flex: 1 1 0;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            align-content: center;
+            gap: 4px 8px;
+            padding: 2px 10px;
+        }
+        .cp-table .cp-cell + .cp-cell {
+            border-left: 1px solid #d0d7de;
+        }
+        /* header: Control / Forwarding plane */
+        .cp-table .cp-head .cp-cell {
+            justify-content: center;
+            flex-wrap: nowrap;
+            font-size: 11px;
+            font-weight: 600;
+            background: #f6f8fa;
+        }
+        .cp-table .cp-head .cp-control { color: #8250df; }
+        .cp-table .cp-head .cp-forward { color: #1a7f37; }
+        /* Network-layer note row (above the 2×2 table; e.g., HTTP: directly reachable, cross-node forwarding by external forwarders) */
+        .cp-table .cp-row.cp-note .cp-cell {
+            justify-content: flex-start;
+            font-size: 11px;
+            color: #656d76;
+            padding: 3px 10px;
+        }
+        /* content row: chip style */
+        .cp-table .cp-body .cp-cell .hl {
+            font-size: 10px;
+            padding: 0 6px;
+            white-space: nowrap;
+        }
+        .cp-table .cp-body .cp-cell .dim {
+            font-size: 10px;
+        }
+        .cp-table .cp-body .cp-control .hl {
+            color: #8250df;
+            background: #f3eafc;
+            border: 1px solid #d8c4ef;
+        }
+        .cp-table .cp-body .cp-control .dim { color: #8b62c9; }
+        /* Control plane: static (purple) vs dynamic (blue) protocols distinguished by color */
+        .cp-table .cp-body .cp-control .hl.dyn {
+            color: #0969da;
+            background: #eaf3ff;
+            border-color: #bfd8f5;
+        }
+        .cp-table .cp-body .cp-forward .hl {
+            color: #1a7f37;
+            background: #e8f6ec;
+            border: 1px solid #bfe0c9;
+        }
+        .cp-table .cp-body .cp-forward .dim { color: #2da44e; }
+
+        /* Network layer expansion height is content-adaptive (2×2 table), auto-scales with window width */
+        .layer.layer-tall.active {
+            height: auto;
+        }
+        .layer.layer-tall.active .layer-body {
+            height: auto;
+        }
+        .layer-tall .inner-row.net-layer {
+            height: auto;
+            min-height: 48px;
+            padding: 4px 12px;
+        }
+        .layer-tall .inner-row.link-layer {
+            height: auto;
+            min-height: 32px;
+            padding: 4px 12px;
+        }
+
+        /* Coding/modulation control plane: static (purple) / dynamic (blue) groups, color-only */
+        .cp-table .cp-body .cp-control .cp-group {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 4px;
+            flex: 0 0 100%;
+            min-width: 0;
+        }
+        /* Dynamic control plane (GMPLS): blue emphasis, linked with the IP layer control plane */
+        .cp-table .cp-body .cp-control .cp-group.dynamic .hl {
+            color: #0969da;
+            background: #eaf3ff;
+            border-color: #bfd8f5;
+        }
+        .cp-table .cp-body .cp-control .cp-group.dynamic .dim {
+            color: #6e88b0;
+        }
+
+        /* TCP network layer: forwarding plane has local/network modes */
+        .cp-table .cp-body .cp-cell .cp-mode {
+            display: flex;
+            flex-direction: row;      /* label and content on the same line, no wrapping */
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px;
+            flex: 0 0 100%;
+            min-width: 0;
+        }
+        .cp-table .cp-body .cp-cell .cp-mode + .cp-mode {
+            margin-top: 4px;
+        }
+        .cp-table .cp-body .cp-cell .cp-mode .cp-mode-tag {
+            font-size: 10px;
+            font-weight: 600;
+            color: #656d76;           /* neutral label color, overridden per cell */
+            white-space: nowrap;
+        }
+        /* Mode labels follow the cell palette: control plane purple, forwarding plane green */
+        .cp-table .cp-body .cp-cell.cp-control .cp-mode-tag { color: #8250df; }
+        .cp-table .cp-body .cp-cell.cp-forward .cp-mode-tag { color: #2da44e; }
+
+        .layer.inactive {
+            opacity: 0.25;
+            filter: grayscale(0.7);
+            border-color: #afb8c1;
+        }
+
+        .layer:hover {
+            border-color: #0969da44;
+        }
+
+        .layer-physical {
+            border-color: #c1c9d1;
+        }
+        .layer-physical .layer-name-bar {
+            border-right-color: #d0d7de;
+        }
+
+        /* Static layer (data): flat, non-expandable, distinguished by dashed border */
+        .layer-static {
+            border-style: dashed;
+            border-color: #c1c9d1;
+        }
+        .layer-static .layer-name-bar {
+            border-right-color: #d0d7de;
+        }
+
+        .layer-name-bar {
+            flex: 0 0 var(--namebar-w, 120px);
+            min-width: 0;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 6px;
+            padding: 0 10px;
+            border-right: 1px solid #eaeef2;
+            transition: background 0.3s;
+            flex-shrink: 0;
+            z-index: 2;
+        }
+
+        .layer.active .layer-name-bar {
+            background: #f6f8fa;
+        }
+
+        .layer-name-bar .icon {
+            font-size: 18px;
+        }
+
+        .layer-name-bar .name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1f2328;
+            white-space: nowrap;
+        }
+
+        .layer-name-bar .badge {
+            font-size: 9px;
+            color: #656d76;
+            background: #eaeef2;
+            padding: 1px 8px;
+            border-radius: 10px;
+            border: 1px solid #d0d7de;
+            white-space: nowrap;
+            display: none;
+        }
+
+        .layer.active .layer-name-bar .badge {
+            display: inline-block;
+        }
+
+        .layer-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 4px 16px;
+            gap: 4px;
+            height: 40px; /* layer height 44 - top/bottom borders 4, vertically centering the two rows */
+            transition: all 0.4s ease;
+            position: relative;
+        }
+
+        .layer.active .layer-body {
+            height: 84px; /* layer height 88 - top/bottom borders 4, vertically centering the two rows */
+            padding: 8px 16px;
+            justify-content: center;
+        }
+
+        .layer-body .collapsed-hint {
+            color: #8c959f;
+            font-size: 13px;
+            text-align: center;
+            letter-spacing: 0.5px;
+            transition: opacity 0.3s;
+        }
+
+        .layer.active .layer-body .collapsed-hint {
+            opacity: 0;
+            height: 0;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            display: none; /* fully removed from flex layout to avoid leftover gap shifting the rows down */
+        }
+
+        .layer-body .inner-row {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 4px 12px;
+            border-radius: 6px;
+            background: #f6f8fa;
+            border-left: 3px solid #d0d7de;
+            transition: border-color 0.3s;
+            font-size: 13px;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 2;
+            height: 32px;
+        }
+
+        .layer.active .layer-body .inner-row {
+            display: flex;
+        }
+
+        .inner-row.net-layer {
+            border-left-color: #0969da;
+        }
+        .inner-row.net-layer .tag {
+            color: #0969da;
+        }
+
+        .inner-row.link-layer {
+            border-left-color: #1a7f37;
+        }
+        .inner-row.link-layer .tag {
+            color: #1a7f37;
+        }
+
+        .inner-row.null-layer {
+            border-left-color: #afb8c1;
+            opacity: 0.5;
+        }
+        .inner-row.null-layer .tag {
+            color: #57606a;
+        }
+
+        .inner-row .tag {
+            font-size: 11px;
+            font-weight: 500;
+            color: #656d76;
+            min-width: 44px;
+            flex-shrink: 0;
+        }
+
+        .inner-row .desc {
+            font-size: 13px;
+            color: #1f2328;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 8px;
+        }
+
+        .inner-row .desc .hl {
+            color: #0969da;
+            background: #eaf3ff;
+            padding: 0 10px;
+            border-radius: 10px;
+            border: 1px solid #bfd8f5;
+            font-size: 12px;
+        }
+
+        .inner-row .desc .dim {
+            color: #656d76;
+            font-size: 12px;
+        }
+
+        .inner-row .desc .null-box {
+            border: 1.5px dashed #8c959f;
+            color: #57606a;
+            padding: 0 12px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        /* ---------- Divider when the left side is expanded ---------- */
+        .layer-divider {
+            display: none;
+            position: absolute;
+            left: var(--namebar-w, 120px);
+            right: 0;
+            height: 1px;
+            background: #0969da22;
+            z-index: 3;
+            pointer-events: none;
+            transition: all 0.4s ease;
+        }
+
+        .layer.active .layer-divider {
+            display: block;
+        }
+
+        /* ---------- Right: ruler (no title bar) ---------- */
+        .right-panel {
+            flex: 0 0 170px;
+            min-width: 150px;
+            background: transparent; /* hide inner background */
+            display: flex;
+            flex-direction: column;
+            transition: border-color 0.3s;
+            position: relative;
+            overflow: visible;
+            border: none; /* hide outer rounded border */
+        }
+
+        .right-panel.active {
+            border-color: #0969da44;
+        }
+
+        /* When not hovered: the ruler is shown in a very dim tone */
+        .right-panel.dimmed .ruler-line {
+            background: #eaeef2;
+        }
+        .right-panel.dimmed .ruler-cross .hline {
+            border-top-color: #eaeef2;
+        }
+        .right-panel.dimmed .ruler-cross .vmark {
+            background: #eaeef2;
+        }
+        .right-panel.dimmed .ruler-label {
+            color: #8c959f;
+        }
+
+        .ruler-body {
+            flex: 1;
+            padding: 8px 12px 8px 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            min-height: 200px;
+            transition: all 0.4s ease;
+        }
+
+        /* Main vertical line - at the left 1/4 */
+        .ruler-line {
+            position: absolute;
+            left: 25%;
+            top: 0px;
+            bottom: 0px;
+            width: 1.5px;
+            background: #afb8c1;
+            transform: translateX(-50%);
+            transition: background 0.4s;
+            border-radius: 2px;
+        }
+
+        /* Cross line - horizontal line + vertical marker */
+        .ruler-cross {
+            position: absolute;
+            left: 0;
+            right: 0;
+            z-index: 2;
+            height: 0;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            transition: all 0.4s ease;
+            pointer-events: none;
+        }
+
+        /* Horizontal line - extends from left to right (dashed) */
+        .ruler-cross .hline {
+            position: absolute;
+            left: 5%;
+            right: 5%;
+            height: 0;
+            border-top: 1px dashed #afb8c1;
+            transition: border-color 0.4s;
+        }
+
+        /* Vertical marker - a small tick at the 25% position */
+        .ruler-cross .vmark {
+            position: absolute;
+            left: 25%;
+            width: 1.5px;
+            height: 12px;
+            background: #afb8c1;
+            transform: translateX(-50%) translateY(-50%);
+            top: 50%;
+            transition: background 0.4s;
+            border-radius: 1px;
+        }
+
+        /* Text labels (uniform color, independent of state) */
+        .ruler-label {
+            position: absolute;
+            left: 32%;
+            font-size: 10px;
+            color: #1f2328;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+            transition: top 0.4s ease, color 0.4s ease;
+            white-space: nowrap;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+
+        .hint {
+            text-align: center;
+            color: #656d76;
+            font-size: 13px;
+            margin-top: 28px;
+            padding-top: 16px;
+            border-top: 1px solid #d0d7de;
+        }
+
+        .hint span {
+            display: inline-block;
+            background: #eaeef2;
+            padding: 4px 16px;
+            border-radius: 20px;
+            color: #57606a;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🧩 Isomorphic Bidirectional Recursive Model for Network Protocols</h1>
+
+    <div class="main-layout">
+
+        <!-- ====== Left: protocol stack ====== -->
+        <div class="left-panel">
+            <div class="stack" id="stack">
+
+                <!-- Data layer (static: no expansion, no link/network layer) -->
+                <div class="layer layer-static" id="layer-data" data-protocol="data">
+                    <div class="layer-name-bar">
+                        <span class="icon">📄</span>
+                        <span class="name">Data Layer</span>
+                        <span class="badge">Raw Data</span>
+                    </div>
+                    <div class="layer-body">
+                        <span class="collapsed-hint">— Raw Data —</span>
+                    </div>
+                    <div class="layer-divider" id="divider-data"></div>
+                </div>
+
+                <!-- HTTP layer -->
+                <div class="layer layer-tall" id="layer-app" data-protocol="app">
+                    <div class="layer-name-bar">
+                        <span class="icon">📦</span>
+                        <span class="name">HTTP Layer</span>
+                        <span class="badge">Hypertext Transfer</span>
+                    </div>
+                    <div class="layer-body">
+                        <span class="collapsed-hint">— Hover to expand —</span>
+                        <div class="inner-row net-layer">
+                            <span class="tag">🌐 Network</span>
+                            <span class="desc cp-table">
+                                <span class="cp-row cp-note">
+                                    <span class="cp-cell">Directly reachable; cross-node forwarding is handled by external forwarders</span>
+                                </span>
+                                <span class="cp-row cp-head">
+                                    <span class="cp-cell cp-control">Control Plane</span>
+                                    <span class="cp-cell cp-forward">Forwarding Plane</span>
+                                </span>
+                                <span class="cp-row cp-body">
+                                    <span class="cp-cell cp-control">
+                                        <span class="hl">Forwarding rule configuration (proxy_pass / load balancing / upstream server list)</span>
+                                        <span class="dim">(maintained by external forwarders)</span>
+                                    </span>
+                                    <span class="cp-cell cp-forward">
+                                        <span class="hl">Forward requests to the origin or next-hop proxy per rules</span>
+                                        <span class="dim">(executed by external forwarders)</span>
+                                    </span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="inner-row link-layer">
+                            <span class="tag">📦 Link</span>
+                            <span class="desc"><span class="hl">URL/Method</span> <span class="hl">Status Code</span></span>
+                        </div>
+                    </div>
+                    <div class="layer-divider" id="divider-app"></div>
+                </div>
+
+                <!-- TCP -->
+                <div class="layer layer-tall" id="layer-tcp" data-protocol="tcp">
+                    <div class="layer-name-bar">
+                        <span class="icon">🔗</span>
+                        <span class="name">TCP Layer</span>
+                        <span class="badge">Transmission Control</span>
+                    </div>
+                    <div class="layer-body">
+                        <span class="collapsed-hint">— Hover to expand —</span>
+                        <div class="inner-row net-layer">
+                            <span class="tag">🌐 Network</span>
+                            <span class="desc cp-table">
+                                <span class="cp-row cp-head">
+                                    <span class="cp-cell cp-control">Control Plane</span>
+                                    <span class="cp-cell cp-forward">Forwarding Plane</span>
+                                </span>
+                                <span class="cp-row cp-body">
+                                    <span class="cp-cell cp-control">
+                                        <span class="cp-mode">
+                                            <span class="cp-mode-tag">Local mode</span>
+                                            <span class="hl">Port binding management (bind/listen/accept)</span>
+                                        </span>
+                                        <span class="cp-mode">
+                                            <span class="cp-mode-tag">Network mode (NAT)</span>
+                                            <span class="hl">NAT mapping rule management (external port ↔ internal host + port)</span>
+                                        </span>
+                                    </span>
+                                    <span class="cp-cell cp-forward">
+                                        <span class="cp-mode">
+                                            <span class="cp-mode-tag">Local mode</span>
+                                            <span class="hl">Port lookup → Socket FD</span>
+                                        </span>
+                                        <span class="cp-mode">
+                                            <span class="cp-mode-tag">Network mode (NAT)</span>
+                                            <span class="hl">NAT table lookup → internal host</span>
+                                        </span>
+                                    </span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="inner-row link-layer">
+                            <span class="tag">📦 Link</span>
+                            <span class="desc"><span class="hl">Connection state management (SYN/EST/FIN)</span> <span class="hl">Checksum</span> <span class="hl">Retransmission</span> <span class="hl">Flow control</span> <span class="hl">Port multiplexing</span></span>
+                        </div>
+                    </div>
+                    <div class="layer-divider" id="divider-tcp"></div>
+                </div>
+
+                <!-- IP -->
+                <div class="layer layer-tall" id="layer-ip" data-protocol="ip">
+                    <div class="layer-name-bar">
+                        <span class="icon">🌍</span>
+                        <span class="name">IP Layer</span>
+                        <span class="badge">Internet Protocol</span>
+                    </div>
+                    <div class="layer-body">
+                        <span class="collapsed-hint">— Hover to expand —</span>
+                        <div class="inner-row net-layer">
+                            <span class="tag">🌐 Network</span>
+                            <span class="desc cp-table">
+                                <span class="cp-row cp-head">
+                                    <span class="cp-cell cp-control">Control Plane</span>
+                                    <span class="cp-cell cp-forward">Forwarding Plane</span>
+                                </span>
+                                <span class="cp-row cp-body">
+                                    <span class="cp-cell cp-control">
+                                        <span class="hl">Static Routing</span>
+                                        <span class="hl dyn">OSPF</span>
+                                        <span class="hl dyn">BGP</span>
+                                        <span class="hl dyn">IS-IS</span>
+                                        <span class="hl dyn">RIP</span>
+                                        <span class="dim">(internal signaling)</span>
+                                    </span>
+                                    <span class="cp-cell cp-forward">
+                                        <span class="hl">Lookup</span>
+                                        <span class="hl">Packet forwarding</span>
+                                        <span class="hl">Encap/Decap</span>
+                                        <span class="hl">TTL handling (decrement per hop, drop on expiry)</span>
+                                        <span class="dim">(external service)</span>
+                                    </span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="inner-row link-layer">
+                            <span class="tag">📦 Link</span>
+                            <span class="desc"><span class="hl">Fragmentation/Reassembly</span> <span class="hl">Protocol number multiplexing</span> <span class="hl">Header checksum</span></span>
+                        </div>
+                    </div>
+                    <div class="layer-divider" id="divider-ip"></div>
+                </div>
+
+                <!-- Ethernet -->
+                <div class="layer layer-tall" id="layer-eth" data-protocol="eth">
+                    <div class="layer-name-bar">
+                        <span class="icon">🔌</span>
+                        <span class="name">Ethernet Layer</span>
+                        <span class="badge">IEEE 802.3</span>
+                    </div>
+                    <div class="layer-body">
+                        <span class="collapsed-hint">— Hover to expand —</span>
+                        <div class="inner-row net-layer">
+                            <span class="tag">🌐 Network</span>
+                            <span class="desc cp-table">
+                                <span class="cp-row cp-head">
+                                    <span class="cp-cell cp-control">Control Plane</span>
+                                    <span class="cp-cell cp-forward">Forwarding Plane</span>
+                                </span>
+                                <span class="cp-row cp-body">
+                                    <span class="cp-cell cp-control">
+                                        <span class="hl dyn">MAC address learning (builds forwarding basis)</span>
+                                        <span class="hl">PBB-TE (802.1Qay)</span>
+                                        <span class="hl dyn">G.8080 ASON</span>
+                                        <span class="hl">MAC-in-MAC + control plane</span>
+                                        <span class="hl">Address space partitioning</span>
+                                        <span class="dim">(internal signaling)</span>
+                                    </span>
+                                    <span class="cp-cell cp-forward">
+                                        <span class="hl">Forwarding via MAC table lookup</span>
+                                        <span class="hl">Flooding</span>
+                                        <span class="hl">Filtering</span>
+                                        <span class="dim">(external service)</span>
+                                    </span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="inner-row link-layer">
+                            <span class="tag">📦 Link</span>
+                            <span class="desc"><span class="hl">CRC check</span> <span class="hl">Collision detection</span></span>
+                        </div>
+                    </div>
+                    <div class="layer-divider" id="divider-eth"></div>
+                </div>
+
+                <!-- Coding/Modulation layer -->
+                <div class="layer layer-physical layer-tall" id="layer-physical" data-protocol="physical">
+                    <div class="layer-name-bar">
+                        <span class="icon">⚡</span>
+                        <span class="name">Coding/Modulation Layer</span>
+                        <span class="badge">Coding &amp; Modulation</span>
+                    </div>
+                    <div class="layer-body">
+                        <span class="collapsed-hint">— Hover to expand —</span>
+                        <div class="inner-row net-layer">
+                            <span class="tag">🌐 Network</span>
+                            <span class="desc cp-table">
+                                <span class="cp-row cp-head">
+                                    <span class="cp-cell cp-control">Control Plane</span>
+                                    <span class="cp-cell cp-forward">Forwarding Plane</span>
+                                </span>
+                                <span class="cp-row cp-body">
+                                    <span class="cp-cell cp-control">
+                                        <span class="null-box">Empty</span>
+                                        <span class="dim">(no forwarding path decisions)</span>
+                                    </span>
+                                    <span class="cp-cell cp-forward">
+                                        <span class="hl">Repeater</span>
+                                        <span class="hl">Regenerative amplifier (e.g., SOA 3R)</span>
+                                        <span class="hl">Wavelength converter</span>
+                                        <span class="hl">ROADM/OTN with O-E-O conversion</span>
+                                    </span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="inner-row link-layer">
+                            <span class="tag">📦 Link</span>
+                            <span class="desc"><span class="hl">Digital ↔ physical signal mapping</span> <span class="hl">Modulation format selection (PAM4/NRZ)</span> <span class="hl">FEC configuration</span> <span class="hl">Power setting</span> <span class="hl">Wavelength modulation parameter config (center frequency / modulation / FEC / power)</span></span>
+                        </div>
+                    </div>
+                    <div class="layer-divider" id="divider-physical"></div>
+                </div>
+
+                <!-- Optical Wave layer (WDM layer of the fiber medium) -->
+                <div class="layer layer-tall" id="layer-wave" data-protocol="wave">
+                    <div class="layer-name-bar">
+                        <span class="icon">🌈</span>
+                        <span class="name">Optical Wave Layer</span>
+                        <span class="badge">WDM Wavelength Multiplexing</span>
+                    </div>
+                    <div class="layer-body">
+                        <span class="collapsed-hint">— Hover to expand —</span>
+                        <div class="inner-row net-layer">
+                            <span class="tag">🌐 Network</span>
+                            <span class="desc cp-table">
+                                <span class="cp-row cp-head">
+                                    <span class="cp-cell cp-control">Control Plane</span>
+                                    <span class="cp-cell cp-forward">Forwarding Plane</span>
+                                </span>
+                                <span class="cp-row cp-body">
+                                    <span class="cp-cell cp-control">
+                                        <span class="hl">Wavelength channel selection (flow ↔ wavelength mapping)</span>
+                                        <span class="hl dyn">GMPLS (OSPF-TE/RSVP-TE)</span>
+                                    </span>
+                                    <span class="cp-cell cp-forward">
+                                        <span class="hl">ROADM wavelength switching</span>
+                                        <span class="hl">Optical amplifier (no regeneration, e.g., EDFA)</span>
+                                        <span class="hl">GMPLS dynamic lightpath</span>
+                                    </span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="inner-row link-layer">
+                            <span class="tag">📦 Link</span>
+                            <span class="desc"><span class="hl">Wavelength addressing (λ₁…λₙ)</span></span>
+                        </div>
+                    </div>
+                    <div class="layer-divider" id="divider-wave"></div>
+                </div>
+
+                <!-- Optical Fiber layer (physical medium · recursion endpoint) -->
+                <div class="layer layer-tall" id="layer-fiber" data-protocol="fiber">
+                    <div class="layer-name-bar">
+                        <span class="icon">🧵</span>
+                        <span class="name">Optical Fiber Layer</span>
+                        <span class="badge">Physical Medium · Recursion Endpoint</span>
+                    </div>
+                    <div class="layer-body">
+                        <span class="collapsed-hint">— Hover to expand —</span>
+                        <div class="inner-row net-layer">
+                            <span class="tag">🌐 Network</span>
+                            <span class="desc cp-table">
+                                <span class="cp-row cp-head">
+                                    <span class="cp-cell cp-control">Control Plane</span>
+                                    <span class="cp-cell cp-forward">Forwarding Plane</span>
+                                </span>
+                                <span class="cp-row cp-body">
+                                    <span class="cp-cell cp-control">
+                                        <span class="hl">Fiber cable deployment planning</span>
+                                        <span class="hl">ODF patch panel management</span>
+                                    </span>
+                                    <span class="cp-cell cp-forward">
+                                        <span class="hl">Fiber splicing</span>
+                                        <span class="hl">Mechanical splicing</span>
+                                        <span class="hl">ODF patching</span>
+                                    </span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="inner-row link-layer">
+                            <span class="tag">📦 Link</span>
+                            <span class="desc"><span class="hl">Optical fiber</span> <span class="dim">(the physical medium itself)</span></span>
+                        </div>
+                    </div>
+                    <div class="layer-divider" id="divider-fiber"></div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ====== Right: ruler (no title bar) ====== -->
+        <div class="right-panel dimmed" id="rulerPanel">
+            <div class="ruler-body" id="rulerBody">
+                <!-- main vertical line -->
+                <div class="ruler-line" id="rulerLine"></div>
+
+                <!-- 3 cross lines -->
+                <div class="ruler-cross" id="cross-network-transport">
+                    <div class="hline" id="hline-network-transport"></div>
+                    <div class="vmark" id="vmark-network-transport"></div>
+                </div>
+                <div class="ruler-cross" id="cross-link-network">
+                    <div class="hline" id="hline-link-network"></div>
+                    <div class="vmark" id="vmark-link-network"></div>
+                </div>
+                <div class="ruler-cross" id="cross-bearing-link">
+                    <div class="hline" id="hline-bearing-link"></div>
+                    <div class="vmark" id="vmark-bearing-link"></div>
+                </div>
+
+                <!-- 4 text labels -->
+                <span class="ruler-label" id="label-transport">Transport</span>
+                <span class="ruler-label" id="label-network">Network</span>
+                <span class="ruler-label" id="label-link">Data Link</span>
+                <span class="ruler-label" id="label-bearing">Bearer</span>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="subtitle">
+        <ul>
+            <li><strong>Isomorphism</strong> — every middle-layer protocol has the same internal four-layer structure (Bearer, Data Link, Network, Transport), structurally identical;</li>
+            <li><strong>Bidirectional Recursion</strong> — downward recursion forms the bearer chain (each layer treats the layer below as its bearer link); upward recursion forms the transport chain (each layer treats the layer above as payload);</li>
+            <li><strong>Boundary Conditions</strong> — terminates upward at the Data Layer (no further encapsulation) and downward at the Medium Layer (no further bearer).</li>
+        </ul>
+    </div>
+
+    <div class="hint">
+        <span>🖱 <strong>Hover</strong> a protocol layer on the left; the ruler on the right dynamically shows the protocol stack from that protocol's perspective</span>
+    </div>
+</div>
+
+<script>
+    (function() {
+
+        // Protocol index: 0=Data (static), 1=HTTP, 2=TCP, 3=IP, 4=Ethernet, 5=Coding/Modulation, 6=Optical Wave, 7=Fiber
+
+        // Ruler mapping per protocol:
+        // network_transport: Network↔Transport boundary → aligned to the current layer's top edge
+        // link_network: Data Link↔Network boundary → aligned to the current layer's internal divider
+        // bearing_link: Bearer↔Data Link boundary → aligned to the current layer's bottom edge
+        const RULER_MAPPINGS = {
+            // Data layer: flat, no internal structure; treats all lower layers as its bearer
+            // → all three boundaries align to the data layer's bottom edge (start of bearer)
+            'data': {
+                network_transport: { targetIndex: 0, boundary: 'bottom', state: null },
+                link_network: { targetIndex: 0, boundary: 'bottom', state: null },
+                bearing_link: { targetIndex: 0, boundary: 'bottom', state: null }
+            },
+            'app': {
+                network_transport: { targetIndex: 1, boundary: 'top', state: null },
+                link_network: { targetIndex: 1, boundary: 'divider', state: 'highlight' },
+                bearing_link: { targetIndex: 1, boundary: 'bottom', state: 'highlight' }
+            },
+            'tcp': {
+                network_transport: { targetIndex: 2, boundary: 'top', state: null },
+                link_network: { targetIndex: 2, boundary: 'divider', state: 'glow' },
+                bearing_link: { targetIndex: 2, boundary: 'bottom', state: 'highlight' }
+            },
+            'ip': {
+                network_transport: { targetIndex: 3, boundary: 'top', state: 'glow' },
+                link_network: { targetIndex: 3, boundary: 'divider', state: 'glow' },
+                bearing_link: { targetIndex: 3, boundary: 'bottom', state: 'highlight' }
+            },
+            'eth': {
+                network_transport: { targetIndex: 4, boundary: 'top', state: 'glow' },
+                link_network: { targetIndex: 4, boundary: 'divider', state: 'glow' },
+                bearing_link: { targetIndex: 4, boundary: 'bottom', state: 'highlight' }
+            },
+            'physical': {
+                network_transport: { targetIndex: 5, boundary: 'top', state: null },
+                link_network: { targetIndex: 5, boundary: 'divider', state: 'highlight' },
+                bearing_link: { targetIndex: 5, boundary: 'bottom', state: null }
+            },
+            'wave': {
+                network_transport: { targetIndex: 6, boundary: 'top', state: null },
+                link_network: { targetIndex: 6, boundary: 'divider', state: 'highlight' },
+                bearing_link: { targetIndex: 6, boundary: 'bottom', state: null }
+            },
+            'fiber': {
+                network_transport: { targetIndex: 7, boundary: 'top', state: null },
+                link_network: { targetIndex: 7, boundary: 'divider', state: 'highlight' },
+                bearing_link: { targetIndex: 7, boundary: 'bottom', state: null }
+            }
+        };
+
+        const layerEls = document.querySelectorAll('.layer');
+        const hlines = {
+            network_transport: document.getElementById('hline-network-transport'),
+            link_network: document.getElementById('hline-link-network'),
+            bearing_link: document.getElementById('hline-bearing-link')
+        };
+        const vmarks = {
+            network_transport: document.getElementById('vmark-network-transport'),
+            link_network: document.getElementById('vmark-link-network'),
+            bearing_link: document.getElementById('vmark-bearing-link')
+        };
+        const crosses = {
+            network_transport: document.getElementById('cross-network-transport'),
+            link_network: document.getElementById('cross-link-network'),
+            bearing_link: document.getElementById('cross-bearing-link')
+        };
+        const labels = {
+            transport: document.getElementById('label-transport'),
+            network: document.getElementById('label-network'),
+            link: document.getElementById('label-link'),
+            bearing: document.getElementById('label-bearing')
+        };
+        const dividers = {
+            data: document.getElementById('divider-data'),
+            app: document.getElementById('divider-app'),
+            tcp: document.getElementById('divider-tcp'),
+            ip: document.getElementById('divider-ip'),
+            eth: document.getElementById('divider-eth'),
+            physical: document.getElementById('divider-physical'),
+            wave: document.getElementById('divider-wave'),
+            fiber: document.getElementById('divider-fiber')
+        };
+        const rulerLine = document.getElementById('rulerLine');
+        const rulerPanel = document.getElementById('rulerPanel');
+        const rulerBody = document.getElementById('rulerBody');
+
+        const DEFAULT_POSITIONS = {
+            network_transport: 0.25,
+            link_network: 0.50,
+            bearing_link: 0.75
+        };
+
+        // ============================================================
+        //  Get each layer's stable-state boundary positions (percentages)
+        //  Note: the cross-line top percentage is positioned relative to
+        //  .ruler-body, so pixel conversion is done directly against the
+        //  rulerBody to avoid misalignment from differing left/right
+        //  panel heights, borders, or padding.
+        //
+        //  Why compute from the stable layout instead of live measuring?
+        //  Measuring live during the .layer height transition (44px↔88px)
+        //  returns intermediate geometry, so a cross line would first be
+        //  placed at a wrong "compressed" position and only be corrected
+        //  by transitionend afterwards, appearing as a "shrink-then-expand"
+        //  jump. Computing directly from the final layout places each cross
+        //  line at its target in one shot, skipping that intermediate
+        //  animation.
+        // ============================================================
+
+        // Layout constants (collapsed layer height / gap / right panel top+bottom borders),
+        // read from computed styles to stay compatible with responsive breakpoints; captured at init.
+        let LAYOUT = captureLayout();
+
+        function captureLayout() {
+            const stack = document.getElementById('stack');
+            // Collapsed height = minimum over all layers: layers mid-transition are taller,
+            // so the minimum stably yields 44px (38px on narrow screens)
+            const collapsed = Math.min(...Array.from(layerEls).map(l =>
+                parseFloat(getComputedStyle(l).height) || 0
+            )) || 44;
+            const gap = parseFloat(getComputedStyle(stack).rowGap) ||
+                        parseFloat(getComputedStyle(stack).gap) || 8;
+            const borderV = (parseFloat(getComputedStyle(rulerPanel).borderTopWidth) || 0) +
+                            (parseFloat(getComputedStyle(rulerPanel).borderBottomWidth) || 0);
+            return { collapsed, gap, borderV };
+        }
+
+        function getLayerBoundaries() {
+            const stack = document.getElementById('stack');
+            const rulerRect = rulerBody.getBoundingClientRect();
+            // Offset of the stack top relative to the ruler top (both panels sit at the top, ~-2px constant)
+            const stackTop = stack.getBoundingClientRect().top - rulerRect.top;
+            const { collapsed, gap, borderV } = LAYOUT;
+
+            const activeEl = document.querySelector('.layer.active');
+            const activeIdx = activeEl ? Array.prototype.indexOf.call(layerEls, activeEl) : -1;
+            // Expanded height = pre-measured stable expanded height (captured at init/resize),
+            // avoiding jitter from mid-transition measurement; regular layers 88, medium/modulation taller
+            const activeProto = activeEl ? activeEl.dataset.protocol : null;
+            const expanded = (activeProto && LAYER_ACTIVE_H[activeProto]) || collapsed * 2;
+
+            // Stable-state ruler height = total stack height - right panel vertical borders
+            const n = layerEls.length;
+            const finalStackH = activeIdx >= 0
+                ? expanded + (n - 1) * collapsed + (n - 1) * gap
+                : n * collapsed + (n - 1) * gap;
+            const finalRulerH = finalStackH - borderV;
+            if (finalRulerH <= 0) return [];
+
+            const boundaries = [];
+            let y = 0;
+            layerEls.forEach((el, j) => {
+                const h = (j === activeIdx) ? expanded : collapsed;
+                const layerTopPx = stackTop + y;
+                // top/bottom use the layer's own boundaries (full height) so the ruler area isn't compressed
+                const top = layerTopPx / finalRulerH;
+                const bottom = (layerTopPx + h) / finalRulerH;
+                // divider sits at the midpoint between the two rows (i.e., the layer center once centered),
+                // aligning with the left divider line
+                // the coding/modulation layer's network row is taller, so its divider offset is measured per-layer
+                const proto = el.dataset.protocol;
+                const divOffset = DIVIDER_OFFSETS[proto] || DIVIDER_OFFSET;
+                const divider = (layerTopPx + LAYER_BORDER_TOP + divOffset) / finalRulerH;
+                boundaries.push({ top, bottom, divider });
+                y += h + gap;
+            });
+            return boundaries;
+        }
+
+        // ============================================================
+        //  Based on the full content width of each layer's name bar
+        //  (icon + name + badge), compute the leftmost column width and
+        //  apply it via the --namebar-w CSS variable, avoiding overflow
+        //  from hardcoded widths for long names.
+        // ============================================================
+        function updateNameBarWidth() {
+            let maxW = 0;
+            layerEls.forEach((l) => {
+                const bar = l.querySelector('.layer-name-bar');
+                const badge = l.querySelector('.badge');
+                if (!bar || !badge) return;
+                // Temporarily show the badge and let the name bar auto-size,
+                // measure the natural width, then restore
+                const prevBadge = badge.style.display;
+                const prevFlex = bar.style.flex;
+                badge.style.display = 'inline-block';
+                bar.style.flex = '0 0 auto';
+                maxW = Math.max(maxW, bar.getBoundingClientRect().width);
+                bar.style.flex = prevFlex;
+                badge.style.display = prevBadge;
+            });
+            document.documentElement.style.setProperty('--namebar-w', Math.ceil(maxW) + 'px');
+        }
+
+        function updateRuler(protocolKey) {
+            const mapping = RULER_MAPPINGS[protocolKey];
+            // The topmost layer has no transport layer above it; the bottommost has no bearer below.
+            // Hovering these layers hides the corresponding "Transport"/"Bearer" labels.
+            const firstLayer = layerEls[0];
+            const lastLayer = layerEls[layerEls.length - 1];
+            const isTopLayer = !!(mapping && protocolKey === firstLayer.dataset.protocol);
+            const isBottomLayer = !!(mapping && protocolKey === lastLayer.dataset.protocol);
+            // Data layer: flat, no internal structure; keep only the Bearer label
+            const isFlatLayer = protocolKey === 'data';
+            if (!mapping) {
+                const crossNames = ['network_transport', 'link_network', 'bearing_link'];
+                crossNames.forEach(name => {
+                    const hline = hlines[name];
+                    const vmark = vmarks[name];
+                    const cross = crosses[name];
+                    hline.className = 'hline';
+                    vmark.className = 'vmark';
+                    cross.style.display = ''; // restore all boundaries visible on reset
+                    const defaultPos = DEFAULT_POSITIONS[name] * 100;
+                    cross.style.top = defaultPos + '%';
+                });
+                const defaultLabelPositions = {
+                    transport: 12.5,
+                    network: 37.5,
+                    link: 62.5,
+                    bearing: 87.5
+                };
+                Object.keys(labels).forEach(key => {
+                    labels[key].className = 'ruler-label';
+                    labels[key].style.top = defaultLabelPositions[key] + '%';
+                    labels[key].style.display = ''; // restore all labels visible on reset
+                });
+                rulerLine.className = 'ruler-line';
+                rulerPanel.classList.remove('active');
+                rulerPanel.classList.add('dimmed'); // no hover: ruler dimmed
+                return;
+            }
+
+            rulerPanel.classList.add('active');
+            rulerPanel.classList.remove('dimmed'); // hover: ruler becomes clear
+            rulerLine.className = 'ruler-line active';
+
+            const boundaries = getLayerBoundaries();
+            if (boundaries.length === 0) return;
+
+            const crossNames = ['network_transport', 'link_network', 'bearing_link'];
+            crossNames.forEach(name => {
+                const hline = hlines[name];
+                const vmark = vmarks[name];
+                const cross = crosses[name];
+                const data = mapping[name];
+                const targetIdx = data.targetIndex;
+                const boundary = data.boundary;
+                const state = data.state;
+
+                let offset;
+                if (targetIdx >= 0 && targetIdx < boundaries.length) {
+                    const b = boundaries[targetIdx];
+                    if (boundary === 'top') {
+                        offset = b.top;
+                    } else if (boundary === 'bottom') {
+                        offset = b.bottom;
+                    } else {
+                        offset = b.divider;
+                    }
+                } else {
+                    offset = DEFAULT_POSITIONS[name];
+                }
+                offset = Math.max(0.01, Math.min(0.99, offset));
+
+                const percent = offset * 100;
+                cross.style.top = percent + '%';
+
+                hline.className = 'hline';
+                vmark.className = 'vmark';
+
+                // hide network_transport boundary when the transport layer doesn't exist (topmost);
+                // hide bearing_link boundary when the bearer doesn't exist (bottommost)
+                const hideCross = (name === 'network_transport' && isTopLayer) ||
+                                  (name === 'bearing_link' && isBottomLayer);
+                cross.style.display = hideCross ? 'none' : '';
+
+                if (state === 'highlight') {
+                    hline.classList.add('active');
+                    vmark.classList.add('active');
+                } else if (state === 'glow') {
+                    hline.classList.add('active-glow');
+                    vmark.classList.add('active-glow');
+                }
+            });
+
+            // Get actual positions of the 3 cross lines
+            const crossPositions = {};
+            crossNames.forEach(name => {
+                const cross = crosses[name];
+                const pos = parseFloat(cross.style.top) / 100;
+                crossPositions[name] = isNaN(pos) ? 0.25 : pos;
+            });
+
+            // Update the positions of the 4 text labels
+            const labelPositions = {
+                transport: (0 + crossPositions.network_transport) / 2,
+                network: (crossPositions.network_transport + crossPositions.link_network) / 2,
+                link: (crossPositions.link_network + crossPositions.bearing_link) / 2,
+                bearing: (crossPositions.bearing_link + 1) / 2
+            };
+
+            const labelStates = {
+                transport: mapping.network_transport.state,
+                network: mapping.network_transport.state,
+                link: mapping.link_network.state,
+                bearing: mapping.bearing_link.state
+            };
+
+            Object.keys(labels).forEach(key => {
+                const label = labels[key];
+                const state = labelStates[key];
+                const pos = labelPositions[key];
+                const clampedPos = Math.max(0.02, Math.min(0.98, pos));
+                label.style.top = (clampedPos * 100) + '%';
+                label.className = 'ruler-label';
+                // Data layer (flat): no transport/network/link sub-layers, keep only Bearer
+                if (isFlatLayer) {
+                    label.style.display = (key === 'bearing') ? '' : 'none';
+                } else {
+                    // first restore all labels visible (avoid leftover hidden state)
+                    label.style.display = '';
+                    // no transport above the topmost layer, no bearer below the bottommost → hide labels
+                    if (key === 'transport') {
+                        label.style.display = isTopLayer ? 'none' : '';
+                    } else if (key === 'bearing') {
+                        label.style.display = isBottomLayer ? 'none' : '';
+                    }
+                }
+                if (state === 'highlight') {
+                    label.classList.add('active');
+                } else if (state === 'glow') {
+                    label.classList.add('active-glow');
+                }
+            });
+        }
+
+        // Update the left divider lines
+        // Fixed offset of the divider relative to the layer's top (padding box) in px:
+        // = midpoint of the gap between the "Network" and "Data Link" rows − layer top.
+        // All expandable layers share the same internal structure, so this offset is a
+        // constant independent of the layer's position; measure once at init/resize.
+        // Using a constant avoids the "rise-then-fall" mid-transition animation.
+        let DIVIDER_OFFSET = 46;      // offset of the divider from the layer's padding-box top (used by updateDividers)
+        let LAYER_BORDER_TOP = 2;     // layer top border width (used by getLayerBoundaries to convert divider position)
+        // Per-protocol divider offset: the coding/modulation layer's network row is taller,
+        // so its divider position differs from regular layers and is measured per-layer.
+        let DIVIDER_OFFSETS = {};
+
+        function measureDividerOffset(el) {
+            const sample = el || document.getElementById('layer-app');
+            const body = sample && sample.querySelector('.layer-body');
+            const netRow = body && body.querySelector('.inner-row.net-layer');
+            const linkRow = body && body.querySelector('.inner-row.link-layer');
+            if (!sample || !body || !netRow || !linkRow) return 46;
+            // Temporarily disable layer/body transitions and expand, then read the final layout
+            // (measured synchronously, restored without flicker)
+            const prevSampleTrans = sample.style.transition;
+            const prevBodyTrans = body.style.transition;
+            sample.style.transition = 'none';
+            body.style.transition = 'none';
+            sample.classList.add('active');
+            const layerRect = sample.getBoundingClientRect();
+            const borderTop = parseFloat(getComputedStyle(sample).borderTopWidth) || 0;
+            const netRect = netRow.getBoundingClientRect();
+            const linkRect = linkRow.getBoundingClientRect();
+            const gapMid = (netRect.bottom + linkRect.top) / 2;
+            sample.classList.remove('active');
+            sample.style.transition = prevSampleTrans;
+            body.style.transition = prevBodyTrans;
+            LAYER_BORDER_TOP = borderTop;
+            return Math.round(gapMid - (layerRect.top + borderTop));
+        }
+
+        // Stable expanded height per protocol (regular 88px; medium/modulation layers taller)
+        let LAYER_ACTIVE_H = {};
+
+        // At init/resize: measure each layer's divider offset and expanded height (incl. coding/modulation)
+        function updateDividerOffsets() {
+            DIVIDER_OFFSET = measureDividerOffset(document.getElementById('layer-app'));
+            DIVIDER_OFFSETS = {};
+            layerEls.forEach(l => {
+                DIVIDER_OFFSETS[l.dataset.protocol] = measureDividerOffset(l);
+            });
+            // Capture each layer's stable expanded height (temporarily expand, measure, restore; no flicker)
+            layerEls.forEach(l => {
+                const prevTrans = l.style.transition;
+                l.style.transition = 'none';
+                l.classList.add('active');
+                LAYER_ACTIVE_H[l.dataset.protocol] = l.getBoundingClientRect().height;
+                l.classList.remove('active');
+                l.style.transition = prevTrans;
+            });
+        }
+
+        function updateDividers(protocolKey) {
+            Object.keys(dividers).forEach(key => {
+                const div = dividers[key];
+                div.style.display = 'none';
+            });
+
+            if (!protocolKey || !RULER_MAPPINGS[protocolKey]) return;
+
+            const activeLayer = document.querySelector('.layer.active');
+            if (!activeLayer) return;
+
+            const protocol = activeLayer.dataset.protocol;
+            if (protocol !== protocolKey) return;
+
+            const divider = dividers[protocolKey];
+            if (!divider) return;
+
+            divider.style.display = 'block';
+            // Use the fixed offset directly (final position), without measuring mid-transition geometry
+            // The coding/modulation layer's divider position differs from regular layers; use per-layer offset
+            divider.style.top = (DIVIDER_OFFSETS[protocolKey] || DIVIDER_OFFSET) + 'px';
+            divider.style.transform = 'translateY(-50%)';
+        }
+
+        // Use requestAnimationFrame to ensure layout stability
+        function updateAll(protocolKey) {
+            // let the browser finish layout updates first
+            requestAnimationFrame(() => {
+                // wait one more frame to ensure all sizes are stable
+                requestAnimationFrame(() => {
+                    updateRuler(protocolKey);
+                    updateDividers(protocolKey);
+                });
+            });
+        }
+
+        // ============================================================
+        //  Interaction
+        //  Reset uses a "grace delay": while the mouse moves between
+        //  protocols, even briefly passing through inter-layer gaps or
+        //  panel gaps, reset (collapse to minimum) is not triggered
+        //  immediately. It only resets once the grace period elapses
+        //  with no protocol layer hovered. This lets switching between
+        //  protocols transition directly from A to B, skipping the
+        //  "collapse-then-expand" intermediate animation.
+        // ============================================================
+        let resetTimer = null;
+
+        function scheduleReset(delay) {
+            clearTimeout(resetTimer);
+            resetTimer = setTimeout(() => {
+                const hovered = document.querySelector('.layer:hover');
+                if (hovered) return;
+                layerEls.forEach(l => {
+                    l.classList.remove('active', 'inactive');
+                });
+                updateAll(null);
+            }, delay);
+        }
+
+        layerEls.forEach((layer) => {
+            layer.addEventListener('mouseenter', function(e) {
+                // entering a new protocol: cancel any pending reset
+                clearTimeout(resetTimer);
+
+                const protocol = this.dataset.protocol;
+                if (!protocol) return;
+
+                // Static layer (data): no expansion, no internal structure;
+                // on hover clear highlights and show "all lower layers = bearer" on the ruler
+                if (this.classList.contains('layer-static')) {
+                    layerEls.forEach(l => {
+                        l.classList.remove('active', 'inactive');
+                    });
+                    updateAll(this.dataset.protocol); // 'data'
+                    return;
+                }
+
+                layerEls.forEach(l => {
+                    l.classList.remove('active', 'inactive');
+                });
+                this.classList.add('active');
+                layerEls.forEach(l => {
+                    if (l !== this) {
+                        l.classList.add('inactive');
+                    }
+                });
+
+                updateAll(protocol);
+            });
+
+            layer.addEventListener('mouseleave', function(e) {
+                // 250ms grace period: entering another protocol during this cancels the reset
+                scheduleReset(250);
+            });
+        });
+
+        // ============================================================
+        //  Re-align after the height transition ends
+        //  .layer.active height transitions from 44px to 88px over 0.4s;
+        //  measuring mid-transition would yield inaccurate percentages,
+        //  so recompute once the transition ends (geometry is stable).
+        // ============================================================
+        let recalcScheduled = false;
+        layerEls.forEach((layer) => {
+            layer.addEventListener('transitionend', function(e) {
+                if (e.target !== this) return;
+                if (e.propertyName !== 'height') return;
+                if (!this.classList.contains('active')) return;
+                if (recalcScheduled) return;
+                recalcScheduled = true;
+                setTimeout(() => {
+                    recalcScheduled = false;
+                    const activeLayer = document.querySelector('.layer.active');
+                    const protocol = activeLayer && activeLayer.dataset.protocol;
+                    if (protocol && RULER_MAPPINGS[protocol]) {
+                        updateAll(protocol);
+                    }
+                }, 50);
+            });
+        });
+
+        const container = document.querySelector('.container');
+        container.addEventListener('mouseleave', function() {
+            // leaving the container counts as a real leave; use a shorter grace period to reset quickly
+            scheduleReset(40);
+        });
+
+        let resizeTimer;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                // re-capture layout constants (narrow-screen breakpoints change layer height),
+                // leftmost column width, and divider offsets
+                LAYOUT = captureLayout();
+                updateNameBarWidth();
+                updateDividerOffsets();
+                const activeLayer = document.querySelector('.layer.active');
+                if (activeLayer) {
+                    const protocol = activeLayer.dataset.protocol;
+                    if (protocol) {
+                        updateAll(protocol);
+                    }
+                }
+            }, 200);
+        });
+
+        // ============================================================
+        //  Initialization: automatically compute the leftmost column width
+        // ============================================================
+        updateNameBarWidth();
+        updateDividerOffsets();
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(updateNameBarWidth);
+        }
+
+        // Initial no-hover state: no protocol highlighted automatically;
+        // the right ruler stays dimmed, waiting for user hover.
+        // Apply the neutral ruler layout immediately so labels and
+        // boundary lines start at their default positions rather than
+        // stacking at the top of the ruler before the first hover.
+        updateRuler(null);
+
+    })();
+</script>
+
+</body>
+</html>
