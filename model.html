@@ -98,71 +98,78 @@
             height: 88px;
         }
 
-        /* 网络层内部：控制面 / 转发面 纵向分割（一左一右，竖线居中分隔，单行不折行） */
-        .inner-row.net-layer .desc.net-split {
+        /* 网络层：2×2 表格（表头 控制面/转发面，第二行具体内容） */
+        .inner-row.net-layer .desc.cp-table {
             display: flex;
-            flex-direction: row;
-            flex-wrap: nowrap;      /* 覆盖基础 .desc 的 wrap，防止转发面折行 */
-            align-items: center;
-            align-self: stretch;
+            flex-direction: column;
+            flex-wrap: nowrap;
             flex: 1;
             min-width: 0;
             gap: 0;
-        }
-        .net-split .plane {
-            display: flex;
-            align-items: center;
-            justify-content: center; /* 内容在各自半区内水平居中 */
-            gap: 5px;
-            flex: 1 1 0;             /* 两平面等宽各 50%，竖线位于正中 */
-            min-width: 0;
-            padding: 0 4px;
-        }
-        .net-split .plane .plane-tag {
-            font-size: 10px;
-            font-weight: 600;
-            flex-shrink: 0;
-        }
-        .net-split .plane .plane-body {
-            display: flex;
-            align-items: center;
-            flex-wrap: nowrap;      /* 半区内单行 */
-            gap: 4px;
-            min-width: 0;
+            align-self: stretch;
+            border: 1px solid #30363d;
+            border-radius: 8px;
             overflow: hidden;
         }
-        .net-split .plane .plane-body .hl {
+        .cp-table .cp-row {
+            display: flex;
+            min-width: 0;
+        }
+        .cp-table .cp-row + .cp-row {
+            border-top: 1px solid #30363d;
+        }
+        .cp-table .cp-cell {
+            flex: 1 1 0;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            align-content: center;
+            gap: 4px 8px;
+            padding: 2px 10px;
+        }
+        .cp-table .cp-cell + .cp-cell {
+            border-left: 1px solid #30363d;
+        }
+        /* 表头：控制面 / 转发面 */
+        .cp-table .cp-head .cp-cell {
+            justify-content: center;
+            flex-wrap: nowrap;
+            font-size: 11px;
+            font-weight: 600;
+            background: #161b22;
+        }
+        .cp-table .cp-head .cp-control { color: #bc8cff; }
+        .cp-table .cp-head .cp-forward { color: #56d364; }
+        /* 内容行：芯片样式 */
+        .cp-table .cp-body .cp-cell .hl {
             font-size: 10px;
-            padding: 0 5px;
+            padding: 0 6px;
             white-space: nowrap;
         }
-        .net-split .plane .plane-body .dim {
+        .cp-table .cp-body .cp-cell .dim {
             font-size: 10px;
-            white-space: nowrap;
         }
-        .net-split .plane-splitter {
-            flex: 0 0 1px;
-            align-self: stretch;
-            background: #30363d;
-        }
-        /* 控制面：蓝紫色标识（对内信令） */
-        .net-split .plane.control-plane .plane-tag { color: #bc8cff; }
-        .net-split .plane.control-plane .plane-body .dim { color: #8b7db0; }
-        .net-split .plane.control-plane .plane-body .hl {
+        .cp-table .cp-body .cp-control .hl {
             color: #d2a8ff;
             background: #221436;
             border: 1px solid #3b2a63;
         }
-        /* 转发面：绿色标识（对外服务） */
-        .net-split .plane.forwarding-plane .plane-tag { color: #56d364; }
-        .net-split .plane.forwarding-plane .plane-body .dim { color: #6eae7a; }
-        .net-split .plane.forwarding-plane .plane-body .hl {
+        .cp-table .cp-body .cp-control .dim { color: #8b7db0; }
+        /* 控制面：静态（紫）与动态（蓝）协议以色彩区分 */
+        .cp-table .cp-body .cp-control .hl.dyn {
+            color: #79c0ff;
+            background: #112136;
+            border-color: #1f3a5f;
+        }
+        .cp-table .cp-body .cp-forward .hl {
             color: #56d364;
             background: #0f2a1a;
             border: 1px solid #1f4d2f;
         }
+        .cp-table .cp-body .cp-forward .dim { color: #6eae7a; }
 
-        /* 介质层 / 编码调制层：网络层高度由内容自适应（不再固定偏高），随窗口宽度自动伸缩 */
+        /* 网络层展开高度由内容自适应（2×2 表格），随窗口宽度自动伸缩 */
         .layer.layer-tall.active {
             height: auto;
         }
@@ -171,18 +178,12 @@
         }
         .layer-tall .inner-row.net-layer {
             height: auto;
-            min-height: 32px;
+            min-height: 48px;
             padding: 4px 12px;
         }
-        /* 高网络层：两个平面在各自半区内可折行 */
-        .layer-tall .inner-row.net-layer .plane-body {
-            flex-wrap: wrap;
-            overflow: visible;
-            align-content: center;
-        }
 
-        /* 编码调制层控制面：静态/半静态 与 动态（GMPLS）两组子控制面 */
-        .net-split .plane .plane-body .cp-group {
+        /* 编码调制层控制面：静态（紫）/ 动态（蓝）两组，仅用色彩区分 */
+        .cp-table .cp-body .cp-control .cp-group {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
@@ -190,32 +191,38 @@
             flex: 0 0 100%;
             min-width: 0;
         }
-        .net-split .plane .plane-body .cp-group .cp-label {
-            font-size: 9px;
-            font-weight: 600;
-            color: #8b949e;
-            background: #161b22;
-            border: 1px solid #21262d;
-            padding: 0 5px;
-            border-radius: 8px;
-            flex-shrink: 0;
-            white-space: nowrap;
-            line-height: 16px;
-        }
         /* 动态控制面（GMPLS）：蓝色强调，与 IP 层控制面联动 */
-        .net-split .plane .plane-body .cp-group.dynamic .cp-label {
-            color: #58a6ff;
-            border-color: #2d3a4f;
-            background: #112136;
-        }
-        .net-split .plane.control-plane .plane-body .cp-group.dynamic .hl {
+        .cp-table .cp-body .cp-control .cp-group.dynamic .hl {
             color: #79c0ff;
             background: #112136;
             border-color: #1f3a5f;
         }
-        .net-split .plane.control-plane .plane-body .cp-group.dynamic .dim {
+        .cp-table .cp-body .cp-control .cp-group.dynamic .dim {
             color: #8b9bb8;
         }
+
+        /* TCP 网络层：转发面 本机/网络 两种模式 */
+        .cp-table .cp-body .cp-cell .cp-mode {
+            display: flex;
+            flex-direction: row;      /* 标签与内容同行，不换行 */
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px;
+            flex: 0 0 100%;
+            min-width: 0;
+        }
+        .cp-table .cp-body .cp-cell .cp-mode + .cp-mode {
+            margin-top: 4px;
+        }
+        .cp-table .cp-body .cp-cell .cp-mode .cp-mode-tag {
+            font-size: 10px;
+            font-weight: 600;
+            color: #8b949e;           /* 中性标签色，随单元格覆写 */
+            white-space: nowrap;
+        }
+        /* 模式标签随单元格配色：控制面偏紫，转发面偏绿 */
+        .cp-table .cp-body .cp-cell.cp-control .cp-mode-tag { color: #bc8cff; }
+        .cp-table .cp-body .cp-cell.cp-forward .cp-mode-tag { color: #6eae7a; }
 
         .layer.inactive {
             opacity: 0.25;
@@ -594,7 +601,7 @@
                 </div>
 
                 <!-- TCP -->
-                <div class="layer" id="layer-tcp" data-protocol="tcp">
+                <div class="layer layer-tall" id="layer-tcp" data-protocol="tcp">
                     <div class="layer-name-bar">
                         <span class="icon">🔗</span>
                         <span class="name">TCP</span>
@@ -602,20 +609,47 @@
                     </div>
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
-                        <div class="inner-row net-layer null-layer">
+                        <div class="inner-row net-layer">
                             <span class="tag">🌐 网络</span>
-                            <span class="desc"><span class="null-box">空（不转发）</span></span>
+                            <span class="desc cp-table">
+                                <span class="cp-row cp-head">
+                                    <span class="cp-cell cp-control">控制面</span>
+                                    <span class="cp-cell cp-forward">转发面</span>
+                                </span>
+                                <span class="cp-row cp-body">
+                                    <span class="cp-cell cp-control">
+                                        <span class="cp-mode">
+                                            <span class="cp-mode-tag">本机模式</span>
+                                            <span class="hl">端口绑定管理（bind/listen/accept）</span>
+                                        </span>
+                                        <span class="cp-mode">
+                                            <span class="cp-mode-tag">网络模式（NAT）</span>
+                                            <span class="hl">NAT映射规则管理（外部端口↔内部主机+端口）</span>
+                                        </span>
+                                    </span>
+                                    <span class="cp-cell cp-forward">
+                                        <span class="cp-mode">
+                                            <span class="cp-mode-tag">本机模式</span>
+                                            <span class="hl">端口查表→Socket FD</span>
+                                        </span>
+                                        <span class="cp-mode">
+                                            <span class="cp-mode-tag">网络模式（NAT）</span>
+                                            <span class="hl">查NAT映射表→内部主机</span>
+                                        </span>
+                                    </span>
+                                </span>
+                            </span>
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 链路</span>
-                            <span class="desc"><span class="hl">校验和</span> <span class="hl">重传</span> <span class="hl">流控</span> <span class="hl">端口复用</span></span>
+                            <span class="desc"><span class="hl">连接状态管理（SYN/EST/FIN）</span> <span class="hl">校验和</span> <span class="hl">重传</span> <span class="hl">流控</span> <span class="hl">端口复用</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-tcp"></div>
                 </div>
 
                 <!-- IP -->
-                <div class="layer" id="layer-ip" data-protocol="ip">
+                <div class="layer layer-tall" id="layer-ip" data-protocol="ip">
                     <div class="layer-name-bar">
                         <span class="icon">🌍</span>
                         <span class="name">IP</span>
@@ -625,25 +659,25 @@
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row net-layer">
                             <span class="tag">🌐 网络</span>
-                            <span class="desc net-split">
-                                <span class="plane control-plane">
-                                    <span class="plane-tag">控制面</span>
-                                    <span class="plane-body">
+                            <span class="desc cp-table">
+                                <span class="cp-row cp-head">
+                                    <span class="cp-cell cp-control">控制面</span>
+                                    <span class="cp-cell cp-forward">转发面</span>
+                                </span>
+                                <span class="cp-row cp-body">
+                                    <span class="cp-cell cp-control">
                                         <span class="hl">静态路由</span>
-                                        <span class="hl">OSPF</span>
-                                        <span class="hl">BGP</span>
-                                        <span class="hl">IS-IS</span>
-                                        <span class="hl">RIP</span>
+                                        <span class="hl dyn">OSPF</span>
+                                        <span class="hl dyn">BGP</span>
+                                        <span class="hl dyn">IS-IS</span>
+                                        <span class="hl dyn">RIP</span>
                                         <span class="dim">（对内信令）</span>
                                     </span>
-                                </span>
-                                <span class="plane-splitter"></span>
-                                <span class="plane forwarding-plane">
-                                    <span class="plane-tag">转发面</span>
-                                    <span class="plane-body">
+                                    <span class="cp-cell cp-forward">
                                         <span class="hl">查表</span>
                                         <span class="hl">搬包</span>
                                         <span class="hl">封装解封装</span>
+                                        <span class="hl">TTL处理（每跳减1，超时丢弃）</span>
                                         <span class="dim">（对外服务）</span>
                                     </span>
                                 </span>
@@ -668,22 +702,21 @@
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row net-layer">
                             <span class="tag">🌐 网络</span>
-                            <span class="desc net-split">
-                                <span class="plane control-plane">
-                                    <span class="plane-tag">控制面</span>
-                                    <span class="plane-body">
+                            <span class="desc cp-table">
+                                <span class="cp-row cp-head">
+                                    <span class="cp-cell cp-control">控制面</span>
+                                    <span class="cp-cell cp-forward">转发面</span>
+                                </span>
+                                <span class="cp-row cp-body">
+                                    <span class="cp-cell cp-control">
+                                        <span class="hl dyn">MAC地址学习（生成转发依据）</span>
                                         <span class="hl">PBB-TE (802.1Qay)</span>
-                                        <span class="hl">G.8080 ASON</span>
+                                        <span class="hl dyn">G.8080 ASON</span>
                                         <span class="hl">MAC-in-MAC + 控制平面</span>
                                         <span class="hl">地址空间分割</span>
                                         <span class="dim">（对内信令）</span>
                                     </span>
-                                </span>
-                                <span class="plane-splitter"></span>
-                                <span class="plane forwarding-plane">
-                                    <span class="plane-tag">转发面</span>
-                                    <span class="plane-body">
-                                        <span class="hl">MAC地址学习</span>
+                                    <span class="cp-cell cp-forward">
                                         <span class="hl">泛洪</span>
                                         <span class="hl">转发</span>
                                         <span class="hl">过滤</span>
@@ -711,28 +744,25 @@
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row net-layer">
                             <span class="tag">🌐 网络</span>
-                            <span class="desc net-split">
-                                <span class="plane control-plane">
-                                    <span class="plane-tag">控制面</span>
-                                    <span class="plane-body">
+                            <span class="desc cp-table">
+                                <span class="cp-row cp-head">
+                                    <span class="cp-cell cp-control">控制面</span>
+                                    <span class="cp-cell cp-forward">转发面</span>
+                                </span>
+                                <span class="cp-row cp-body">
+                                    <span class="cp-cell cp-control">
                                         <span class="cp-group">
-                                            <span class="cp-label">静态/半静态</span>
                                             <span class="hl">调制格式选择（PAM4/NRZ）</span>
                                             <span class="hl">FEC配置</span>
                                             <span class="hl">功率设置</span>
-                                            <span class="hl">波长分配</span>
+                                            <span class="hl">波长分配（物理参数配置：中心频率/调制格式/功率）</span>
                                         </span>
                                         <span class="cp-group dynamic" title="与IP层控制面联动，动态建立光路">
-                                            <span class="cp-label">动态</span>
                                             <span class="hl">GMPLS（OSPF-TE + RSVP-TE）</span>
                                             <span class="dim">（与IP层控制面联动）</span>
                                         </span>
                                     </span>
-                                </span>
-                                <span class="plane-splitter"></span>
-                                <span class="plane forwarding-plane">
-                                    <span class="plane-tag">转发面</span>
-                                    <span class="plane-body">
+                                    <span class="cp-cell cp-forward">
                                         <span class="hl">中继器</span>
                                         <span class="hl">光放大器</span>
                                         <span class="hl">波长转换器</span>
@@ -749,43 +779,77 @@
                     <div class="layer-divider" id="divider-physical"></div>
                 </div>
 
-                <!-- 介质层 -->
-                <div class="layer layer-tall" id="layer-medium" data-protocol="medium">
+                <!-- 光波层（光纤介质的波分复用层） -->
+                <div class="layer layer-tall" id="layer-wave" data-protocol="wave">
                     <div class="layer-name-bar">
-                        <span class="icon">🧵</span>
-                        <span class="name">介质层</span>
-                        <span class="badge">传输介质</span>
+                        <span class="icon">🌈</span>
+                        <span class="name">光波层</span>
+                        <span class="badge">WDM 波长复用</span>
                     </div>
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row net-layer">
                             <span class="tag">🌐 网络</span>
-                            <span class="desc net-split">
-                                <span class="plane control-plane">
-                                    <span class="plane-tag">控制面</span>
-                                    <span class="plane-body">
-                                        <span class="hl">光缆施工规划</span>
-                                        <span class="hl">ODF配线架管理</span>
-                                    </span>
+                            <span class="desc cp-table">
+                                <span class="cp-row cp-head">
+                                    <span class="cp-cell cp-control">控制面</span>
+                                    <span class="cp-cell cp-forward">转发面</span>
                                 </span>
-                                <span class="plane-splitter"></span>
-                                <span class="plane forwarding-plane">
-                                    <span class="plane-tag">转发面</span>
-                                    <span class="plane-body">
-                                        <span class="hl">光纤熔接</span>
-                                        <span class="hl">机械接续</span>
-                                        <span class="hl">ODF跳纤</span>
-                                        <span class="hl">透明波长交换</span>
+                                <span class="cp-row cp-body">
+                                    <span class="cp-cell cp-control">
+                                        <span class="hl">波长分配计划（通道调度：数据流↔波长映射）</span>
+                                        <span class="hl dyn">GMPLS（OSPF-TE/RSVP-TE）</span>
+                                    </span>
+                                    <span class="cp-cell cp-forward">
+                                        <span class="hl">ROADM波长交换</span>
+                                        <span class="hl">GMPLS动态光路</span>
                                     </span>
                                 </span>
                             </span>
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 链路</span>
-                            <span class="desc"><span class="hl">铜缆</span> <span class="hl">光纤</span> <span class="hl">同轴电缆</span> <span class="dim">（物理介质本身）</span></span>
+                            <span class="desc"><span class="hl">波长寻址（λ₁…λₙ）</span></span>
                         </div>
                     </div>
-                    <div class="layer-divider" id="divider-medium"></div>
+                    <div class="layer-divider" id="divider-wave"></div>
+                </div>
+
+                <!-- 光纤层（物理介质 · 递归终点） -->
+                <div class="layer layer-tall" id="layer-fiber" data-protocol="fiber">
+                    <div class="layer-name-bar">
+                        <span class="icon">🧵</span>
+                        <span class="name">光纤层</span>
+                        <span class="badge">物理介质 · 递归终点</span>
+                    </div>
+                    <div class="layer-body">
+                        <span class="collapsed-hint">— 悬停展开 —</span>
+                        <div class="inner-row net-layer">
+                            <span class="tag">🌐 网络</span>
+                            <span class="desc cp-table">
+                                <span class="cp-row cp-head">
+                                    <span class="cp-cell cp-control">控制面</span>
+                                    <span class="cp-cell cp-forward">转发面</span>
+                                </span>
+                                <span class="cp-row cp-body">
+                                    <span class="cp-cell cp-control">
+                                        <span class="hl">光缆施工规划</span>
+                                        <span class="hl">ODF配线架管理</span>
+                                    </span>
+                                    <span class="cp-cell cp-forward">
+                                        <span class="hl">光纤熔接</span>
+                                        <span class="hl">机械接续</span>
+                                        <span class="hl">ODF跳纤</span>
+                                    </span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="inner-row link-layer">
+                            <span class="tag">📦 链路</span>
+                            <span class="desc"><span class="hl">光纤</span> <span class="dim">（物理介质本身）</span></span>
+                        </div>
+                    </div>
+                    <div class="layer-divider" id="divider-fiber"></div>
                 </div>
 
             </div>
@@ -829,7 +893,7 @@
 <script>
     (function() {
 
-        // 协议索引: 0=数据层(静态), 1=HTTP层, 2=TCP, 3=IP, 4=以太网, 5=编码调制层, 6=介质层
+        // 协议索引: 0=数据层(静态), 1=HTTP层, 2=TCP, 3=IP, 4=以太网, 5=编码调制层, 6=光波层, 7=光纤层
 
         // 每个协议的标尺映射：
         // network_transport: 网络层↔传输层 分界 → 对准当前协议层的上边界 (top)
@@ -868,10 +932,15 @@
                 link_network: { targetIndex: 5, boundary: 'divider', state: 'highlight' },
                 bearing_link: { targetIndex: 5, boundary: 'bottom', state: null }
             },
-            'medium': {
+            'wave': {
                 network_transport: { targetIndex: 6, boundary: 'top', state: null },
                 link_network: { targetIndex: 6, boundary: 'divider', state: 'highlight' },
                 bearing_link: { targetIndex: 6, boundary: 'bottom', state: null }
+            },
+            'fiber': {
+                network_transport: { targetIndex: 7, boundary: 'top', state: null },
+                link_network: { targetIndex: 7, boundary: 'divider', state: 'highlight' },
+                bearing_link: { targetIndex: 7, boundary: 'bottom', state: null }
             }
         };
 
@@ -904,7 +973,8 @@
             ip: document.getElementById('divider-ip'),
             eth: document.getElementById('divider-eth'),
             physical: document.getElementById('divider-physical'),
-            medium: document.getElementById('divider-medium')
+            wave: document.getElementById('divider-wave'),
+            fiber: document.getElementById('divider-fiber')
         };
         const rulerLine = document.getElementById('rulerLine');
         const rulerPanel = document.getElementById('rulerPanel');
