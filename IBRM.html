@@ -12,7 +12,7 @@
         }
 
         body {
-            background: #0d1117;
+            background: #f6f8fa;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
             display: flex;
             flex-direction: column;
@@ -29,34 +29,34 @@
             max-width: 1600px;
             width: 100%;
             margin: 0 auto; /* 水平居中；窄窗口溢出时可从左侧完整滚动 */
-            background: #161b22;
+            background: #ffffff;
             border-radius: 20px;
             padding: 40px 40px 50px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-            border: 1px solid #30363d;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+            border: 1px solid #d0d7de;
         }
 
         h1 {
             text-align: center;
             font-weight: 600;
             font-size: 26px;
-            color: #f0f6fc;
+            color: #1f2328;
             letter-spacing: 0.5px;
             margin-bottom: 35px; /* 主标题与协议栈的间距 */
         }
 
         .subtitle {
             text-align: left; /* 三行文字向左对齐 */
-            color: #8b949e;
+            color: #656d76;
             font-size: 13px; /* 字体改小一号（15px → 13px） */
             margin-top: 28px;
             margin-bottom: 0;
-            border-top: 1px solid #21262d;
+            border-top: 1px solid #d0d7de;
             padding-top: 16px;
         }
 
         .subtitle strong {
-            color: #f0f6fc;
+            color: #1f2328;
         }
 
         /* 项目符号风格：三行列表 */
@@ -76,7 +76,7 @@
             position: absolute;
             left: 0;
             top: 2px;
-            color: #58a6ff;
+            color: #0969da;
             font-size: 12px;
         }
 
@@ -100,12 +100,12 @@
         }
 
         .layer {
-            background: #0d1117;
-            border: 2px solid #30363d;
+            background: #ffffff;
+            border: 2px solid #d0d7de;
             border-radius: 14px;
             transition: all 0.4s ease;
             cursor: default;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
             display: flex;
             flex-direction: row;
             align-items: stretch;
@@ -115,8 +115,8 @@
         }
 
         .layer.active {
-            border-color: #58a6ff88;
-            box-shadow: 0 6px 20px rgba(88, 166, 255, 0.12);
+            border-color: #0969da55;
+            box-shadow: 0 6px 20px rgba(9, 105, 218, 0.12);
             height: 88px;
         }
 
@@ -129,7 +129,7 @@
             min-width: 0;
             gap: 0;
             align-self: stretch;
-            border: 1px solid #30363d;
+            border: 1px solid #d0d7de;
             border-radius: 8px;
             overflow: hidden;
         }
@@ -138,7 +138,7 @@
             min-width: 0;
         }
         .cp-table .cp-row + .cp-row {
-            border-top: 1px solid #30363d;
+            border-top: 1px solid #d0d7de;
         }
         .cp-table .cp-cell {
             flex: 1 1 0;
@@ -151,7 +151,7 @@
             padding: 2px 10px;
         }
         .cp-table .cp-cell + .cp-cell {
-            border-left: 1px solid #30363d;
+            border-left: 1px solid #d0d7de;
         }
         /* 表头：控制面 / 转发面 */
         .cp-table .cp-head .cp-cell {
@@ -159,10 +159,10 @@
             flex-wrap: nowrap;
             font-size: 11px;
             font-weight: 600;
-            background: #161b22;
+            background: #f6f8fa;
         }
-        .cp-table .cp-head .cp-control { color: #bc8cff; }
-        .cp-table .cp-head .cp-forward { color: #56d364; }
+        .cp-table .cp-head .cp-control { color: #8250df; }
+        .cp-table .cp-head .cp-forward { color: #1a7f37; }
         /* 内容行：芯片样式 */
         .cp-table .cp-body .cp-cell .hl {
             font-size: 10px;
@@ -173,23 +173,23 @@
             font-size: 10px;
         }
         .cp-table .cp-body .cp-control .hl {
-            color: #d2a8ff;
-            background: #221436;
-            border: 1px solid #3b2a63;
+            color: #8250df;
+            background: #f3eafc;
+            border: 1px solid #d8c4ef;
         }
-        .cp-table .cp-body .cp-control .dim { color: #8b7db0; }
+        .cp-table .cp-body .cp-control .dim { color: #8b62c9; }
         /* 控制面：静态（紫）与动态（蓝）协议以色彩区分 */
         .cp-table .cp-body .cp-control .hl.dyn {
-            color: #79c0ff;
-            background: #112136;
-            border-color: #1f3a5f;
+            color: #0969da;
+            background: #eaf3ff;
+            border-color: #bfd8f5;
         }
         .cp-table .cp-body .cp-forward .hl {
-            color: #56d364;
-            background: #0f2a1a;
-            border: 1px solid #1f4d2f;
+            color: #1a7f37;
+            background: #e8f6ec;
+            border: 1px solid #bfe0c9;
         }
-        .cp-table .cp-body .cp-forward .dim { color: #6eae7a; }
+        .cp-table .cp-body .cp-forward .dim { color: #2da44e; }
 
         /* 网络层展开高度由内容自适应（2×2 表格），随窗口宽度自动伸缩 */
         .layer.layer-tall.active {
@@ -220,12 +220,12 @@
         }
         /* 动态控制面（GMPLS）：蓝色强调，与 IP 层控制面联动 */
         .cp-table .cp-body .cp-control .cp-group.dynamic .hl {
-            color: #79c0ff;
-            background: #112136;
-            border-color: #1f3a5f;
+            color: #0969da;
+            background: #eaf3ff;
+            border-color: #bfd8f5;
         }
         .cp-table .cp-body .cp-control .cp-group.dynamic .dim {
-            color: #8b9bb8;
+            color: #6e88b0;
         }
 
         /* TCP 网络层：转发面 本机/网络 两种模式 */
@@ -244,56 +244,56 @@
         .cp-table .cp-body .cp-cell .cp-mode .cp-mode-tag {
             font-size: 10px;
             font-weight: 600;
-            color: #8b949e;           /* 中性标签色，随单元格覆写 */
+            color: #656d76;           /* 中性标签色，随单元格覆写 */
             white-space: nowrap;
         }
         /* 模式标签随单元格配色：控制面偏紫，转发面偏绿 */
-        .cp-table .cp-body .cp-cell.cp-control .cp-mode-tag { color: #bc8cff; }
-        .cp-table .cp-body .cp-cell.cp-forward .cp-mode-tag { color: #6eae7a; }
+        .cp-table .cp-body .cp-cell.cp-control .cp-mode-tag { color: #8250df; }
+        .cp-table .cp-body .cp-cell.cp-forward .cp-mode-tag { color: #2da44e; }
 
         .layer.inactive {
             opacity: 0.25;
             filter: grayscale(0.7);
-            border-color: #1c2128;
+            border-color: #afb8c1;
         }
 
         .layer:hover {
-            border-color: #58a6ff55;
+            border-color: #0969da44;
         }
 
         .layer-physical {
-            border-color: #3d3d4a;
+            border-color: #c1c9d1;
         }
         .layer-physical .layer-name-bar {
-            border-right-color: #2d2d3a;
+            border-right-color: #d0d7de;
         }
 
         /* 静态层（数据层）：扁平、不可展开，用虚线边框区分 */
         .layer-static {
             border-style: dashed;
-            border-color: #3d3d4a;
+            border-color: #c1c9d1;
         }
         .layer-static .layer-name-bar {
-            border-right-color: #2d2d3a;
+            border-right-color: #d0d7de;
         }
 
         .layer-name-bar {
             flex: 0 0 var(--namebar-w, 120px);
             min-width: 0;
-            background: #0d1117;
+            background: #ffffff;
             display: flex;
             align-items: center;
             justify-content: flex-start;
             gap: 6px;
             padding: 0 10px;
-            border-right: 1px solid #21262d;
+            border-right: 1px solid #eaeef2;
             transition: background 0.3s;
             flex-shrink: 0;
             z-index: 2;
         }
 
         .layer.active .layer-name-bar {
-            background: #161b22;
+            background: #f6f8fa;
         }
 
         .layer-name-bar .icon {
@@ -303,17 +303,17 @@
         .layer-name-bar .name {
             font-size: 14px;
             font-weight: 600;
-            color: #f0f6fc;
+            color: #1f2328;
             white-space: nowrap;
         }
 
         .layer-name-bar .badge {
             font-size: 9px;
-            color: #8b949e;
-            background: #21262d;
+            color: #656d76;
+            background: #eaeef2;
             padding: 1px 8px;
             border-radius: 10px;
-            border: 1px solid #30363d;
+            border: 1px solid #d0d7de;
             white-space: nowrap;
             display: none;
         }
@@ -341,7 +341,7 @@
         }
 
         .layer-body .collapsed-hint {
-            color: #484f58;
+            color: #8c959f;
             font-size: 13px;
             text-align: center;
             letter-spacing: 0.5px;
@@ -363,8 +363,8 @@
             gap: 10px;
             padding: 4px 12px;
             border-radius: 6px;
-            background: #0d1117;
-            border-left: 3px solid #30363d;
+            background: #f6f8fa;
+            border-left: 3px solid #d0d7de;
             transition: border-color 0.3s;
             font-size: 13px;
             flex-shrink: 0;
@@ -378,60 +378,60 @@
         }
 
         .inner-row.net-layer {
-            border-left-color: #58a6ff;
+            border-left-color: #0969da;
         }
         .inner-row.net-layer .tag {
-            color: #58a6ff;
+            color: #0969da;
         }
 
         .inner-row.link-layer {
-            border-left-color: #3fb950;
+            border-left-color: #1a7f37;
         }
         .inner-row.link-layer .tag {
-            color: #3fb950;
+            color: #1a7f37;
         }
 
         .inner-row.null-layer {
-            border-left-color: #3d3d4a;
+            border-left-color: #afb8c1;
             opacity: 0.5;
         }
         .inner-row.null-layer .tag {
-            color: #6e7681;
+            color: #57606a;
         }
 
         .inner-row .tag {
             font-size: 11px;
             font-weight: 500;
-            color: #8b949e;
+            color: #656d76;
             min-width: 44px;
             flex-shrink: 0;
         }
 
         .inner-row .desc {
             font-size: 13px;
-            color: #f0f6fc;
+            color: #1f2328;
             display: flex;
             flex-wrap: wrap;
             gap: 4px 8px;
         }
 
         .inner-row .desc .hl {
-            color: #58a6ff;
-            background: #1c2333;
+            color: #0969da;
+            background: #eaf3ff;
             padding: 0 10px;
             border-radius: 10px;
-            border: 1px solid #2d3a4f;
+            border: 1px solid #bfd8f5;
             font-size: 12px;
         }
 
         .inner-row .desc .dim {
-            color: #8b949e;
+            color: #656d76;
             font-size: 12px;
         }
 
         .inner-row .desc .null-box {
-            border: 1.5px dashed #484f58;
-            color: #6e7681;
+            border: 1.5px dashed #8c959f;
+            color: #57606a;
             padding: 0 12px;
             border-radius: 12px;
             font-size: 12px;
@@ -444,7 +444,7 @@
             left: var(--namebar-w, 120px);
             right: 0;
             height: 1px;
-            background: #58a6ff44;
+            background: #0969da22;
             z-index: 3;
             pointer-events: none;
             transition: all 0.4s ease;
@@ -468,21 +468,21 @@
         }
 
         .right-panel.active {
-            border-color: #58a6ff66;
+            border-color: #0969da44;
         }
 
         /* 无悬停时：标尺以很暗的色调显示 */
         .right-panel.dimmed .ruler-line {
-            background: #21262d;
+            background: #eaeef2;
         }
         .right-panel.dimmed .ruler-cross .hline {
-            border-top-color: #21262d;
+            border-top-color: #eaeef2;
         }
         .right-panel.dimmed .ruler-cross .vmark {
-            background: #21262d;
+            background: #eaeef2;
         }
         .right-panel.dimmed .ruler-label {
-            color: #484f58;
+            color: #8c959f;
         }
 
         .ruler-body {
@@ -503,7 +503,7 @@
             top: 0px;
             bottom: 0px;
             width: 1.5px;
-            background: #8b949e;
+            background: #afb8c1;
             transform: translateX(-50%);
             transition: background 0.4s;
             border-radius: 2px;
@@ -529,7 +529,7 @@
             left: 5%;
             right: 5%;
             height: 0;
-            border-top: 1px dashed #8b949e;
+            border-top: 1px dashed #afb8c1;
             transition: border-color 0.4s;
         }
 
@@ -539,7 +539,7 @@
             left: 25%;
             width: 1.5px;
             height: 12px;
-            background: #8b949e;
+            background: #afb8c1;
             transform: translateX(-50%) translateY(-50%);
             top: 50%;
             transition: background 0.4s;
@@ -551,7 +551,7 @@
             position: absolute;
             left: 32%;
             font-size: 10px;
-            color: #ffffff;
+            color: #1f2328;
             font-weight: 400;
             letter-spacing: 0.3px;
             transition: top 0.4s ease, color 0.4s ease;
@@ -562,19 +562,19 @@
 
         .hint {
             text-align: center;
-            color: #8b949e;
+            color: #656d76;
             font-size: 13px;
             margin-top: 28px;
             padding-top: 16px;
-            border-top: 1px solid #21262d;
+            border-top: 1px solid #d0d7de;
         }
 
         .hint span {
             display: inline-block;
-            background: #21262d;
+            background: #eaeef2;
             padding: 4px 16px;
             border-radius: 20px;
-            color: #c9d1d9;
+            color: #57606a;
         }
     </style>
 </head>
