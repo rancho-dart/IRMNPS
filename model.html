@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>递归对等模型 - 交互式可视化</title>
+    <title>同构双向递归模型 - 交互式可视化</title>
     <style>
         * {
             margin: 0;
@@ -431,14 +431,13 @@
         .right-panel {
             flex: 0 0 170px;
             min-width: 150px;
-            background: #0d1117;
-            border-radius: 16px;
-            border: 2px solid #30363d;
+            background: transparent; /* 隐藏框内背景色 */
             display: flex;
             flex-direction: column;
             transition: border-color 0.3s;
             position: relative;
             overflow: visible;
+            border: none; /* 隐藏外圈圆角边框 */
         }
 
         .right-panel.active {
@@ -555,7 +554,7 @@
 <body>
 
 <div class="container">
-    <h1>🧩 递归对等模型</h1>
+    <h1>🧩 同构双向递归模型</h1>
     <div class="subtitle">
         每个中间层协议自身拥有 <strong>四层结构</strong> <p>每个协议内部可拆分为数据链路层（实现直接相邻的节点间通信）和网络层（在不直接相邻的节点间转发）。<p>所有上层协议统一作为传输层，所有下层协议统一视为承载层。<p>最下层没有承载层，最上层的数据层不再有内部层次，作为两个递归方向的终止条件。
     </div>
@@ -604,7 +603,7 @@
                 <div class="layer layer-tall" id="layer-tcp" data-protocol="tcp">
                     <div class="layer-name-bar">
                         <span class="icon">🔗</span>
-                        <span class="name">TCP</span>
+                        <span class="name">TCP层</span>
                         <span class="badge">传输控制</span>
                     </div>
                     <div class="layer-body">
@@ -652,7 +651,7 @@
                 <div class="layer layer-tall" id="layer-ip" data-protocol="ip">
                     <div class="layer-name-bar">
                         <span class="icon">🌍</span>
-                        <span class="name">IP</span>
+                        <span class="name">IP层</span>
                         <span class="badge">互联网协议</span>
                     </div>
                     <div class="layer-body">
@@ -695,7 +694,7 @@
                 <div class="layer layer-tall" id="layer-eth" data-protocol="eth">
                     <div class="layer-name-bar">
                         <span class="icon">🔌</span>
-                        <span class="name">以太网</span>
+                        <span class="name">以太网层</span>
                         <span class="badge">IEEE 802.3</span>
                     </div>
                     <div class="layer-body">
@@ -755,7 +754,7 @@
                                             <span class="hl">调制格式选择（PAM4/NRZ）</span>
                                             <span class="hl">FEC配置</span>
                                             <span class="hl">功率设置</span>
-                                            <span class="hl">波长分配（物理参数配置：中心频率/调制格式/功率）</span>
+                                            <span class="hl">波长调制参数配置（中心频率/调制格式/FEC/功率）</span>
                                         </span>
                                         <span class="cp-group dynamic" title="与IP层控制面联动，动态建立光路">
                                             <span class="hl">GMPLS（OSPF-TE + RSVP-TE）</span>
@@ -797,7 +796,7 @@
                                 </span>
                                 <span class="cp-row cp-body">
                                     <span class="cp-cell cp-control">
-                                        <span class="hl">波长分配计划（通道调度：数据流↔波长映射）</span>
+                                        <span class="hl">波长通道选择（数据流↔波长映射）</span>
                                         <span class="hl dyn">GMPLS（OSPF-TE/RSVP-TE）</span>
                                     </span>
                                     <span class="cp-cell cp-forward">
