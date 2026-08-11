@@ -42,20 +42,42 @@
             font-size: 26px;
             color: #f0f6fc;
             letter-spacing: 0.5px;
-            margin-bottom: 6px;
+            margin-bottom: 35px; /* 主标题与协议栈的间距 */
         }
 
         .subtitle {
-            text-align: center;
+            text-align: left; /* 三行文字向左对齐 */
             color: #8b949e;
-            font-size: 15px;
-            margin-bottom: 35px;
-            border-bottom: 1px solid #21262d;
-            padding-bottom: 18px;
+            font-size: 13px; /* 字体改小一号（15px → 13px） */
+            margin-top: 28px;
+            margin-bottom: 0;
+            border-top: 1px solid #21262d;
+            padding-top: 16px;
         }
 
         .subtitle strong {
             color: #f0f6fc;
+        }
+
+        /* 项目符号风格：三行列表 */
+        .subtitle ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .subtitle li {
+            position: relative;
+            padding-left: 18px;
+            line-height: 1.6;
+            margin: 5px 0;
+        }
+        .subtitle li::before {
+            content: "▪"; /* 项目符号 */
+            position: absolute;
+            left: 0;
+            top: 2px;
+            color: #58a6ff;
+            font-size: 12px;
         }
 
         .main-layout {
@@ -179,6 +201,11 @@
         .layer-tall .inner-row.net-layer {
             height: auto;
             min-height: 48px;
+            padding: 4px 12px;
+        }
+        .layer-tall .inner-row.link-layer {
+            height: auto;
+            min-height: 32px;
             padding: 4px 12px;
         }
 
@@ -555,9 +582,6 @@
 
 <div class="container">
     <h1>🧩 同构双向递归模型</h1>
-    <div class="subtitle">
-        每个中间层协议自身拥有 <strong>四层结构</strong> <p>每个协议内部可拆分为数据链路层（实现直接相邻的节点间通信）和网络层（在不直接相邻的节点间转发）。<p>所有上层协议统一作为传输层，所有下层协议统一视为承载层。<p>最下层没有承载层，最上层的数据层不再有内部层次，作为两个递归方向的终止条件。
-    </div>
 
     <div class="main-layout">
 
@@ -716,8 +740,8 @@
                                         <span class="dim">（对内信令）</span>
                                     </span>
                                     <span class="cp-cell cp-forward">
+                                        <span class="hl">根据MAC地址查表转发</span>
                                         <span class="hl">泛洪</span>
-                                        <span class="hl">转发</span>
                                         <span class="hl">过滤</span>
                                         <span class="dim">（对外服务）</span>
                                     </span>
@@ -726,7 +750,7 @@
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 链路</span>
-                            <span class="desc"><span class="hl">CRC校验</span> <span class="hl">碰撞检测</span> <span class="hl">MAC寻址</span></span>
+                            <span class="desc"><span class="hl">CRC校验</span> <span class="hl">碰撞检测</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-eth"></div>
@@ -750,20 +774,12 @@
                                 </span>
                                 <span class="cp-row cp-body">
                                     <span class="cp-cell cp-control">
-                                        <span class="cp-group">
-                                            <span class="hl">调制格式选择（PAM4/NRZ）</span>
-                                            <span class="hl">FEC配置</span>
-                                            <span class="hl">功率设置</span>
-                                            <span class="hl">波长调制参数配置（中心频率/调制格式/FEC/功率）</span>
-                                        </span>
-                                        <span class="cp-group dynamic" title="与IP层控制面联动，动态建立光路">
-                                            <span class="hl">GMPLS（OSPF-TE + RSVP-TE）</span>
-                                            <span class="dim">（与IP层控制面联动）</span>
-                                        </span>
+                                        <span class="null-box">空</span>
+                                        <span class="dim">（不涉及转发路径决策）</span>
                                     </span>
                                     <span class="cp-cell cp-forward">
                                         <span class="hl">中继器</span>
-                                        <span class="hl">光放大器</span>
+                                        <span class="hl">带整形的光放大器（如SOA 3R再生）</span>
                                         <span class="hl">波长转换器</span>
                                         <span class="hl">带O-E-O转换的ROADM/OTN</span>
                                     </span>
@@ -772,7 +788,7 @@
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 链路</span>
-                            <span class="desc"><span class="hl">数字 ↔ 物理信号映射</span> <span class="dim">（NRZ/PAM4/QAM）</span></span>
+                            <span class="desc"><span class="hl">数字 ↔ 物理信号映射</span> <span class="hl">调制格式选择（PAM4/NRZ）</span> <span class="hl">FEC配置</span> <span class="hl">功率设置</span> <span class="hl">波长调制参数配置（中心频率/调制格式/FEC/功率）</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-physical"></div>
@@ -801,6 +817,7 @@
                                     </span>
                                     <span class="cp-cell cp-forward">
                                         <span class="hl">ROADM波长交换</span>
+                                        <span class="hl">光放大器（不带整形，如EDFA）</span>
                                         <span class="hl">GMPLS动态光路</span>
                                     </span>
                                 </span>
@@ -882,6 +899,14 @@
             </div>
         </div>
 
+    </div>
+
+    <div class="subtitle">
+        <ul>
+            <li><strong>同构</strong> —— 每一个中间层协议都拥有相同的四层结构（承载层、链路层、网络层、传输层），结构完全一致；</li>
+            <li><strong>双向递归</strong> —— 向下递归形成承载链（每一层以下层为承载链路），向上递归形成传输链（每一层以上层为载荷）；</li>
+            <li><strong>边界条件</strong> —— 向上终止于数据层（不再封装），向下终止于介质层（不再承载）。</li>
+        </ul>
     </div>
 
     <div class="hint">
