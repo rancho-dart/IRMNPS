@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>同构双向递归模型 - 交互式可视化</title>
+    <title>网络协议栈的同构递归模型 - 交互式可视化</title>
     <style>
         * {
             margin: 0;
@@ -246,7 +246,7 @@
             color: #6e88b0;
         }
 
-        /* TCP 网络层：转发面 本机/网络 两种模式 */
+        /* TCP 网络层：转发面 网络NAT/SSH端口转发 两种模式（跨主机转发） */
         .cp-table .cp-body .cp-cell .cp-mode {
             display: flex;
             flex-direction: row;      /* 标签与内容同行，不换行 */
@@ -455,7 +455,8 @@
             font-size: 12px;
         }
 
-        /* ---------- 左侧展开时的分隔线 ---------- */
+        /* ---------- 左侧展开时的分隔线 ----------
+           已移除：网络层与链路层之间的分隔线不再显示 */
         .layer-divider {
             display: none;
             position: absolute;
@@ -466,10 +467,6 @@
             z-index: 3;
             pointer-events: none;
             transition: all 0.4s ease;
-        }
-
-        .layer.active .layer-divider {
-            display: block;
         }
 
         /* ---------- 右侧：标尺（无标题栏） ---------- */
@@ -599,7 +596,7 @@
 <body>
 
 <div class="container">
-    <h1>🧩 同构双向递归模型</h1>
+    <h1>🧩 网络协议栈的同构递归模型</h1>
 
     <div class="main-layout">
 
@@ -625,7 +622,7 @@
                     <div class="layer-name-bar">
                         <span class="icon">📦</span>
                         <span class="name">HTTP层</span>
-                        <span class="badge">超文本传输</span>
+                        <span class="badge">超文本传输安全</span>
                     </div>
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
@@ -663,6 +660,46 @@
                     <div class="layer-divider" id="divider-app"></div>
                 </div>
 
+                <!-- TLS层 -->
+                <div class="layer layer-tall" id="layer-tls" data-protocol="tls">
+                    <div class="layer-name-bar">
+                        <span class="icon">🔐</span>
+                        <span class="name">TLS层</span>
+                        <span class="badge">传输层安全</span>
+                    </div>
+                    <div class="layer-body">
+                        <span class="collapsed-hint">— 悬停展开 —</span>
+                        <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
+                            <span class="tag" style="color:#9a6700;">📡 复用</span>
+                            <span class="desc"><span class="null-box">空</span></span>
+                        </div>
+                        <div class="inner-row net-layer">
+                            <span class="tag">🌐 网络</span>
+                            <span class="desc cp-table">
+                                <span class="cp-row cp-head">
+                                    <span class="cp-cell cp-control">控制面</span>
+                                    <span class="cp-cell cp-forward">转发面</span>
+                                </span>
+                                <span class="cp-row cp-body">
+                                    <span class="cp-cell cp-control">
+                                        <span class="null-box">空</span>
+                                        <span class="dim">（TLS设计目标禁止被转发）</span>
+                                    </span>
+                                    <span class="cp-cell cp-forward">
+                                        <span class="null-box">空</span>
+                                        <span class="dim">（TLS设计目标禁止被转发；MITM攻击中攻击者充当外部转发器，属违反设计目标的攻击行为）</span>
+                                    </span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="inner-row link-layer">
+                            <span class="tag">📦 链路</span>
+                            <span class="desc"><span class="hl">加密</span> <span class="hl">身份认证</span> <span class="hl">完整性校验</span></span>
+                        </div>
+                    </div>
+                    <div class="layer-divider" id="divider-tls"></div>
+                </div>
+
                 <!-- TCP -->
                 <div class="layer layer-tall" id="layer-tcp" data-protocol="tcp">
                     <div class="layer-name-bar">
@@ -686,22 +723,22 @@
                                 <span class="cp-row cp-body">
                                     <span class="cp-cell cp-control">
                                         <span class="cp-mode">
-                                            <span class="cp-mode-tag">本机模式</span>
-                                            <span class="hl">端口绑定管理（bind/listen/accept）</span>
+                                            <span class="cp-mode-tag">网络模式（NAT）</span>
+                                            <span class="hl">NAT映射规则管理</span>
                                         </span>
                                         <span class="cp-mode">
-                                            <span class="cp-mode-tag">网络模式（NAT）</span>
-                                            <span class="hl">NAT映射规则管理（外部端口↔内部主机+端口）</span>
+                                            <span class="cp-mode-tag">SSH端口转发</span>
+                                            <span class="hl">SSH转发规则配置（-L / -R / -D）</span>
                                         </span>
                                     </span>
                                     <span class="cp-cell cp-forward">
                                         <span class="cp-mode">
-                                            <span class="cp-mode-tag">本机模式</span>
-                                            <span class="hl">端口查表→Socket FD</span>
-                                        </span>
-                                        <span class="cp-mode">
                                             <span class="cp-mode-tag">网络模式（NAT）</span>
                                             <span class="hl">查NAT映射表→内部主机</span>
+                                        </span>
+                                        <span class="cp-mode">
+                                            <span class="cp-mode-tag">SSH端口转发</span>
+                                            <span class="hl">查SSH转发规则→远端主机</span>
                                         </span>
                                     </span>
                                 </span>
@@ -756,7 +793,7 @@
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 链路</span>
-                            <span class="desc"><span class="hl">分片重组</span> <span class="hl">头部校验</span> <span class="hl">生存时间管理</span></span>
+                            <span class="desc"><span class="hl">分片重组</span> <span class="hl">头部校验</span> <span class="hl">生存时间管理</span> <span class="hl">ARP</span> <span class="dim">（在以太网等广播介质中拣选直达节点；点到点链路如 PPP 无需 ARP）</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-ip"></div>
@@ -773,7 +810,7 @@
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
-                            <span class="desc"><span class="hl">Type字段复用</span> <span class="dim">（IPv4 / ARP / IPv6）</span></span>
+                            <span class="desc"><span class="hl">Type字段复用（IPv4 / ARP / IPv6）</span> <span class="dim"></span> <span class="hl">VLAN Tag复用</span> <span class="dim"></span></span>
                         </div>
                         <div class="inner-row net-layer">
                             <span class="tag">🌐 网络</span>
@@ -844,7 +881,7 @@
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 链路</span>
-                            <span class="desc"><span class="hl">数字 ↔ 物理信号映射（NRZ/PAM4/QAM）</span> <span class="hl">调制格式选择（PAM4/NRZ）</span> <span class="hl">FEC配置</span> <span class="hl">功率设置</span> <span class="hl">波长调制参数配置（中心频率/调制格式/FEC/功率）</span></span>
+                            <span class="desc"><span class="hl">数字 ↔ 物理信号映射（NRZ/PAM4/QAM）</span> <span class="hl">波长调制参数配置（中心频率/调制格式/FEC/功率）</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-physical"></div>
@@ -960,10 +997,10 @@
                 </div>
 
                 <!-- 5个文字标签 -->
-                <span class="ruler-label" id="label-transport">传输层</span>
+                <span class="ruler-label" id="label-transport">载荷层</span>
                 <span class="ruler-label" id="label-mux">复用层</span>
                 <span class="ruler-label" id="label-network">网络层</span>
-                <span class="ruler-label" id="label-link">数据链路层</span>
+                <span class="ruler-label" id="label-link">链路层</span>
                 <span class="ruler-label" id="label-bearing">承载层</span>
             </div>
         </div>
@@ -972,9 +1009,9 @@
 
     <div class="subtitle">
         <ul>
-            <li><strong>同构</strong> —— 每一个中间层协议都拥有相同的四层结构（承载层、链路层、网络层、传输层），结构完全一致；</li>
+            <li><strong>协议同构</strong> —— 每一个中间层协议都拥有相同的五层结构（承载层、链路层、网络层、复用层、载荷层），结构完全一致；</li>
             <li><strong>双向递归</strong> —— 向下递归形成承载链（每一层以下层为承载链路），向上递归形成传输链（每一层以上层为载荷）；</li>
-            <li><strong>边界条件</strong> —— 向上终止于数据层（不再封装），向下终止于介质层（不再承载）。</li>
+            <li><strong>边界异构</strong> —— 向上终止于数据层（不再封装），向下终止于介质层（不再承载）。</li>
         </ul>
     </div>
 
@@ -986,13 +1023,13 @@
 <script>
     (function() {
 
-        // 协议索引: 0=数据层(静态), 1=HTTP层, 2=TCP, 3=IP, 4=以太网, 5=编码调制层, 6=光波层, 7=光纤层
+        // 协议索引: 0=数据层(静态), 1=HTTP层, 2=TLS层, 3=TCP, 4=IP, 5=以太网, 6=编码调制层, 7=光波层, 8=光纤层
 
         // 每个协议的标尺映射：
-        // transport_mux: 传输层↔复用层 分界 → 对准当前协议层的上边界 (top)
+        // transport_mux: 载荷层↔复用层 分界 → 对准当前协议层的上边界 (top)
         // mux_network: 复用层↔网络层 分界 → 对准当前协议层上部分隔线 (dividerMux)
-        // link_network: 网络层↔数据链路层 分界 → 对准当前协议层下部分隔线 (dividerNet)
-        // bearing_link: 数据链路层↔承载层 分界 → 对准当前协议层的下边界 (bottom)
+        // link_network: 网络层↔链路层 分界 → 对准当前协议层下部分隔线 (dividerNet)
+        // bearing_link: 链路层↔承载层 分界 → 对准当前协议层的下边界 (bottom)
         const RULER_MAPPINGS = {
             // 数据层：扁平、无内部结构，将全部下层视为承载层
             // → 四条分界都对准数据层的下边界（承载层起始处）
@@ -1008,41 +1045,47 @@
                 link_network: { targetIndex: 1, boundary: 'dividerNet', state: 'highlight' },
                 bearing_link: { targetIndex: 1, boundary: 'bottom', state: 'highlight' }
             },
-            'tcp': {
+            'tls': {
                 transport_mux: { targetIndex: 2, boundary: 'top', state: null },
-                mux_network: { targetIndex: 2, boundary: 'dividerMux', state: 'glow' },
-                link_network: { targetIndex: 2, boundary: 'dividerNet', state: 'glow' },
+                mux_network: { targetIndex: 2, boundary: 'dividerMux', state: null },
+                link_network: { targetIndex: 2, boundary: 'dividerNet', state: 'highlight' },
                 bearing_link: { targetIndex: 2, boundary: 'bottom', state: 'highlight' }
             },
-            'ip': {
-                transport_mux: { targetIndex: 3, boundary: 'top', state: 'glow' },
+            'tcp': {
+                transport_mux: { targetIndex: 3, boundary: 'top', state: null },
                 mux_network: { targetIndex: 3, boundary: 'dividerMux', state: 'glow' },
                 link_network: { targetIndex: 3, boundary: 'dividerNet', state: 'glow' },
                 bearing_link: { targetIndex: 3, boundary: 'bottom', state: 'highlight' }
             },
-            'eth': {
+            'ip': {
                 transport_mux: { targetIndex: 4, boundary: 'top', state: 'glow' },
                 mux_network: { targetIndex: 4, boundary: 'dividerMux', state: 'glow' },
                 link_network: { targetIndex: 4, boundary: 'dividerNet', state: 'glow' },
                 bearing_link: { targetIndex: 4, boundary: 'bottom', state: 'highlight' }
             },
-            'physical': {
-                transport_mux: { targetIndex: 5, boundary: 'top', state: null },
-                mux_network: { targetIndex: 5, boundary: 'dividerMux', state: 'highlight' },
-                link_network: { targetIndex: 5, boundary: 'dividerNet', state: 'highlight' },
-                bearing_link: { targetIndex: 5, boundary: 'bottom', state: null }
+            'eth': {
+                transport_mux: { targetIndex: 5, boundary: 'top', state: 'glow' },
+                mux_network: { targetIndex: 5, boundary: 'dividerMux', state: 'glow' },
+                link_network: { targetIndex: 5, boundary: 'dividerNet', state: 'glow' },
+                bearing_link: { targetIndex: 5, boundary: 'bottom', state: 'highlight' }
             },
-            'wave': {
+            'physical': {
                 transport_mux: { targetIndex: 6, boundary: 'top', state: null },
                 mux_network: { targetIndex: 6, boundary: 'dividerMux', state: 'highlight' },
                 link_network: { targetIndex: 6, boundary: 'dividerNet', state: 'highlight' },
                 bearing_link: { targetIndex: 6, boundary: 'bottom', state: null }
             },
-            'fiber': {
+            'wave': {
                 transport_mux: { targetIndex: 7, boundary: 'top', state: null },
                 mux_network: { targetIndex: 7, boundary: 'dividerMux', state: 'highlight' },
                 link_network: { targetIndex: 7, boundary: 'dividerNet', state: 'highlight' },
                 bearing_link: { targetIndex: 7, boundary: 'bottom', state: null }
+            },
+            'fiber': {
+                transport_mux: { targetIndex: 8, boundary: 'top', state: null },
+                mux_network: { targetIndex: 8, boundary: 'dividerMux', state: 'highlight' },
+                link_network: { targetIndex: 8, boundary: 'dividerNet', state: 'highlight' },
+                bearing_link: { targetIndex: 8, boundary: 'bottom', state: null }
             }
         };
 
@@ -1075,6 +1118,7 @@
         const dividers = {
             data: document.getElementById('divider-data'),
             app: document.getElementById('divider-app'),
+            tls: document.getElementById('divider-tls'),
             tcp: document.getElementById('divider-tcp'),
             ip: document.getElementById('divider-ip'),
             eth: document.getElementById('divider-eth'),
@@ -1192,13 +1236,13 @@
 
         function updateRuler(protocolKey) {
             const mapping = RULER_MAPPINGS[protocolKey];
-            // 最上层（应用层）之上没有传输层；最下层（介质层）之下没有承载层。
-            // 悬停这两层时，标尺中隐藏对应的"传输层"/"承载层"标签。
+            // 最上层（应用层）之上没有载荷层；最下层（介质层）之下没有承载层。
+            // 悬停这两层时，标尺中隐藏对应的"载荷层"/"承载层"标签。
             const firstLayer = layerEls[0];
             const lastLayer = layerEls[layerEls.length - 1];
             const isTopLayer = !!(mapping && protocolKey === firstLayer.dataset.protocol);
             const isBottomLayer = !!(mapping && protocolKey === lastLayer.dataset.protocol);
-            // 数据层：扁平、无内部结构，只保留承载层
+            // 数据层：扁平、无内部结构，只保留载荷层（数据层即载荷）与承载层
             const isFlatLayer = protocolKey === 'data';
             if (!mapping) {
                 const crossNames = ['transport_mux', 'mux_network', 'link_network', 'bearing_link'];
@@ -1272,7 +1316,7 @@
                 hline.className = 'hline';
                 vmark.className = 'vmark';
 
-                // 传输层不存在时（最上层）隐藏其上方分界线 transport_mux；
+                // 载荷层不存在时（最上层）隐藏其上方分界线 transport_mux；
                 // 复用层不存在时（如 HTTP 无复用行）隐藏 mux_network；
                 // 承载层不存在时（最下层）隐藏其上方分界线 bearing_link
                 const hideCross = (name === 'transport_mux' && isTopLayer) ||
@@ -1321,13 +1365,13 @@
                 const clampedPos = Math.max(0.02, Math.min(0.98, pos));
                 label.style.top = (clampedPos * 100) + '%';
                 label.className = 'ruler-label';
-                // 数据层（扁平）：无传输/复用/网络/链路子层，只保留承载层
+                // 数据层（扁平）：无复用/网络/链路子层，保留载荷层（数据层即载荷）与承载层
                 if (isFlatLayer) {
-                    label.style.display = (key === 'bearing') ? '' : 'none';
+                    label.style.display = (key === 'bearing' || key === 'transport') ? '' : 'none';
                 } else {
                     // 先恢复所有标签可见（避免残留数据层隐藏的状态）
                     label.style.display = '';
-                    // 最上层之上没有传输层、复用层缺失（如 HTTP）、最下层之下没有承载层 → 隐藏对应标签
+                    // 最上层之上没有载荷层、复用层缺失（如 HTTP）、最下层之下没有承载层 → 隐藏对应标签
                     if (key === 'transport') {
                         label.style.display = isTopLayer ? 'none' : '';
                     } else if (key === 'mux') {
@@ -1346,7 +1390,7 @@
 
         // 更新左侧分隔线
         // 分隔线相对层顶部（内边距盒）的固定偏移（px）：
-        // = "网络层"与"数据链路层"两行间隙中心 − 层顶部。
+        // = "网络层"与"链路层"两行间隙中心 − 层顶部。
         // 所有可展开层内部结构一致，因此该偏移是常量，与层在栈中的位置无关，
         // 只需在初始化/缩放时测量一次。直接使用常量可避免过渡中测量导致的
         // "先升后降"的中间动画。
@@ -1415,28 +1459,12 @@
         }
 
         function updateDividers(protocolKey) {
+            // 网络层与链路层之间的分隔线已移除：
+            // 左侧不再显示任何 layer-divider（右侧标尺逻辑保持不变）
             Object.keys(dividers).forEach(key => {
                 const div = dividers[key];
                 div.style.display = 'none';
             });
-
-            if (!protocolKey || !RULER_MAPPINGS[protocolKey]) return;
-
-            const activeLayer = document.querySelector('.layer.active');
-            if (!activeLayer) return;
-
-            const protocol = activeLayer.dataset.protocol;
-            if (protocol !== protocolKey) return;
-
-            const divider = dividers[protocolKey];
-            if (!divider) return;
-
-            divider.style.display = 'block';
-            // 直接使用固定偏移（最终位置），不测量过渡中的几何
-            // 编码调制层分隔线位置与普通层不同，使用按层测量的偏移
-            const off = DIVIDER_OFFSETS[protocolKey];
-            divider.style.top = ((off && off.dividerNet) || DIVIDER_OFFSET) + 'px';
-            divider.style.transform = 'translateY(-50%)';
         }
 
         // 使用 requestAnimationFrame 确保布局稳定
