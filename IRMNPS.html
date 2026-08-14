@@ -278,7 +278,7 @@
             min-width: 52px;
             flex-shrink: 0;
         }
-        /* 下接口层：与上接口同族（品红），位于层底部，作为向下交付的出口；
+        /* 下行接口层：与上行接口同族（品红），位于层底部，作为向下交付的出口；
            虚线左边框提示其位于层底边界 */
         .inner-row.down-iface-layer {
             border-left-style: dashed;
@@ -632,6 +632,31 @@
             z-index: 1;
         }
 
+        /* 背景色带：上行接口区 / 中间区 / 下行接口区。
+           灰色、无圆角；颜色在左右两侧淡出（横向渐变）。
+           两个接口层各加一条较淡的灰色背景，
+           两接口层之间的各层再覆盖一条更淡的背景加以区分 */
+        .ruler-zone {
+            position: absolute;
+            left: 4%;
+            right: 4%;
+            border-radius: 0;
+            z-index: 0;
+            pointer-events: none;
+            transition: top 0.4s ease, height 0.4s ease, opacity 0.4s ease;
+        }
+        .ruler-zone.up-iface,
+        .ruler-zone.down-iface {
+            background: linear-gradient(to right, transparent, rgba(88, 96, 106, 0.06) 15%, rgba(88, 96, 106, 0.06) 85%, transparent);
+        }
+        .ruler-zone.middle {
+            background: linear-gradient(to right, transparent, rgba(88, 96, 106, 0.03) 15%, rgba(88, 96, 106, 0.03) 85%, transparent);
+        }
+        /* 无悬停（变暗）时色带几乎不可见 */
+        .right-panel.dimmed .ruler-zone {
+            opacity: 0.2;
+        }
+
         .hint {
             text-align: center;
             color: #656d76;
@@ -684,8 +709,14 @@
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row iface-layer">
-                            <span class="tag">🧩 上接口</span>
+                            <span class="tag">🧩 上行接口</span>
                             <span class="desc">
+                                <span class="iface-item">
+                                    <span class="iface-key">承诺</span>
+                                    <span class="hl">请求-响应语义（方法 / 状态码 / 头部）</span>
+                                    <span class="hl">连接复用（Keep-Alive）</span>
+                                    <span class="hl">内容压缩 / 缓存</span>
+                                </span>
                                 <span class="iface-item">
                                     <span class="iface-key">参数</span>
                                     <span class="hl">URL / 方法（GET/POST/PUT等）</span>
@@ -698,9 +729,9 @@
                                     <span class="dim">（通过下层 TCP/TLS 完成）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">数据</span>
-                                    <span class="hl">HTTP 请求</span>
-                                    <span class="dim">（方法 + URL + 头部 + 字节数据）；接收并解析 HTTP 响应</span>
+                                    <span class="iface-key">交付</span>
+                                    <span class="hl">HTTP 请求 / HTTP 响应</span>
+                                    <span class="dim">（发送：交付请求，含方法 + URL + 头部 + 字节数据；接收：解析并交付响应）</span>
                                 </span>
                             </span>
                         </div>
@@ -739,16 +770,22 @@
                             <span class="desc"><span class="hl">多路复用（Stream ID）</span> <span class="dim">（在下层提供的端到端透明承载通道上创建多个并行传输的请求/响应流）</span></span>
                         </div>
                         <div class="inner-row iface-layer down-iface-layer">
-                            <span class="tag">🧩 下接口</span>
+                            <span class="tag">🧩 下行接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">目标</span>
-                                    <span class="hl">TCP连接（端口 443/80）</span>
+                                    <span class="hl">TLS连接（目标IP + 端口 443/80）</span>
+                                    <span class="dim">（目标IP 由本层经 DNS 解析、端口由本层指定，下层 TLS 据此建立加密连接）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">参数</span>
+                                    <span class="hl">端口（协议标识，443 / 80，由本层决定）</span>
+                                    <span class="dim">（下层 TLS 复用 TCP 连接，不新增协议标识）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">交付</span>
                                     <span class="hl">明文 HTTP 报文</span>
-                                    <span class="dim">（交给下层 TLS/TCP 封装传输）</span>
+                                    <span class="dim">（交给下层 TLS 加密封装后经 TCP 传输）</span>
                                 </span>
                             </span>
                         </div>
@@ -766,8 +803,14 @@
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row iface-layer">
-                            <span class="tag">🧩 上接口</span>
+                            <span class="tag">🧩 上行接口</span>
                             <span class="desc">
+                                <span class="iface-item">
+                                    <span class="iface-key">承诺</span>
+                                    <span class="hl">机密性（加密）</span>
+                                    <span class="hl">完整性（防篡改校验）</span>
+                                    <span class="hl">身份认证（对端可验证）</span>
+                                </span>
                                 <span class="iface-item">
                                     <span class="iface-key">参数</span>
                                     <span class="null-box">无新增协议标识字段</span>
@@ -779,9 +822,9 @@
                                     <span class="dim">（ClientHello / ServerHello / 证书交换 / 密钥协商）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">数据发送</span>
+                                    <span class="iface-key">交付</span>
                                     <span class="hl">明文数据</span>
-                                    <span class="dim">（TLS 层加密、完整性保护后通过 TCP 发送）</span>
+                                    <span class="dim">（发送：明文数据经 TLS 加密、完整性保护后交付 TCP；接收：对端 TLS 解密后交付明文数据）</span>
                                 </span>
                             </span>
                         </div>
@@ -819,11 +862,17 @@
                             <span class="desc"><span class="null-box">空</span> </span>
                         </div>
                         <div class="inner-row iface-layer down-iface-layer">
-                            <span class="tag">🧩 下接口</span>
+                            <span class="tag">🧩 下行接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">目标</span>
-                                    <span class="hl">TCP连接（端口 443）</span>
+                                    <span class="hl">TCP连接（目标IP + 端口 443）</span>
+                                    <span class="dim">（目标IP + 端口由上层传入，TCP 据此建立连接）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">参数</span>
+                                    <span class="hl">目标IP + 目标端口（由本层提供）</span>
+                                    <span class="dim">（TCP 补齐源IP、源端口与协议号，构成五元组）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">交付</span>
@@ -846,11 +895,18 @@
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row iface-layer">
-                            <span class="tag">🧩 上接口</span>
+                            <span class="tag">🧩 上行接口</span>
                             <span class="desc">
+                                <span class="iface-item">
+                                    <span class="iface-key">承诺</span>
+                                    <span class="hl">可靠有序（不丢不重）</span>
+                                    <span class="hl">全双工字节流</span>
+                                    <span class="hl">流控 / 拥塞控制</span>
+                                </span>
                                 <span class="iface-item">
                                     <span class="iface-key">参数</span>
                                     <span class="hl">五元组（目标IP、目标端口、源IP、源端口、协议号）</span>
+                                    <span class="dim">（目标IP、目标端口由上层提供；源IP、源端口、协议号由 TCP 自身确定）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">初始化</span>
@@ -858,9 +914,9 @@
                                     <span class="dim">—— 三次握手，建立连接</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">数据</span>
+                                    <span class="iface-key">交付</span>
                                     <span class="hl">字节流（任意大小，无边界）</span>
-                                    <span class="dim">—— TCP层负责分段（按MSS）、封装TCP头、交给IP层发送；对端TCP层重组后交付给上层</span>
+                                    <span class="dim">—— 发送：分段（按MSS）封装 TCP 头后交给 IP；接收：对端 TCP 重组后交付字节流给上层</span>
                                 </span>
                             </span>
                         </div>
@@ -908,11 +964,17 @@
                             <span class="desc"><span class="hl">全网连接复用（目标IP + 目标端口 + 源端口）</span> <span class="dim">—— 创建 2³² × 2¹⁶ × 2¹⁶ 的会话空间</span></span>
                         </div>
                         <div class="inner-row iface-layer down-iface-layer">
-                            <span class="tag">🧩 下接口</span>
+                            <span class="tag">🧩 下行接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">目标</span>
                                     <span class="hl">目标IP地址（协议号 6=TCP）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">参数</span>
+                                    <span class="hl">协议号字段（6=TCP，由本层确定）</span>
+                                    <span class="hl">对端IP地址（目标IP，由本层提供）</span>
+                                    <span class="dim">（本机IP地址与 MTU 由 IP 层自行管理 / 自下层读取）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">交付</span>
@@ -935,14 +997,20 @@
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row iface-layer">
-                            <span class="tag">🧩 上接口</span>
+                            <span class="tag">🧩 上行接口</span>
                             <span class="desc">
                                 <span class="iface-item">
+                                    <span class="iface-key">承诺</span>
+                                    <span class="hl">尽力而为投递（不保证可靠）</span>
+                                    <span class="hl">无连接（无状态，无需握手）</span>
+                                    <span class="hl">统一寻址（IP 地址）</span>
+                                </span>
+                                <span class="iface-item">
                                     <span class="iface-key">参数</span>
-                                    <span class="hl">协议号字段（6=TCP / 17=UDP / 1=ICMP）</span>
-                                    <span class="hl">本机IP地址</span>
-                                    <span class="hl">对端IP地址</span>
-                                    <span class="hl">MTU</span>
+                                    <span class="hl">协议号字段（6=TCP / 17=UDP / 1=ICMP，由上层传入）</span>
+                                    <span class="hl">本机IP地址（由 IP 层管理）</span>
+                                    <span class="hl">对端IP地址（由上层传入）</span>
+                                    <span class="hl">MTU（自下层读取）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">初始化</span>
@@ -950,8 +1018,9 @@
                                     <span class="dim">（无连接，不需要握手）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">数据</span>
+                                    <span class="iface-key">交付</span>
                                     <span class="hl">数据块 + 目标IP地址</span>
+                                    <span class="dim">（发送：交付数据块与目标 IP，IP 层封装发送；接收：IP 层按协议号解封装后交付数据块）</span>
                                 </span>
                             </span>
                         </div>
@@ -994,7 +1063,7 @@
                             <span class="desc"><span class="hl">VLAN Tag复用（802.1Q）</span> <span class="hl">Type字段复用（IPv4 / ARP / IPv6）</span></span>
                         </div>
                         <div class="inner-row iface-layer down-iface-layer">
-                            <span class="tag">🧩 下接口</span>
+                            <span class="tag">🧩 下行接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">目标</span>
@@ -1025,7 +1094,7 @@
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row iface-layer">
-                            <span class="tag">🧩 上接口</span>
+                            <span class="tag">🧩 上行接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">承诺</span>
@@ -1035,10 +1104,10 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">参数</span>
-                                    <span class="hl">Type字段（0x0800=IPv4 / 0x0806=ARP / 0x86DD=IPv6 / 0x8191=NetBEUI）</span>
-                                    <span class="hl">本机MAC地址</span>
-                                    <span class="hl">对端MAC地址</span>
-                                    <span class="hl">MTU</span>
+                                    <span class="hl">Type字段（0x0800=IPv4 / 0x0806=ARP / 0x86DD=IPv6 / 0x8191=NetBEUI，由上层传入）</span>
+                                    <span class="hl">本机MAC地址（由以太网层管理）</span>
+                                    <span class="hl">对端MAC地址（由上层传入）</span>
+                                    <span class="hl">MTU（由以太网层提供，单向上报）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">初始化</span>
@@ -1046,9 +1115,9 @@
                                     <span class="dim">（无连接，不需握手）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">数据发送</span>
+                                    <span class="iface-key">交付</span>
                                     <span class="hl">目标MAC + 数据</span>
-                                    <span class="dim">（以太网层封装帧并发送）</span>
+                                    <span class="dim">（发送：以太网层封装帧后发送；接收：解封装后交付数据与源MAC）</span>
                                 </span>
                             </span>
                         </div>
@@ -1096,16 +1165,16 @@
                             <span class="desc"><span class="null-box">无</span> <span class="dim">（下层编码调制层提供单条物理通道，以太网不复用）</span></span>
                         </div>
                         <div class="inner-row iface-layer down-iface-layer">
-                            <span class="tag">🧩 下接口</span>
+                            <span class="tag">🧩 下行接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">目标</span>
                                     <span class="hl">编码调制层</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">数据</span>
+                                    <span class="iface-key">交付</span>
                                     <span class="hl">双向比特流</span>
-                                    <span class="dim">（发送：将以太网帧以连续比特流形式发送；接收：从连续比特流中还原出以太网帧）</span>
+                                    <span class="dim">（发送：将以太网帧以连续比特流形式交付下层；接收：从连续比特流中还原出以太网帧）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">参数</span>
@@ -1130,8 +1199,13 @@
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row iface-layer">
-                            <span class="tag">🧩 上接口</span>
+                            <span class="tag">🧩 上行接口</span>
                             <span class="desc">
+                                <span class="iface-item">
+                                    <span class="iface-key">承诺</span>
+                                    <span class="hl">透明比特流传输（双向）</span>
+                                    <span class="hl">物理信号保真（NRZ / PAM4 / QAM）</span>
+                                </span>
                                 <span class="iface-item">
                                     <span class="iface-key">参数</span>
                                     <span class="hl">速率（双向，10/100/1000/10000M）</span>
@@ -1145,9 +1219,9 @@
                                     <span class="dim">（静态配置，运行时不变）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">数据</span>
+                                    <span class="iface-key">交付</span>
                                     <span class="hl">双向比特流</span>
-                                    <span class="dim">（上层提供数字比特流，本层将其映射为物理信号发送；或者反之）</span>
+                                    <span class="dim">（发送：数字比特流映射为物理信号交付下层；接收：物理信号还原为数字比特流交付上层）</span>
                                 </span>
                             </span>
                         </div>
@@ -1185,16 +1259,23 @@
                             <span class="desc"><span class="hl">码分复用（CDMA）</span> <span class="dim">—— 在单一波长上通过不同扩频码区分多个并行通道（注：不适用于标准以太网）</span></span>
                         </div>
                         <div class="inner-row iface-layer down-iface-layer">
-                            <span class="tag">🧩 下接口</span>
+                            <span class="tag">🧩 下行接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">目标</span>
-                                    <span class="hl">波长通道（λ₁…λₙ）</span>
+                                    <span class="hl">指定波长通道（λᵢ）</span>
+                                    <span class="dim">（从光波层提供的波长通道集合 λ₁…λₙ 中拣选目标波长）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">参数</span>
+                                    <span class="hl">波长通道状态（单向接收，可用 / 占用 / 故障）</span>
+                                    <span class="hl">波长通道方向（单向接收）</span>
+                                    <span class="dim">（从光波层读取）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">交付</span>
                                     <span class="hl">物理信号（光信号）</span>
-                                    <span class="dim">（映射到指定波长通道，交给光波层转发）</span>
+                                    <span class="dim">（映射到目标波长通道 λᵢ，交给光波层转发）</span>
                                 </span>
                             </span>
                         </div>
@@ -1212,13 +1293,18 @@
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row iface-layer">
-                            <span class="tag">🧩 上接口</span>
+                            <span class="tag">🧩 上行接口</span>
                             <span class="desc">
                                 <span class="iface-item">
+                                    <span class="iface-key">承诺</span>
+                                    <span class="hl">波长级透明转发</span>
+                                    <span class="hl">波长通道状态可查（可用 / 占用 / 故障）</span>
+                                </span>
+                                <span class="iface-item">
                                     <span class="iface-key">参数</span>
-                                    <span class="hl">波长通道标识（λ₁…λₙ）</span>
-                                    <span class="hl">波长通道状态（可用 / 占用 / 故障）</span>
-                                    <span class="hl">波长通道方向</span>
+                                    <span class="hl">波长通道标识（λ₁…λₙ，由光波层提供）</span>
+                                    <span class="hl">波长通道状态（单向上报，可用 / 占用 / 故障）</span>
+                                    <span class="hl">波长通道方向（单向上报）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">初始化</span>
@@ -1226,9 +1312,9 @@
                                     <span class="dim">（ROADM / 光交叉连接通过 GMPLS 或工程规划配置）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">数据发送</span>
+                                    <span class="iface-key">交付</span>
                                     <span class="hl">特定波长光信号</span>
-                                    <span class="dim">（光波层完成波长级转发，将信号送到正确的方向）</span>
+                                    <span class="dim">（发送：交付光信号做波长级转发；接收：将到达信号交付回上层对应波长通道）</span>
                                 </span>
                             </span>
                         </div>
@@ -1265,11 +1351,18 @@
                             <span class="desc"><span class="hl">WDM波分复用</span> <span class="dim">（将裸光纤复用为多个波长通道 λ₁…λₙ）</span></span>
                         </div>
                         <div class="inner-row iface-layer down-iface-layer">
-                            <span class="tag">🧩 下接口</span>
+                            <span class="tag">🧩 下行接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">目标</span>
                                     <span class="hl">光纤（物理介质）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">参数</span>
+                                    <span class="hl">光纤类型（单向接收，单模 / 多模）</span>
+                                    <span class="hl">物理接口类型（单向接收，LC / SC / MPO 等）</span>
+                                    <span class="hl">光纤长度 / 衰减 / 色散等物理特性（单向接收）</span>
+                                    <span class="dim">（从光纤层读取）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">交付</span>
@@ -1292,13 +1385,18 @@
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row iface-layer">
-                            <span class="tag">🧩 上接口</span>
+                            <span class="tag">🧩 上行接口</span>
                             <span class="desc">
                                 <span class="iface-item">
+                                    <span class="iface-key">承诺</span>
+                                    <span class="hl">物理介质透明传输（无处理）</span>
+                                    <span class="hl">光信号低损耗传输</span>
+                                </span>
+                                <span class="iface-item">
                                     <span class="iface-key">参数</span>
-                                    <span class="hl">光纤类型（单模 / 多模）</span>
-                                    <span class="hl">物理接口类型（LC / SC / MPO 等）</span>
-                                    <span class="hl">光纤长度 / 衰减 / 色散等物理特性</span>
+                                    <span class="hl">光纤类型（单向上报，单模 / 多模）</span>
+                                    <span class="hl">物理接口类型（单向上报，LC / SC / MPO 等）</span>
+                                    <span class="hl">光纤长度 / 衰减 / 色散等物理特性（单向上报）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">初始化</span>
@@ -1306,9 +1404,9 @@
                                     <span class="dim">（光纤铺设、熔接、ODF跳纤），建成即固定</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">数据发送</span>
+                                    <span class="iface-key">交付</span>
                                     <span class="hl">光信号</span>
-                                    <span class="dim">（上层提供光信号，光纤层在物理介质中透明传输）</span>
+                                    <span class="dim">（发送：光信号入光纤透明传输；接收：对端光纤层交付光信号给上层）</span>
                                 </span>
                             </span>
                         </div>
@@ -1349,7 +1447,12 @@
                 <!-- 主竖线 -->
                 <div class="ruler-line" id="rulerLine"></div>
 
-                <!-- 5条十字线 -->
+                <!-- 背景色带：上行接口区（品红 8%）/ 中间区（更淡）/ 下行接口区（品红 8%） -->
+                <div class="ruler-zone up-iface" id="zone-up-interface"></div>
+                <div class="ruler-zone middle" id="zone-middle"></div>
+                <div class="ruler-zone down-iface" id="zone-down-interface"></div>
+
+                <!-- 7条十字线 -->
                 <div class="ruler-cross" id="cross-transport-mux">
                     <div class="hline" id="hline-transport-mux"></div>
                     <div class="vmark" id="vmark-transport-mux"></div>
@@ -1381,12 +1484,12 @@
 
                 <!-- 8个文字标签 -->
                 <span class="ruler-label" id="label-transport">载荷层</span>
-                <span class="ruler-label" id="label-up-interface">上接口层</span>
+                <span class="ruler-label" id="label-up-interface">上行接口层</span>
                 <span class="ruler-label" id="label-mux">复用层</span>
                 <span class="ruler-label" id="label-network">网络层</span>
                 <span class="ruler-label" id="label-link">链路层</span>
                 <span class="ruler-label" id="label-select">选链层</span>
-                <span class="ruler-label" id="label-down-interface">下接口层</span>
+                <span class="ruler-label" id="label-down-interface">下行接口层</span>
                 <span class="ruler-label" id="label-bearing">承载层</span>
             </div>
         </div>
@@ -1395,7 +1498,7 @@
 
     <div class="subtitle">
         <ul>
-            <li><strong>协议同构</strong> —— 每一个中间层协议都拥有相同的八层结构（承载层、下接口层、复用层、选链层、链路层、网络层、上接口层、载荷层），结构完全一致；</li>
+            <li><strong>协议同构</strong> —— 每一个中间层协议都拥有相同的八层结构（承载层、下行接口层、复用层、选链层、链路层、网络层、上行接口层、载荷层），结构完全一致；</li>
             <li><strong>双向递归</strong> —— 向下递归形成承载链（每一层以下层为承载链路），向上递归形成传输链（每一层以上层为载荷）；</li>
             <li><strong>边界异构</strong> —— 向上终止于数据层（不再封装），向下终止于介质层（不再承载）。</li>
         </ul>
@@ -1411,14 +1514,14 @@
 
         // 协议索引: 0=数据层(静态), 1=HTTP层, 2=TLS层, 3=TCP, 4=IP, 5=以太网, 6=编码调制层, 7=光波层, 8=光纤层
 
-        // 每个协议的标尺映射（下接口层位于本层底部）：
-        // transport_mux: 载荷层↔上接口 分界 → 对准当前协议层的上边界 (top)
-        // iface_network: 上接口↔网络层 分界 → 对准当前协议层接口/网络分隔线 (dividerIface)
+        // 每个协议的标尺映射（下行接口层位于本层底部）：
+        // transport_mux: 载荷层↔上行接口 分界 → 对准当前协议层的上边界 (top)
+        // iface_network: 上行接口↔网络层 分界 → 对准当前协议层接口/网络分隔线 (dividerIface)
         // mux_network: 网络层↔链路层 分界 → 对准当前协议层网络/链路分隔线 (dividerNet)
         // link_network: 链路层↔选链层 分界 → 对准当前协议层链路/选链分隔线 (dividerSelect)
         // link_select: 选链层↔复用层 分界 → 对准当前协议层选链/复用分隔线 (dividerMux)
-        // down_iface: 复用层↔下接口 分界 → 对准当前协议层复用/下接口分隔线 (dividerDown)
-        // bearing_link: 下接口↔承载层 分界 → 对准当前协议层的下边界 (bottom)
+        // down_iface: 复用层↔下行接口 分界 → 对准当前协议层复用/下行接口分隔线 (dividerDown)
+        // bearing_link: 下行接口↔承载层 分界 → 对准当前协议层的下边界 (bottom)
         const RULER_MAPPINGS = {
             // 数据层：扁平、无内部结构，将全部下层视为承载层
             // → 全部分界都对准数据层的下边界（承载层起始处）
@@ -1668,6 +1771,25 @@
             document.documentElement.style.setProperty('--namebar-w', Math.ceil(maxW) + 'px');
         }
 
+        // 背景色带定位：上行接口区 = [transport_mux, iface_network]，
+        // 中间区 = [iface_network, down_iface]，下行接口区 = [down_iface, bearing_link]
+        function positionRulerZones(pos) {
+            const zones = {
+                'zone-up-interface':   { top: pos.transport_mux, bottom: pos.iface_network },
+                'zone-middle':         { top: pos.iface_network, bottom: pos.down_iface },
+                'zone-down-interface': { top: pos.down_iface,   bottom: pos.bearing_link }
+            };
+            ['zone-up-interface', 'zone-middle', 'zone-down-interface'].forEach(name => {
+                const el = document.getElementById(name);
+                if (!el) return;
+                const top = Math.max(0, Math.min(1, zones[name].top));
+                const bottom = Math.max(0, Math.min(1, zones[name].bottom));
+                const h = Math.max(0, bottom - top);
+                el.style.top = (top * 100) + '%';
+                el.style.height = (h * 100) + '%';
+            });
+        }
+
         function updateRuler(protocolKey) {
             const mapping = RULER_MAPPINGS[protocolKey];
             // 最上层（应用层）之上没有载荷层；最下层（介质层）之下没有承载层。
@@ -1705,6 +1827,7 @@
                     labels[key].style.top = defaultLabelPositions[key] + '%';
                     labels[key].style.display = ''; // 复位时恢复所有标签可见
                 });
+                positionRulerZones(DEFAULT_POSITIONS); // 复位：色带回到默认分界位置
                 rulerLine.className = 'ruler-line';
                 rulerPanel.classList.remove('active');
                 rulerPanel.classList.add('dimmed'); // 无悬停：标尺变暗
@@ -1790,6 +1913,9 @@
                 const pos = parseFloat(cross.style.top) / 100;
                 crossPositions[name] = isNaN(pos) ? 0.25 : pos;
             });
+
+            // 背景色带跟随十字线定位
+            positionRulerZones(crossPositions);
 
             // 更新8个文字标签的位置
             const labelPositions = {
@@ -1904,7 +2030,7 @@
                 const muxRect = muxRow.getBoundingClientRect();
                 muxMid = (muxMid + muxRect.top) / 2;
             }
-            // 复用层↔下接口层 分界：复用行底边与下接口行顶边的中点（下接口层位于本层底部）
+            // 复用层↔下行接口层 分界：复用行底边与下行接口行顶边的中点（下行接口层位于本层底部）
             let downMid = muxRow ? muxRow.getBoundingClientRect().bottom : (selectRect ? selectRect.bottom : linkRect.bottom);
             if (downRow) {
                 const downRect = downRow.getBoundingClientRect();
