@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Isomorphic Bidirectional Recursive Model for Network Protocols - Interactive Visualization</title>
+    <title>The Isomorphic Recursive Model of the Network Protocol Stack - Interactive Visualization</title>
     <style>
         * {
             margin: 0;
@@ -16,19 +16,19 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
             display: flex;
             flex-direction: column;
-            align-items: flex-start; /* centered via margin:auto; avoids clipping the left side on narrow windows */
+            align-items: flex-start; /* centered via margin:auto so the left edge is not clipped on narrow windows */
             justify-content: center;
             min-height: 100vh;
             padding: 30px 20px;
-            overflow-x: auto; /* allows horizontal scrolling on narrow windows; container keeps min width */
+            overflow-x: auto; /* allow horizontal scrolling on narrow windows, keeping the container at its minimum width */
         }
 
         .container {
-            /* Min window width = comfortable width; scales up on large screens (max 1600px) */
+            /* minimum window width = the comfortable width; on large screens the actual display area scales up (capped at 1600px) */
             min-width: 1100px;
             max-width: 1600px;
             width: 100%;
-            margin: 0 auto; /* horizontally centered; can scroll fully from the left on narrow windows */
+            margin: 0 auto; /* horizontally centered; on narrow windows the overflow can be scrolled from the left */
             background: #ffffff;
             border-radius: 20px;
             padding: 40px 40px 50px;
@@ -42,13 +42,13 @@
             font-size: 26px;
             color: #1f2328;
             letter-spacing: 0.5px;
-            margin-bottom: 35px; /* gap between main title and the protocol stack */
+            margin-bottom: 35px; /* spacing between the main title and the protocol stack */
         }
 
         .subtitle {
-            text-align: left; /* three lines left-aligned */
+            text-align: left; /* the three lines are left-aligned */
             color: #656d76;
-            font-size: 13px; /* font size reduced one step (15px → 13px) */
+            font-size: 13px; /* one size smaller (15px → 13px) */
             margin-top: 28px;
             margin-bottom: 0;
             border-top: 1px solid #d0d7de;
@@ -86,7 +86,7 @@
             align-items: stretch;
         }
 
-        /* ---------- Left: protocol stack ---------- */
+        /* ---------- left: the protocol stack ---------- */
         .left-panel {
             flex: 1;
             min-width: 0;
@@ -120,7 +120,7 @@
             height: 88px;
         }
 
-        /* Network layer: 2×2 table (header Control/Forwarding plane, second row = contents) */
+        /* Network layer: 2×2 table (header row: Control Plane / Forwarding Plane; second row: actual content) */
         .inner-row.net-layer .desc.cp-table {
             display: flex;
             flex-direction: column;
@@ -153,7 +153,7 @@
         .cp-table .cp-cell + .cp-cell {
             border-left: 1px solid #d0d7de;
         }
-        /* header: Control / Forwarding plane */
+        /* header row: Control Plane / Forwarding Plane */
         .cp-table .cp-head .cp-cell {
             justify-content: center;
             flex-wrap: nowrap;
@@ -163,7 +163,7 @@
         }
         .cp-table .cp-head .cp-control { color: #8250df; }
         .cp-table .cp-head .cp-forward { color: #1a7f37; }
-        /* Network-layer note row (above the 2×2 table; e.g., HTTP: directly reachable, cross-node forwarding by external forwarders) */
+        /* network-layer note row (above the 2×2 table; e.g., HTTP: directly reachable, cross-node forwarding is implemented by external forwarders) */
         .cp-table .cp-row.cp-note .cp-cell {
             justify-content: flex-start;
             font-size: 11px;
@@ -185,7 +185,7 @@
             border: 1px solid #d8c4ef;
         }
         .cp-table .cp-body .cp-control .dim { color: #8b62c9; }
-        /* Control plane: static (purple) vs dynamic (blue) protocols distinguished by color */
+        /* Control plane: static (purple) and dynamic (blue) protocols are distinguished by color */
         .cp-table .cp-body .cp-control .hl.dyn {
             color: #0969da;
             background: #eaf3ff;
@@ -198,7 +198,7 @@
         }
         .cp-table .cp-body .cp-forward .dim { color: #2da44e; }
 
-        /* Network layer expansion height is content-adaptive (2×2 table), auto-scales with window width */
+        /* the expanded network-layer height adapts to its content (2×2 table) and scales with window width */
         .layer.layer-tall.active {
             height: auto;
         }
@@ -215,8 +215,37 @@
             min-height: 32px;
             padding: 4px 12px;
         }
+        .layer-tall .inner-row.mux-layer {
+            height: auto;
+            min-height: 32px;
+            padding: 4px 12px;
+        }
+        /* Multiplexing layer: amber (distinct from the network blue, link green, and control-plane purple) */
+        .inner-row.mux-layer .desc .hl {
+            color: #9a6700;
+            background: #fff8c5;
+            border: 1px solid #eae2a8;
+        }
 
-        /* Coding/modulation control plane: static (purple) / dynamic (blue) groups, color-only */
+        /* Interface layer: magenta/pink (above the Network layer; distinct from the network blue, link green, mux amber, control-plane purple) */
+        .layer-tall .inner-row.iface-layer {
+            height: auto;
+            min-height: 32px;
+            padding: 4px 12px;
+        }
+        .inner-row.iface-layer {
+            border-left-color: #bf3989;
+        }
+        .inner-row.iface-layer .tag {
+            color: #bf3989;
+        }
+        .inner-row.iface-layer .desc .hl {
+            color: #bf3989;
+            background: #fbf0f7;
+            border: 1px solid #e6b7d3;
+        }
+
+        /* Coding/modulation-layer control plane: static (purple) / dynamic (blue) groups, distinguished by color only */
         .cp-table .cp-body .cp-control .cp-group {
             display: flex;
             flex-wrap: wrap;
@@ -225,7 +254,7 @@
             flex: 0 0 100%;
             min-width: 0;
         }
-        /* Dynamic control plane (GMPLS): blue emphasis, linked with the IP layer control plane */
+        /* dynamic control plane (GMPLS): blue emphasis, linked with the IP-layer control plane */
         .cp-table .cp-body .cp-control .cp-group.dynamic .hl {
             color: #0969da;
             background: #eaf3ff;
@@ -235,7 +264,7 @@
             color: #6e88b0;
         }
 
-        /* TCP network layer: forwarding plane has local/network modes */
+        /* TCP network layer: two forwarding-plane modes, network NAT / SSH port forwarding (cross-host forwarding) */
         .cp-table .cp-body .cp-cell .cp-mode {
             display: flex;
             flex-direction: row;      /* label and content on the same line, no wrapping */
@@ -254,7 +283,7 @@
             color: #656d76;           /* neutral label color, overridden per cell */
             white-space: nowrap;
         }
-        /* Mode labels follow the cell palette: control plane purple, forwarding plane green */
+        /* mode label follows the cell color: control plane tends purple, forwarding plane tends green */
         .cp-table .cp-body .cp-cell.cp-control .cp-mode-tag { color: #8250df; }
         .cp-table .cp-body .cp-cell.cp-forward .cp-mode-tag { color: #2da44e; }
 
@@ -275,7 +304,7 @@
             border-right-color: #d0d7de;
         }
 
-        /* Static layer (data): flat, non-expandable, distinguished by dashed border */
+        /* static layer (data layer): flat, not expandable, distinguished by a dashed border */
         .layer-static {
             border-style: dashed;
             border-color: #c1c9d1;
@@ -336,13 +365,13 @@
             justify-content: center;
             padding: 4px 16px;
             gap: 4px;
-            height: 40px; /* layer height 44 - top/bottom borders 4, vertically centering the two rows */
+            height: 40px; /* layer height 44 - top/bottom border 4, keeping the two rows vertically centered in the layer */
             transition: all 0.4s ease;
             position: relative;
         }
 
         .layer.active .layer-body {
-            height: 84px; /* layer height 88 - top/bottom borders 4, vertically centering the two rows */
+            height: 84px; /* layer height 88 - top/bottom border 4, keeping the two rows vertically centered in the layer */
             padding: 8px 16px;
             justify-content: center;
         }
@@ -361,7 +390,7 @@
             overflow: hidden;
             margin: 0;
             padding: 0;
-            display: none; /* fully removed from flex layout to avoid leftover gap shifting the rows down */
+            display: none; /* fully remove from the flex layout, avoiding residual gap pushing the two rows down */
         }
 
         .layer-body .inner-row {
@@ -444,7 +473,8 @@
             font-size: 12px;
         }
 
-        /* ---------- Divider when the left side is expanded ---------- */
+        /* ---------- divider when the left side is expanded ----------
+           Removed: the divider between the network layer and the link layer is no longer shown */
         .layer-divider {
             display: none;
             position: absolute;
@@ -457,28 +487,24 @@
             transition: all 0.4s ease;
         }
 
-        .layer.active .layer-divider {
-            display: block;
-        }
-
-        /* ---------- Right: ruler (no title bar) ---------- */
+        /* ---------- right: the ruler (no title bar) ---------- */
         .right-panel {
             flex: 0 0 170px;
             min-width: 150px;
-            background: transparent; /* hide inner background */
+            background: transparent; /* hide the panel's background color */
             display: flex;
             flex-direction: column;
             transition: border-color 0.3s;
             position: relative;
             overflow: visible;
-            border: none; /* hide outer rounded border */
+            border: none; /* hide the outer rounded border */
         }
 
         .right-panel.active {
             border-color: #0969da44;
         }
 
-        /* When not hovered: the ruler is shown in a very dim tone */
+        /* when there is no hover: the ruler is shown in a very dim tone */
         .right-panel.dimmed .ruler-line {
             background: #eaeef2;
         }
@@ -503,7 +529,7 @@
             transition: all 0.4s ease;
         }
 
-        /* Main vertical line - at the left 1/4 */
+        /* main vertical line - at the left quarter */
         .ruler-line {
             position: absolute;
             left: 25%;
@@ -516,7 +542,7 @@
             border-radius: 2px;
         }
 
-        /* Cross line - horizontal line + vertical marker */
+        /* crosshair - horizontal line + vertical tick */
         .ruler-cross {
             position: absolute;
             left: 0;
@@ -529,8 +555,6 @@
             transition: all 0.4s ease;
             pointer-events: none;
         }
-
-        /* Horizontal line - extends from left to right (dashed) */
         .ruler-cross .hline {
             position: absolute;
             left: 5%;
@@ -540,7 +564,7 @@
             transition: border-color 0.4s;
         }
 
-        /* Vertical marker - a small tick at the 25% position */
+        /* vertical tick - a small vertical line at the 25% position */
         .ruler-cross .vmark {
             position: absolute;
             left: 25%;
@@ -553,7 +577,7 @@
             border-radius: 1px;
         }
 
-        /* Text labels (uniform color, independent of state) */
+        /* text labels (uniformly white, not dependent on state) */
         .ruler-label {
             position: absolute;
             left: 32%;
@@ -588,15 +612,15 @@
 <body>
 
 <div class="container">
-    <h1>🧩 Isomorphic Bidirectional Recursive Model for Network Protocols</h1>
+    <h1>🧩 The Isomorphic Recursive Model of the Network Protocol Stack</h1>
 
     <div class="main-layout">
 
-        <!-- ====== Left: protocol stack ====== -->
+        <!-- ====== left: the protocol stack ====== -->
         <div class="left-panel">
             <div class="stack" id="stack">
 
-                <!-- Data layer (static: no expansion, no link/network layer) -->
+                <!-- Data layer (static: not expandable, no link/network layers) -->
                 <div class="layer layer-static" id="layer-data" data-protocol="data">
                     <div class="layer-name-bar">
                         <span class="icon">📄</span>
@@ -614,15 +638,23 @@
                     <div class="layer-name-bar">
                         <span class="icon">📦</span>
                         <span class="name">HTTP Layer</span>
-                        <span class="badge">Hypertext Transfer</span>
+                        <span class="badge">Hypertext Transfer Secure</span>
                     </div>
                     <div class="layer-body">
                         <span class="collapsed-hint">— Hover to expand —</span>
+                        <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
+                            <span class="tag" style="color:#9a6700;">📡 MUX</span>
+                            <span class="desc"><span class="hl">Multiplexing (Stream ID)</span> <span class="dim">— transmit multiple request/response streams in parallel over one connection</span></span>
+                        </div>
+                        <div class="inner-row iface-layer">
+                            <span class="tag">🧩 Interface</span>
+                            <span class="desc"><span class="hl">Request/Response service interface</span> <span class="dim">(the HTTP service interface exposed to the application)</span></span>
+                        </div>
                         <div class="inner-row net-layer">
                             <span class="tag">🌐 Network</span>
                             <span class="desc cp-table">
                                 <span class="cp-row cp-note">
-                                    <span class="cp-cell">Directly reachable; cross-node forwarding is handled by external forwarders</span>
+                                    <span class="cp-cell">Directly reachable; cross-node forwarding is performed by external forwarders (HTTP Proxy / CDN / API Gateway)</span>
                                 </span>
                                 <span class="cp-row cp-head">
                                     <span class="cp-cell cp-control">Control Plane</span>
@@ -634,7 +666,7 @@
                                         <span class="dim">(maintained by external forwarders)</span>
                                     </span>
                                     <span class="cp-cell cp-forward">
-                                        <span class="hl">Forward requests to the origin or next-hop proxy per rules</span>
+                                        <span class="hl">Forward requests to the target origin or next-hop proxy according to the rules</span>
                                         <span class="dim">(executed by external forwarders)</span>
                                     </span>
                                 </span>
@@ -642,10 +674,54 @@
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 Link</span>
-                            <span class="desc"><span class="hl">URL/Method</span> <span class="hl">Status Code</span></span>
+                            <span class="desc"><span class="hl">URL/Method</span> <span class="hl">Status codes</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-app"></div>
+                </div>
+
+                <!-- TLS layer -->
+                <div class="layer layer-tall" id="layer-tls" data-protocol="tls">
+                    <div class="layer-name-bar">
+                        <span class="icon">🔐</span>
+                        <span class="name">TLS Layer</span>
+                        <span class="badge">Transport Layer Security</span>
+                    </div>
+                    <div class="layer-body">
+                        <span class="collapsed-hint">— Hover to expand —</span>
+                        <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
+                            <span class="tag" style="color:#9a6700;">📡 MUX</span>
+                            <span class="desc"><span class="null-box">null</span></span>
+                        </div>
+                        <div class="inner-row iface-layer">
+                            <span class="tag">🧩 Interface</span>
+                            <span class="desc"><span class="hl">Secure byte-stream channel interface</span> <span class="dim">(provides a reliable byte stream similar to TCP to the upper layer)</span></span>
+                        </div>
+                        <div class="inner-row net-layer">
+                            <span class="tag">🌐 Network</span>
+                            <span class="desc cp-table">
+                                <span class="cp-row cp-head">
+                                    <span class="cp-cell cp-control">Control Plane</span>
+                                    <span class="cp-cell cp-forward">Forwarding Plane</span>
+                                </span>
+                                <span class="cp-row cp-body">
+                                    <span class="cp-cell cp-control">
+                                        <span class="null-box">null</span>
+                                        <span class="dim">(TLS design forbids being forwarded)</span>
+                                    </span>
+                                    <span class="cp-cell cp-forward">
+                                        <span class="null-box">null</span>
+                                        <span class="dim">(TLS design forbids being forwarded; in a MITM attack the attacker acts as an external forwarder — a violation of the design goal, i.e. an attack)</span>
+                                    </span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="inner-row link-layer">
+                            <span class="tag">📦 Link</span>
+                            <span class="desc"><span class="hl">Encryption</span> <span class="hl">Identity authentication</span> <span class="hl">Integrity verification</span></span>
+                        </div>
+                    </div>
+                    <div class="layer-divider" id="divider-tls"></div>
                 </div>
 
                 <!-- TCP -->
@@ -657,6 +733,14 @@
                     </div>
                     <div class="layer-body">
                         <span class="collapsed-hint">— Hover to expand —</span>
+                        <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
+                            <span class="tag" style="color:#9a6700;">📡 MUX</span>
+                            <span class="desc"><span class="null-box">null</span> <span class="dim">(multiplexing is already handled by the IP layer)</span></span>
+                        </div>
+                        <div class="inner-row iface-layer">
+                            <span class="tag">🧩 Interface</span>
+                            <span class="desc"><span class="hl">Socket API</span> <span class="dim">(connect / send / recv / close, the service interface to upper-layer processes)</span></span>
+                        </div>
                         <div class="inner-row net-layer">
                             <span class="tag">🌐 Network</span>
                             <span class="desc cp-table">
@@ -667,22 +751,22 @@
                                 <span class="cp-row cp-body">
                                     <span class="cp-cell cp-control">
                                         <span class="cp-mode">
-                                            <span class="cp-mode-tag">Local mode</span>
-                                            <span class="hl">Port binding management (bind/listen/accept)</span>
+                                            <span class="cp-mode-tag">Network mode (NAT)</span>
+                                            <span class="hl">NAT mapping rule management</span>
                                         </span>
                                         <span class="cp-mode">
-                                            <span class="cp-mode-tag">Network mode (NAT)</span>
-                                            <span class="hl">NAT mapping rule management (external port ↔ internal host + port)</span>
+                                            <span class="cp-mode-tag">SSH port forwarding</span>
+                                            <span class="hl">SSH forwarding rule configuration (-L / -R / -D)</span>
                                         </span>
                                     </span>
                                     <span class="cp-cell cp-forward">
                                         <span class="cp-mode">
-                                            <span class="cp-mode-tag">Local mode</span>
-                                            <span class="hl">Port lookup → Socket FD</span>
+                                            <span class="cp-mode-tag">Network mode (NAT)</span>
+                                            <span class="hl">Look up NAT mapping table → internal host</span>
                                         </span>
                                         <span class="cp-mode">
-                                            <span class="cp-mode-tag">Network mode (NAT)</span>
-                                            <span class="hl">NAT table lookup → internal host</span>
+                                            <span class="cp-mode-tag">SSH port forwarding</span>
+                                            <span class="hl">Look up SSH forwarding rules → remote host</span>
                                         </span>
                                     </span>
                                 </span>
@@ -690,7 +774,7 @@
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 Link</span>
-                            <span class="desc"><span class="hl">Connection state management (SYN/EST/FIN)</span> <span class="hl">Checksum</span> <span class="hl">Retransmission</span> <span class="hl">Flow control</span> <span class="hl">Port multiplexing</span></span>
+                            <span class="desc"><span class="hl">Connection state management (SYN/EST/FIN)</span> <span class="hl">Checksum</span> <span class="hl">Retransmission</span> <span class="hl">Flow control</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-tcp"></div>
@@ -705,6 +789,14 @@
                     </div>
                     <div class="layer-body">
                         <span class="collapsed-hint">— Hover to expand —</span>
+                        <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
+                            <span class="tag" style="color:#9a6700;">📡 MUX</span>
+                            <span class="desc"><span class="hl">Protocol number + port number</span> <span class="dim">(joint multiplexing, locating the TCP/UDP process directly; ICMP has no port, identified by protocol number alone)</span></span>
+                        </div>
+                        <div class="inner-row iface-layer">
+                            <span class="tag">🧩 Interface</span>
+                            <span class="desc"><span class="hl">Connectionless datagram service</span> <span class="dim">(the protocol number identifies the upper-layer protocol and delivers datagrams upward)</span></span>
+                        </div>
                         <div class="inner-row net-layer">
                             <span class="tag">🌐 Network</span>
                             <span class="desc cp-table">
@@ -714,7 +806,7 @@
                                 </span>
                                 <span class="cp-row cp-body">
                                     <span class="cp-cell cp-control">
-                                        <span class="hl">Static Routing</span>
+                                        <span class="hl">Static routing</span>
                                         <span class="hl dyn">OSPF</span>
                                         <span class="hl dyn">BGP</span>
                                         <span class="hl dyn">IS-IS</span>
@@ -722,10 +814,10 @@
                                         <span class="dim">(internal signaling)</span>
                                     </span>
                                     <span class="cp-cell cp-forward">
-                                        <span class="hl">Lookup</span>
+                                        <span class="hl">Table lookup</span>
                                         <span class="hl">Packet forwarding</span>
-                                        <span class="hl">Encap/Decap</span>
-                                        <span class="hl">TTL handling (decrement per hop, drop on expiry)</span>
+                                        <span class="hl">Encapsulation/decapsulation</span>
+                                        <span class="hl">TTL processing (decrement per hop, drop on timeout)</span>
                                         <span class="dim">(external service)</span>
                                     </span>
                                 </span>
@@ -733,7 +825,7 @@
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 Link</span>
-                            <span class="desc"><span class="hl">Fragmentation/Reassembly</span> <span class="hl">Protocol number multiplexing</span> <span class="hl">Header checksum</span></span>
+                            <span class="desc"><span class="hl">Fragmentation/reassembly</span> <span class="hl">Header checksum</span> <span class="hl">TTL management</span> <span class="hl">ARP</span> <span class="dim">(selects directly reachable nodes on broadcast media such as Ethernet; point-to-point links such as PPP need no ARP)</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-ip"></div>
@@ -748,6 +840,14 @@
                     </div>
                     <div class="layer-body">
                         <span class="collapsed-hint">— Hover to expand —</span>
+                        <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
+                            <span class="tag" style="color:#9a6700;">📡 MUX</span>
+                            <span class="desc"><span class="hl">Type field multiplexing (IPv4 / ARP / IPv6)</span> <span class="dim"></span> <span class="hl">VLAN Tag multiplexing</span> <span class="dim"></span></span>
+                        </div>
+                        <div class="inner-row iface-layer">
+                            <span class="tag">🧩 Interface</span>
+                            <span class="desc"><span class="hl">MAC service interface (LLC)</span> <span class="dim">(provides frame delivery to the upper layer)</span></span>
+                        </div>
                         <div class="inner-row net-layer">
                             <span class="tag">🌐 Network</span>
                             <span class="desc cp-table">
@@ -757,7 +857,7 @@
                                 </span>
                                 <span class="cp-row cp-body">
                                     <span class="cp-cell cp-control">
-                                        <span class="hl dyn">MAC address learning (builds forwarding basis)</span>
+                                        <span class="hl dyn">MAC address learning (generating the forwarding basis)</span>
                                         <span class="hl">PBB-TE (802.1Qay)</span>
                                         <span class="hl dyn">G.8080 ASON</span>
                                         <span class="hl">MAC-in-MAC + control plane</span>
@@ -765,7 +865,7 @@
                                         <span class="dim">(internal signaling)</span>
                                     </span>
                                     <span class="cp-cell cp-forward">
-                                        <span class="hl">Forwarding via MAC table lookup</span>
+                                        <span class="hl">Forward by MAC-address table lookup</span>
                                         <span class="hl">Flooding</span>
                                         <span class="hl">Filtering</span>
                                         <span class="dim">(external service)</span>
@@ -775,7 +875,7 @@
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 Link</span>
-                            <span class="desc"><span class="hl">CRC check</span> <span class="hl">Collision detection</span></span>
+                            <span class="desc"><span class="hl">CRC check</span> <span class="hl">Collision detection (when carried on electrical media)</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-eth"></div>
@@ -786,10 +886,18 @@
                     <div class="layer-name-bar">
                         <span class="icon">⚡</span>
                         <span class="name">Coding/Modulation Layer</span>
-                        <span class="badge">Coding &amp; Modulation</span>
+                        <span class="badge">Coding · Modulation</span>
                     </div>
                     <div class="layer-body">
                         <span class="collapsed-hint">— Hover to expand —</span>
+                        <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
+                            <span class="tag" style="color:#9a6700;">📡 MUX</span>
+                            <span class="desc"><span class="null-box">none</span> <span class="dim">(currently carries only Ethernet as its upper protocol, with no multiple protocols to multiplex)</span></span>
+                        </div>
+                        <div class="inner-row iface-layer">
+                            <span class="tag">🧩 Interface</span>
+                            <span class="desc"><span class="hl">Bit / symbol stream interface</span> <span class="dim">(provides physical signal carriage to the upper layer)</span></span>
+                        </div>
                         <div class="inner-row net-layer">
                             <span class="tag">🌐 Network</span>
                             <span class="desc cp-table">
@@ -799,13 +907,13 @@
                                 </span>
                                 <span class="cp-row cp-body">
                                     <span class="cp-cell cp-control">
-                                        <span class="null-box">Empty</span>
-                                        <span class="dim">(no forwarding path decisions)</span>
+                                        <span class="null-box">null</span>
+                                        <span class="dim">(no forwarding-path decision making)</span>
                                     </span>
                                     <span class="cp-cell cp-forward">
-                                        <span class="hl">Repeater</span>
-                                        <span class="hl">Regenerative amplifier (e.g., SOA 3R)</span>
-                                        <span class="hl">Wavelength converter</span>
+                                        <span class="hl">Repeaters</span>
+                                        <span class="hl">Optical amplifiers with shaping (e.g., SOA 3R regeneration)</span>
+                                        <span class="hl">Wavelength converters</span>
                                         <span class="hl">ROADM/OTN with O-E-O conversion</span>
                                     </span>
                                 </span>
@@ -813,21 +921,29 @@
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 Link</span>
-                            <span class="desc"><span class="hl">Digital ↔ physical signal mapping</span> <span class="hl">Modulation format selection (PAM4/NRZ)</span> <span class="hl">FEC configuration</span> <span class="hl">Power setting</span> <span class="hl">Wavelength modulation parameter config (center frequency / modulation / FEC / power)</span></span>
+                            <span class="desc"><span class="hl">Digital ↔ physical signal mapping (NRZ/PAM4/QAM)</span> <span class="hl">Wavelength modulation parameter configuration (center frequency / modulation format / FEC / power)</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-physical"></div>
                 </div>
 
-                <!-- Optical Wave layer (WDM layer of the fiber medium) -->
+                <!-- Optical Wave layer (wavelength-level forwarding; operation granularity: a single wavelength) -->
                 <div class="layer layer-tall" id="layer-wave" data-protocol="wave">
                     <div class="layer-name-bar">
                         <span class="icon">🌈</span>
                         <span class="name">Optical Wave Layer</span>
-                        <span class="badge">WDM Wavelength Multiplexing</span>
+                        <span class="badge">Wavelength-level forwarding</span>
                     </div>
                     <div class="layer-body">
                         <span class="collapsed-hint">— Hover to expand —</span>
+                        <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
+                            <span class="tag" style="color:#9a6700;">📡 MUX</span>
+                            <span class="desc"><span class="null-box">none</span> <span class="dim">(carries only the coding/modulation layer; a wavelength channel itself has no multiplexing space)</span></span>
+                        </div>
+                        <div class="inner-row iface-layer">
+                            <span class="tag">🧩 Interface</span>
+                            <span class="desc"><span class="hl">Wavelength channel interface</span> <span class="dim">(provides wavelength-level carriage to the upper layer)</span></span>
+                        </div>
                         <div class="inner-row net-layer">
                             <span class="tag">🌐 Network</span>
                             <span class="desc cp-table">
@@ -837,13 +953,13 @@
                                 </span>
                                 <span class="cp-row cp-body">
                                     <span class="cp-cell cp-control">
-                                        <span class="hl">Wavelength channel selection (flow ↔ wavelength mapping)</span>
+                                        <span class="hl">Wavelength channel selection (data-flow ↔ wavelength mapping)</span>
                                         <span class="hl dyn">GMPLS (OSPF-TE/RSVP-TE)</span>
                                     </span>
                                     <span class="cp-cell cp-forward">
                                         <span class="hl">ROADM wavelength switching</span>
-                                        <span class="hl">Optical amplifier (no regeneration, e.g., EDFA)</span>
-                                        <span class="hl">GMPLS dynamic lightpath</span>
+                                        <span class="hl">GMPLS dynamic optical paths</span>
+                                        <span class="hl">Optical amplifiers (without shaping, e.g., EDFA)</span>
                                     </span>
                                 </span>
                             </span>
@@ -856,15 +972,23 @@
                     <div class="layer-divider" id="divider-wave"></div>
                 </div>
 
-                <!-- Optical Fiber layer (physical medium · recursion endpoint) -->
+                <!-- Fiber layer (physical medium · recursion endpoint) -->
                 <div class="layer layer-tall" id="layer-fiber" data-protocol="fiber">
                     <div class="layer-name-bar">
                         <span class="icon">🧵</span>
-                        <span class="name">Optical Fiber Layer</span>
-                        <span class="badge">Physical Medium · Recursion Endpoint</span>
+                        <span class="name">Fiber Layer</span>
+                        <span class="badge">Physical medium · recursion endpoint</span>
                     </div>
                     <div class="layer-body">
                         <span class="collapsed-hint">— Hover to expand —</span>
+                        <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
+                            <span class="tag" style="color:#9a6700;">📡 MUX</span>
+                            <span class="desc"><span class="hl">WDM wavelength-division multiplexing</span> <span class="dim">(multiple wavelengths multiplexed on the same fiber, direction unchanged)</span></span>
+                        </div>
+                        <div class="inner-row iface-layer">
+                            <span class="tag">🧩 Interface</span>
+                            <span class="desc"><span class="hl">Fiber port / connector interface</span> <span class="dim">(provides physical medium access to the upper layer)</span></span>
+                        </div>
                         <div class="inner-row net-layer">
                             <span class="tag">🌐 Network</span>
                             <span class="desc cp-table">
@@ -874,8 +998,8 @@
                                 </span>
                                 <span class="cp-row cp-body">
                                     <span class="cp-cell cp-control">
-                                        <span class="hl">Fiber cable deployment planning</span>
-                                        <span class="hl">ODF patch panel management</span>
+                                        <span class="hl">Optical cable construction planning</span>
+                                        <span class="hl">ODF patch-panel management</span>
                                     </span>
                                     <span class="cp-cell cp-forward">
                                         <span class="hl">Fiber splicing</span>
@@ -896,16 +1020,24 @@
             </div>
         </div>
 
-        <!-- ====== Right: ruler (no title bar) ====== -->
+        <!-- ====== right: the ruler (no title bar) ====== -->
         <div class="right-panel dimmed" id="rulerPanel">
             <div class="ruler-body" id="rulerBody">
                 <!-- main vertical line -->
                 <div class="ruler-line" id="rulerLine"></div>
 
-                <!-- 3 cross lines -->
-                <div class="ruler-cross" id="cross-network-transport">
-                    <div class="hline" id="hline-network-transport"></div>
-                    <div class="vmark" id="vmark-network-transport"></div>
+                <!-- 5 crosshairs -->
+                <div class="ruler-cross" id="cross-transport-mux">
+                    <div class="hline" id="hline-transport-mux"></div>
+                    <div class="vmark" id="vmark-transport-mux"></div>
+                </div>
+                <div class="ruler-cross" id="cross-iface-network">
+                    <div class="hline" id="hline-iface-network"></div>
+                    <div class="vmark" id="vmark-iface-network"></div>
+                </div>
+                <div class="ruler-cross" id="cross-mux-network">
+                    <div class="hline" id="hline-mux-network"></div>
+                    <div class="vmark" id="vmark-mux-network"></div>
                 </div>
                 <div class="ruler-cross" id="cross-link-network">
                     <div class="hline" id="hline-link-network"></div>
@@ -916,10 +1048,12 @@
                     <div class="vmark" id="vmark-bearing-link"></div>
                 </div>
 
-                <!-- 4 text labels -->
-                <span class="ruler-label" id="label-transport">Transport</span>
+                <!-- 6 text labels -->
+                <span class="ruler-label" id="label-transport">Payload</span>
+                <span class="ruler-label" id="label-interface">Interface</span>
+                <span class="ruler-label" id="label-mux">Multiplexing</span>
                 <span class="ruler-label" id="label-network">Network</span>
-                <span class="ruler-label" id="label-link">Data Link</span>
+                <span class="ruler-label" id="label-link">Link</span>
                 <span class="ruler-label" id="label-bearing">Bearer</span>
             </div>
         </div>
@@ -928,89 +1062,121 @@
 
     <div class="subtitle">
         <ul>
-            <li><strong>Isomorphism</strong> — every middle-layer protocol has the same internal four-layer structure (Bearer, Data Link, Network, Transport), structurally identical;</li>
-            <li><strong>Bidirectional Recursion</strong> — downward recursion forms the bearer chain (each layer treats the layer below as its bearer link); upward recursion forms the transport chain (each layer treats the layer above as payload);</li>
-            <li><strong>Boundary Conditions</strong> — terminates upward at the Data Layer (no further encapsulation) and downward at the Medium Layer (no further bearer).</li>
+            <li><strong>Protocol Isomorphism</strong> — every intermediate-layer protocol has the same six-layer structure (Bearer, Link, Network, Interface, Multiplexing, Payload), identical in structure;</li>
+            <li><strong>Bidirectional Recursion</strong> — downward recursion forms the bearer chain (each layer takes the layer below as its bearer link), upward recursion forms the payload chain (each layer takes the layer above as its payload);</li>
+            <li><strong>Boundary Heterogeneity</strong> — terminates upward at the Data Layer (no further encapsulation) and downward at the Medium Layer (no further carrying).</li>
         </ul>
     </div>
 
     <div class="hint">
-        <span>🖱 <strong>Hover</strong> a protocol layer on the left; the ruler on the right dynamically shows the protocol stack from that protocol's perspective</span>
+        <span>🖱 <strong>Hover</strong> over a protocol layer on the left; the ruler on the right dynamically shows the protocol stack from that protocol's perspective</span>
     </div>
 </div>
 
 <script>
     (function() {
 
-        // Protocol index: 0=Data (static), 1=HTTP, 2=TCP, 3=IP, 4=Ethernet, 5=Coding/Modulation, 6=Optical Wave, 7=Fiber
+        // Protocol index: 0=Data layer (static), 1=HTTP layer, 2=TLS layer, 3=TCP, 4=IP, 5=Ethernet, 6=Coding/Modulation layer, 7=Optical Wave layer, 8=Fiber layer
 
-        // Ruler mapping per protocol:
-        // network_transport: Network↔Transport boundary → aligned to the current layer's top edge
-        // link_network: Data Link↔Network boundary → aligned to the current layer's internal divider
-        // bearing_link: Bearer↔Data Link boundary → aligned to the current layer's bottom edge
+        // Ruler mapping for each protocol:
+        // transport_mux: Payload↔Multiplexing boundary → aligned to the current protocol layer's top edge (top)
+        // mux_network: Multiplexing↔Network boundary → aligned to the current protocol layer's upper divider (dividerMux)
+        // link_network: Network↔Link boundary → aligned to the current protocol layer's lower divider (dividerNet)
+        // bearing_link: Link↔Bearer boundary → aligned to the current protocol layer's bottom edge (bottom)
         const RULER_MAPPINGS = {
-            // Data layer: flat, no internal structure; treats all lower layers as its bearer
-            // → all three boundaries align to the data layer's bottom edge (start of bearer)
+            // Data layer: flat, no internal structure, treats all lower layers as the bearer layer
+            // → all four boundaries align to the data layer's bottom edge (where the bearer starts)
             'data': {
-                network_transport: { targetIndex: 0, boundary: 'bottom', state: null },
+                transport_mux: { targetIndex: 0, boundary: 'bottom', state: null },
+                iface_network: { targetIndex: 0, boundary: 'bottom', state: null },
+                mux_network: { targetIndex: 0, boundary: 'bottom', state: null },
                 link_network: { targetIndex: 0, boundary: 'bottom', state: null },
                 bearing_link: { targetIndex: 0, boundary: 'bottom', state: null }
             },
             'app': {
-                network_transport: { targetIndex: 1, boundary: 'top', state: null },
-                link_network: { targetIndex: 1, boundary: 'divider', state: 'highlight' },
+                transport_mux: { targetIndex: 1, boundary: 'top', state: null },
+                iface_network: { targetIndex: 1, boundary: 'dividerIface', state: null },
+                mux_network: { targetIndex: 1, boundary: 'dividerMux', state: null },
+                link_network: { targetIndex: 1, boundary: 'dividerNet', state: 'highlight' },
                 bearing_link: { targetIndex: 1, boundary: 'bottom', state: 'highlight' }
             },
-            'tcp': {
-                network_transport: { targetIndex: 2, boundary: 'top', state: null },
-                link_network: { targetIndex: 2, boundary: 'divider', state: 'glow' },
+            'tls': {
+                transport_mux: { targetIndex: 2, boundary: 'top', state: null },
+                iface_network: { targetIndex: 2, boundary: 'dividerIface', state: null },
+                mux_network: { targetIndex: 2, boundary: 'dividerMux', state: null },
+                link_network: { targetIndex: 2, boundary: 'dividerNet', state: 'highlight' },
                 bearing_link: { targetIndex: 2, boundary: 'bottom', state: 'highlight' }
             },
-            'ip': {
-                network_transport: { targetIndex: 3, boundary: 'top', state: 'glow' },
-                link_network: { targetIndex: 3, boundary: 'divider', state: 'glow' },
+            'tcp': {
+                transport_mux: { targetIndex: 3, boundary: 'top', state: null },
+                iface_network: { targetIndex: 3, boundary: 'dividerIface', state: 'glow' },
+                mux_network: { targetIndex: 3, boundary: 'dividerMux', state: 'glow' },
+                link_network: { targetIndex: 3, boundary: 'dividerNet', state: 'glow' },
                 bearing_link: { targetIndex: 3, boundary: 'bottom', state: 'highlight' }
             },
-            'eth': {
-                network_transport: { targetIndex: 4, boundary: 'top', state: 'glow' },
-                link_network: { targetIndex: 4, boundary: 'divider', state: 'glow' },
+            'ip': {
+                transport_mux: { targetIndex: 4, boundary: 'top', state: 'glow' },
+                iface_network: { targetIndex: 4, boundary: 'dividerIface', state: 'glow' },
+                mux_network: { targetIndex: 4, boundary: 'dividerMux', state: 'glow' },
+                link_network: { targetIndex: 4, boundary: 'dividerNet', state: 'glow' },
                 bearing_link: { targetIndex: 4, boundary: 'bottom', state: 'highlight' }
             },
-            'physical': {
-                network_transport: { targetIndex: 5, boundary: 'top', state: null },
-                link_network: { targetIndex: 5, boundary: 'divider', state: 'highlight' },
-                bearing_link: { targetIndex: 5, boundary: 'bottom', state: null }
+            'eth': {
+                transport_mux: { targetIndex: 5, boundary: 'top', state: 'glow' },
+                iface_network: { targetIndex: 5, boundary: 'dividerIface', state: 'glow' },
+                mux_network: { targetIndex: 5, boundary: 'dividerMux', state: 'glow' },
+                link_network: { targetIndex: 5, boundary: 'dividerNet', state: 'glow' },
+                bearing_link: { targetIndex: 5, boundary: 'bottom', state: 'highlight' }
             },
-            'wave': {
-                network_transport: { targetIndex: 6, boundary: 'top', state: null },
-                link_network: { targetIndex: 6, boundary: 'divider', state: 'highlight' },
+            'physical': {
+                transport_mux: { targetIndex: 6, boundary: 'top', state: null },
+                iface_network: { targetIndex: 6, boundary: 'dividerIface', state: 'highlight' },
+                mux_network: { targetIndex: 6, boundary: 'dividerMux', state: 'highlight' },
+                link_network: { targetIndex: 6, boundary: 'dividerNet', state: 'highlight' },
                 bearing_link: { targetIndex: 6, boundary: 'bottom', state: null }
             },
-            'fiber': {
-                network_transport: { targetIndex: 7, boundary: 'top', state: null },
-                link_network: { targetIndex: 7, boundary: 'divider', state: 'highlight' },
+            'wave': {
+                transport_mux: { targetIndex: 7, boundary: 'top', state: null },
+                iface_network: { targetIndex: 7, boundary: 'dividerIface', state: 'highlight' },
+                mux_network: { targetIndex: 7, boundary: 'dividerMux', state: 'highlight' },
+                link_network: { targetIndex: 7, boundary: 'dividerNet', state: 'highlight' },
                 bearing_link: { targetIndex: 7, boundary: 'bottom', state: null }
+            },
+            'fiber': {
+                transport_mux: { targetIndex: 8, boundary: 'top', state: null },
+                iface_network: { targetIndex: 8, boundary: 'dividerIface', state: 'highlight' },
+                mux_network: { targetIndex: 8, boundary: 'dividerMux', state: 'highlight' },
+                link_network: { targetIndex: 8, boundary: 'dividerNet', state: 'highlight' },
+                bearing_link: { targetIndex: 8, boundary: 'bottom', state: null }
             }
         };
 
         const layerEls = document.querySelectorAll('.layer');
         const hlines = {
-            network_transport: document.getElementById('hline-network-transport'),
+            transport_mux: document.getElementById('hline-transport-mux'),
+            iface_network: document.getElementById('hline-iface-network'),
+            mux_network: document.getElementById('hline-mux-network'),
             link_network: document.getElementById('hline-link-network'),
             bearing_link: document.getElementById('hline-bearing-link')
         };
         const vmarks = {
-            network_transport: document.getElementById('vmark-network-transport'),
+            transport_mux: document.getElementById('vmark-transport-mux'),
+            iface_network: document.getElementById('vmark-iface-network'),
+            mux_network: document.getElementById('vmark-mux-network'),
             link_network: document.getElementById('vmark-link-network'),
             bearing_link: document.getElementById('vmark-bearing-link')
         };
         const crosses = {
-            network_transport: document.getElementById('cross-network-transport'),
+            transport_mux: document.getElementById('cross-transport-mux'),
+            iface_network: document.getElementById('cross-iface-network'),
+            mux_network: document.getElementById('cross-mux-network'),
             link_network: document.getElementById('cross-link-network'),
             bearing_link: document.getElementById('cross-bearing-link')
         };
         const labels = {
             transport: document.getElementById('label-transport'),
+            interface: document.getElementById('label-interface'),
+            mux: document.getElementById('label-mux'),
             network: document.getElementById('label-network'),
             link: document.getElementById('label-link'),
             bearing: document.getElementById('label-bearing')
@@ -1018,6 +1184,7 @@
         const dividers = {
             data: document.getElementById('divider-data'),
             app: document.getElementById('divider-app'),
+            tls: document.getElementById('divider-tls'),
             tcp: document.getElementById('divider-tcp'),
             ip: document.getElementById('divider-ip'),
             eth: document.getElementById('divider-eth'),
@@ -1030,36 +1197,41 @@
         const rulerBody = document.getElementById('rulerBody');
 
         const DEFAULT_POSITIONS = {
-            network_transport: 0.25,
-            link_network: 0.50,
-            bearing_link: 0.75
+            transport_mux: 0.1667,
+            mux_network: 0.3333,
+            iface_network: 0.5000,
+            link_network: 0.6667,
+            bearing_link: 0.8333
         };
 
         // ============================================================
-        //  Get each layer's stable-state boundary positions (percentages)
-        //  Note: the cross-line top percentage is positioned relative to
-        //  .ruler-body, so pixel conversion is done directly against the
-        //  rulerBody to avoid misalignment from differing left/right
-        //  panel heights, borders, or padding.
+        //  Get the boundary position (percentage) of each layer in the
+        //  stack in its "stable state".
+        //  Note: the crosshair top percentage is positioned relative to
+        //  .ruler-body, so we convert at the pixel level using rulerBody
+        //  as the reference, to avoid misalignment caused by differences
+        //  in height/borders/padding between the left and right panels.
         //
-        //  Why compute from the stable layout instead of live measuring?
-        //  Measuring live during the .layer height transition (44px↔88px)
-        //  returns intermediate geometry, so a cross line would first be
-        //  placed at a wrong "compressed" position and only be corrected
-        //  by transitionend afterwards, appearing as a "shrink-then-expand"
-        //  jump. Computing directly from the final layout places each cross
-        //  line at its target in one shot, skipping that intermediate
+        //  Why compute from the "stable layout" instead of measuring live?
+        //  Measuring live during the layer height transition (44px↔88px)
+        //  returns intermediate geometry, so the crosshair is first
+        //  positioned at a wrong "compressed" spot and only corrected by
+        //  transitionend afterwards, appearing to "shrink to minimum then
+        //  expand". Computing directly from the final layout makes the
+        //  crosshair hit its target in one go, skipping that middle
         //  animation.
         // ============================================================
 
-        // Layout constants (collapsed layer height / gap / right panel top+bottom borders),
-        // read from computed styles to stay compatible with responsive breakpoints; captured at init.
+        // Layout constants (collapsed layer height / layer gap / right-panel
+        // top and bottom borders), read from computed styles to support
+        // responsive breakpoints; captured at initialization.
         let LAYOUT = captureLayout();
 
         function captureLayout() {
             const stack = document.getElementById('stack');
-            // Collapsed height = minimum over all layers: layers mid-transition are taller,
-            // so the minimum stably yields 44px (38px on narrow screens)
+            // Collapsed height takes the minimum of all layers: layers in
+            // transition are taller, so the minimum stably gives 44px
+            // (38px on narrow screens)
             const collapsed = Math.min(...Array.from(layerEls).map(l =>
                 parseFloat(getComputedStyle(l).height) || 0
             )) || 44;
@@ -1073,18 +1245,21 @@
         function getLayerBoundaries() {
             const stack = document.getElementById('stack');
             const rulerRect = rulerBody.getBoundingClientRect();
-            // Offset of the stack top relative to the ruler top (both panels sit at the top, ~-2px constant)
+            // Offset of the stack top relative to the ruler top (both panels
+            // are at their own top; this value is constant, about -2px)
             const stackTop = stack.getBoundingClientRect().top - rulerRect.top;
             const { collapsed, gap, borderV } = LAYOUT;
 
             const activeEl = document.querySelector('.layer.active');
             const activeIdx = activeEl ? Array.prototype.indexOf.call(layerEls, activeEl) : -1;
-            // Expanded height = pre-measured stable expanded height (captured at init/resize),
-            // avoiding jitter from mid-transition measurement; regular layers 88, medium/modulation taller
+            // Expanded height = the layer's pre-captured stable expanded
+            // height (measured at init/resize), avoiding jitter during the
+            // transition; ordinary layers 88, medium/coding-modulation
+            // layers etc. are taller per class
             const activeProto = activeEl ? activeEl.dataset.protocol : null;
             const expanded = (activeProto && LAYER_ACTIVE_H[activeProto]) || collapsed * 2;
 
-            // Stable-state ruler height = total stack height - right panel vertical borders
+            // Total ruler height in the stable state = total stack height - right panel's vertical borders
             const n = layerEls.length;
             const finalStackH = activeIdx >= 0
                 ? expanded + (n - 1) * collapsed + (n - 1) * gap
@@ -1097,16 +1272,21 @@
             layerEls.forEach((el, j) => {
                 const h = (j === activeIdx) ? expanded : collapsed;
                 const layerTopPx = stackTop + y;
-                // top/bottom use the layer's own boundaries (full height) so the ruler area isn't compressed
+                // top/bottom use the layer's own edges (full height) so the right ruler area is not compressed
                 const top = layerTopPx / finalRulerH;
                 const bottom = (layerTopPx + h) / finalRulerH;
-                // divider sits at the midpoint between the two rows (i.e., the layer center once centered),
-                // aligning with the left divider line
-                // the coding/modulation layer's network row is taller, so its divider offset is measured per-layer
+                // divider is positioned at the midpoint of the gap between
+                // the two rows (with the rows centered this is the layer
+                // midpoint), aligned with the left-side divider; the
+                // coding/modulation layer's network row is taller, so its
+                // divider position differs from ordinary layers — use the
+                // per-layer measured offset
                 const proto = el.dataset.protocol;
-                const divOffset = DIVIDER_OFFSETS[proto] || DIVIDER_OFFSET;
-                const divider = (layerTopPx + LAYER_BORDER_TOP + divOffset) / finalRulerH;
-                boundaries.push({ top, bottom, divider });
+                const offs = DIVIDER_OFFSETS[proto] || { dividerIface: DIVIDER_OFFSET, dividerMux: DIVIDER_OFFSET, dividerNet: DIVIDER_OFFSET };
+                const dividerIface = (layerTopPx + LAYER_BORDER_TOP + offs.dividerIface) / finalRulerH;
+                const dividerMux = (layerTopPx + LAYER_BORDER_TOP + offs.dividerMux) / finalRulerH;
+                const dividerNet = (layerTopPx + LAYER_BORDER_TOP + offs.dividerNet) / finalRulerH;
+                boundaries.push({ top, bottom, dividerIface, dividerMux, dividerNet });
                 y += h + gap;
             });
             return boundaries;
@@ -1114,9 +1294,10 @@
 
         // ============================================================
         //  Based on the full content width of each layer's name bar
-        //  (icon + name + badge), compute the leftmost column width and
-        //  apply it via the --namebar-w CSS variable, avoiding overflow
-        //  from hardcoded widths for long names.
+        //  (icon + name + badge), automatically compute the left column
+        //  width and apply it uniformly through the CSS variable
+        //  --namebar-w, avoiding overflow of long names caused by
+        //  hard-coded widths.
         // ============================================================
         function updateNameBarWidth() {
             let maxW = 0;
@@ -1124,8 +1305,8 @@
                 const bar = l.querySelector('.layer-name-bar');
                 const badge = l.querySelector('.badge');
                 if (!bar || !badge) return;
-                // Temporarily show the badge and let the name bar auto-size,
-                // measure the natural width, then restore
+                // Temporarily show the badge and let the name bar size to
+                // its content, measure the natural width, then restore
                 const prevBadge = badge.style.display;
                 const prevFlex = bar.style.flex;
                 badge.style.display = 'inline-block';
@@ -1139,51 +1320,59 @@
 
         function updateRuler(protocolKey) {
             const mapping = RULER_MAPPINGS[protocolKey];
-            // The topmost layer has no transport layer above it; the bottommost has no bearer below.
-            // Hovering these layers hides the corresponding "Transport"/"Bearer" labels.
+            // Above the topmost layer there is no payload layer; below the
+            // bottommost layer there is no bearer layer. When hovering
+            // those two layers, the corresponding "Payload"/"Bearer"
+            // labels in the ruler are hidden.
             const firstLayer = layerEls[0];
             const lastLayer = layerEls[layerEls.length - 1];
             const isTopLayer = !!(mapping && protocolKey === firstLayer.dataset.protocol);
             const isBottomLayer = !!(mapping && protocolKey === lastLayer.dataset.protocol);
-            // Data layer: flat, no internal structure; keep only the Bearer label
+            // Data layer: flat, no internal structure, keeps only the payload
+            // layer (the data layer itself is the payload) and the bearer layer
             const isFlatLayer = protocolKey === 'data';
             if (!mapping) {
-                const crossNames = ['network_transport', 'link_network', 'bearing_link'];
+                const crossNames = ['transport_mux', 'iface_network', 'mux_network', 'link_network', 'bearing_link'];
                 crossNames.forEach(name => {
                     const hline = hlines[name];
                     const vmark = vmarks[name];
                     const cross = crosses[name];
                     hline.className = 'hline';
                     vmark.className = 'vmark';
-                    cross.style.display = ''; // restore all boundaries visible on reset
+                    cross.style.display = ''; // on reset, restore all boundaries visible
                     const defaultPos = DEFAULT_POSITIONS[name] * 100;
                     cross.style.top = defaultPos + '%';
                 });
                 const defaultLabelPositions = {
-                    transport: 12.5,
-                    network: 37.5,
-                    link: 62.5,
-                    bearing: 87.5
+                    transport: 8.33,
+                    mux: 25,
+                    interface: 41.67,
+                    network: 58.33,
+                    link: 75,
+                    bearing: 91.67
                 };
                 Object.keys(labels).forEach(key => {
                     labels[key].className = 'ruler-label';
                     labels[key].style.top = defaultLabelPositions[key] + '%';
-                    labels[key].style.display = ''; // restore all labels visible on reset
+                    labels[key].style.display = ''; // on reset, restore all labels visible
                 });
                 rulerLine.className = 'ruler-line';
                 rulerPanel.classList.remove('active');
-                rulerPanel.classList.add('dimmed'); // no hover: ruler dimmed
+                rulerPanel.classList.add('dimmed'); // no hover: dim the ruler
                 return;
             }
 
             rulerPanel.classList.add('active');
-            rulerPanel.classList.remove('dimmed'); // hover: ruler becomes clear
+            rulerPanel.classList.remove('dimmed'); // hover: restore the ruler to full clarity
             rulerLine.className = 'ruler-line active';
 
             const boundaries = getLayerBoundaries();
             if (boundaries.length === 0) return;
 
-            const crossNames = ['network_transport', 'link_network', 'bearing_link'];
+            const activeLayerEl = document.querySelector('.layer.active');
+            const hasIfaceRow = !!(activeLayerEl && activeLayerEl.querySelector('.inner-row.iface-layer'));
+            const hasMuxRow = !!(activeLayerEl && activeLayerEl.querySelector('.inner-row.mux-layer'));
+            const crossNames = ['transport_mux', 'iface_network', 'mux_network', 'link_network', 'bearing_link'];
             crossNames.forEach(name => {
                 const hline = hlines[name];
                 const vmark = vmarks[name];
@@ -1200,8 +1389,12 @@
                         offset = b.top;
                     } else if (boundary === 'bottom') {
                         offset = b.bottom;
+                    } else if (boundary === 'dividerIface') {
+                        offset = b.dividerIface;
+                    } else if (boundary === 'dividerMux') {
+                        offset = b.dividerMux;
                     } else {
-                        offset = b.divider;
+                        offset = b.dividerNet;
                     }
                 } else {
                     offset = DEFAULT_POSITIONS[name];
@@ -1214,9 +1407,14 @@
                 hline.className = 'hline';
                 vmark.className = 'vmark';
 
-                // hide network_transport boundary when the transport layer doesn't exist (topmost);
-                // hide bearing_link boundary when the bearer doesn't exist (bottommost)
-                const hideCross = (name === 'network_transport' && isTopLayer) ||
+                // When the payload layer is absent (topmost layer) hide the
+                // boundary above it, transport_mux; when the multiplexing
+                // layer is absent (e.g., HTTP has no mux row) hide
+                // mux_network; when the bearer layer is absent (bottommost
+                // layer) hide the boundary above it, bearing_link
+                const hideCross = (name === 'transport_mux' && isTopLayer) ||
+                                  (name === 'iface_network' && !hasIfaceRow) ||
+                                  (name === 'mux_network' && !hasMuxRow) ||
                                   (name === 'bearing_link' && isBottomLayer);
                 cross.style.display = hideCross ? 'none' : '';
 
@@ -1229,7 +1427,7 @@
                 }
             });
 
-            // Get actual positions of the 3 cross lines
+            // get the actual positions of the crosshairs
             const crossPositions = {};
             crossNames.forEach(name => {
                 const cross = crosses[name];
@@ -1237,17 +1435,21 @@
                 crossPositions[name] = isNaN(pos) ? 0.25 : pos;
             });
 
-            // Update the positions of the 4 text labels
+            // update the positions of the text labels
             const labelPositions = {
-                transport: (0 + crossPositions.network_transport) / 2,
-                network: (crossPositions.network_transport + crossPositions.link_network) / 2,
+                transport: (0 + crossPositions.transport_mux) / 2,
+                mux: (crossPositions.transport_mux + crossPositions.mux_network) / 2,
+                interface: (crossPositions.mux_network + crossPositions.iface_network) / 2,
+                network: (crossPositions.iface_network + crossPositions.link_network) / 2,
                 link: (crossPositions.link_network + crossPositions.bearing_link) / 2,
                 bearing: (crossPositions.bearing_link + 1) / 2
             };
 
             const labelStates = {
-                transport: mapping.network_transport.state,
-                network: mapping.network_transport.state,
+                transport: mapping.transport_mux.state,
+                mux: mapping.mux_network.state,
+                interface: mapping.iface_network.state,
+                network: mapping.mux_network.state,
                 link: mapping.link_network.state,
                 bearing: mapping.bearing_link.state
             };
@@ -1259,15 +1461,24 @@
                 const clampedPos = Math.max(0.02, Math.min(0.98, pos));
                 label.style.top = (clampedPos * 100) + '%';
                 label.className = 'ruler-label';
-                // Data layer (flat): no transport/network/link sub-layers, keep only Bearer
+                // Data layer (flat): no mux/network/link sublayers, keep the
+                // payload label (the data layer is itself the payload) and
+                // the bearer label
                 if (isFlatLayer) {
-                    label.style.display = (key === 'bearing') ? '' : 'none';
+                    label.style.display = (key === 'bearing' || key === 'transport') ? '' : 'none';
                 } else {
-                    // first restore all labels visible (avoid leftover hidden state)
+                    // restore all labels visible first (avoid residual
+                    // hidden states from the data layer)
                     label.style.display = '';
-                    // no transport above the topmost layer, no bearer below the bottommost → hide labels
+                    // no payload above the topmost layer, missing
+                    // multiplexing (e.g., HTTP), no bearer below the
+                    // bottommost layer → hide the corresponding labels
                     if (key === 'transport') {
                         label.style.display = isTopLayer ? 'none' : '';
+                    } else if (key === 'interface') {
+                        label.style.display = hasIfaceRow ? '' : 'none';
+                    } else if (key === 'mux') {
+                        label.style.display = hasMuxRow ? '' : 'none';
                     } else if (key === 'bearing') {
                         label.style.display = isBottomLayer ? 'none' : '';
                     }
@@ -1280,26 +1491,33 @@
             });
         }
 
-        // Update the left divider lines
-        // Fixed offset of the divider relative to the layer's top (padding box) in px:
-        // = midpoint of the gap between the "Network" and "Data Link" rows − layer top.
-        // All expandable layers share the same internal structure, so this offset is a
-        // constant independent of the layer's position; measure once at init/resize.
-        // Using a constant avoids the "rise-then-fall" mid-transition animation.
-        let DIVIDER_OFFSET = 46;      // offset of the divider from the layer's padding-box top (used by updateDividers)
-        let LAYER_BORDER_TOP = 2;     // layer top border width (used by getLayerBoundaries to convert divider position)
-        // Per-protocol divider offset: the coding/modulation layer's network row is taller,
-        // so its divider position differs from regular layers and is measured per-layer.
+        // update the left-side dividers
+        // fixed offset (px) of the divider relative to the layer top
+        // (padding box): = midpoint of the gap between the "network" and
+        // "link" rows − layer top. All expandable layers share the same
+        // internal structure, so this offset is constant and independent
+        // of the layer's position in the stack; it only needs to be
+        // measured once at init/resize. Using the constant avoids the
+        // "rise then fall" middle animation caused by measuring during
+        // the transition.
+        let DIVIDER_OFFSET = 46;      // offset of the divider relative to the layer's padding-box top (used by updateDividers)
+        let LAYER_BORDER_TOP = 2;     // layer top border width (used by getLayerBoundaries to convert divider absolute position)
+        // per-protocol divider offset: the coding/modulation layer's
+        // network row is taller, so its divider position differs from
+        // ordinary layers and must be measured per layer.
         let DIVIDER_OFFSETS = {};
 
-        function measureDividerOffset(el) {
+        function measureRowOffsets(el) {
             const sample = el || document.getElementById('layer-app');
             const body = sample && sample.querySelector('.layer-body');
+            const ifaceRow = body && body.querySelector('.inner-row.iface-layer');
+            const muxRow = body && body.querySelector('.inner-row.mux-layer');
             const netRow = body && body.querySelector('.inner-row.net-layer');
             const linkRow = body && body.querySelector('.inner-row.link-layer');
-            if (!sample || !body || !netRow || !linkRow) return 46;
-            // Temporarily disable layer/body transitions and expand, then read the final layout
-            // (measured synchronously, restored without flicker)
+            if (!sample || !body || !netRow || !linkRow) return { dividerIface: 46, dividerMux: 46, dividerNet: 46 };
+            // temporarily disable the layer/body transitions and expand,
+            // reading the final layout directly (restored synchronously
+            // afterwards, no flicker)
             const prevSampleTrans = sample.style.transition;
             const prevBodyTrans = body.style.transition;
             sample.style.transition = 'none';
@@ -1307,27 +1525,49 @@
             sample.classList.add('active');
             const layerRect = sample.getBoundingClientRect();
             const borderTop = parseFloat(getComputedStyle(sample).borderTopWidth) || 0;
+            const layerTopPx = layerRect.top + borderTop;
             const netRect = netRow.getBoundingClientRect();
+            const ifaceRect = ifaceRow ? ifaceRow.getBoundingClientRect() : null;
             const linkRect = linkRow.getBoundingClientRect();
-            const gapMid = (netRect.bottom + linkRect.top) / 2;
+            const linkMid = (netRect.bottom + linkRect.top) / 2;
+            // Interface↔Network boundary: midpoint between the interface row bottom and the network row top
+            let ifaceMid = netRect.top;
+            if (ifaceRect) {
+                ifaceMid = (ifaceRect.bottom + netRect.top) / 2;
+            }
+            // Multiplexing↔Interface boundary: midpoint between the mux row bottom and the interface row top
+            // (falls back to the interface row top when the mux row is absent)
+            let muxMid = ifaceRect ? ifaceRect.top : netRect.top;
+            if (muxRow && ifaceRect) {
+                const muxRect = muxRow.getBoundingClientRect();
+                muxMid = (muxRect.bottom + ifaceRect.top) / 2;
+            }
             sample.classList.remove('active');
             sample.style.transition = prevSampleTrans;
             body.style.transition = prevBodyTrans;
             LAYER_BORDER_TOP = borderTop;
-            return Math.round(gapMid - (layerRect.top + borderTop));
+            return {
+                dividerIface: Math.round(ifaceMid - layerTopPx),
+                dividerMux: Math.round(muxMid - layerTopPx),
+                dividerNet: Math.round(linkMid - layerTopPx)
+            };
         }
 
-        // Stable expanded height per protocol (regular 88px; medium/modulation layers taller)
+        // stable expanded height of each protocol layer (ordinary 88px;
+        // medium/coding-modulation layers etc. are taller per class)
         let LAYER_ACTIVE_H = {};
 
-        // At init/resize: measure each layer's divider offset and expanded height (incl. coding/modulation)
+        // at init/resize: measure the divider offset and expanded height
+        // of every protocol layer (including the coding/modulation layer)
         function updateDividerOffsets() {
-            DIVIDER_OFFSET = measureDividerOffset(document.getElementById('layer-app'));
             DIVIDER_OFFSETS = {};
             layerEls.forEach(l => {
-                DIVIDER_OFFSETS[l.dataset.protocol] = measureDividerOffset(l);
+                DIVIDER_OFFSETS[l.dataset.protocol] = measureRowOffsets(l);
             });
-            // Capture each layer's stable expanded height (temporarily expand, measure, restore; no flicker)
+            const appOff = DIVIDER_OFFSETS['app'] || { dividerNet: 46 };
+            DIVIDER_OFFSET = appOff.dividerNet;
+            // capture each layer's stable expanded height (temporarily
+            // expand, measure, then restore — no flicker)
             layerEls.forEach(l => {
                 const prevTrans = l.style.transition;
                 l.style.transition = 'none';
@@ -1339,32 +1579,18 @@
         }
 
         function updateDividers(protocolKey) {
+            // the divider between the network layer and the link layer has
+            // been removed: no layer-divider is shown on the left anymore
+            // (the right-side ruler logic is unchanged)
             Object.keys(dividers).forEach(key => {
                 const div = dividers[key];
                 div.style.display = 'none';
             });
-
-            if (!protocolKey || !RULER_MAPPINGS[protocolKey]) return;
-
-            const activeLayer = document.querySelector('.layer.active');
-            if (!activeLayer) return;
-
-            const protocol = activeLayer.dataset.protocol;
-            if (protocol !== protocolKey) return;
-
-            const divider = dividers[protocolKey];
-            if (!divider) return;
-
-            divider.style.display = 'block';
-            // Use the fixed offset directly (final position), without measuring mid-transition geometry
-            // The coding/modulation layer's divider position differs from regular layers; use per-layer offset
-            divider.style.top = (DIVIDER_OFFSETS[protocolKey] || DIVIDER_OFFSET) + 'px';
-            divider.style.transform = 'translateY(-50%)';
         }
 
-        // Use requestAnimationFrame to ensure layout stability
+        // use requestAnimationFrame to ensure a stable layout
         function updateAll(protocolKey) {
-            // let the browser finish layout updates first
+            // let the browser finish the layout update first
             requestAnimationFrame(() => {
                 // wait one more frame to ensure all sizes are stable
                 requestAnimationFrame(() => {
@@ -1376,13 +1602,14 @@
 
         // ============================================================
         //  Interaction
-        //  Reset uses a "grace delay": while the mouse moves between
-        //  protocols, even briefly passing through inter-layer gaps or
-        //  panel gaps, reset (collapse to minimum) is not triggered
-        //  immediately. It only resets once the grace period elapses
-        //  with no protocol layer hovered. This lets switching between
-        //  protocols transition directly from A to B, skipping the
-        //  "collapse-then-expand" intermediate animation.
+        //  Reset uses a "grace delay": when the mouse moves between
+        //  protocols, even if it briefly passes over layer gaps/panel
+        //  gaps, it will not immediately trigger a reset (collapse to
+        //  minimum); it only resets once the grace period ends and no
+        //  protocol layer is hovered. This way switching between
+        //  protocols transitions directly from state A to state B,
+        //  skipping the intermediate "shrink to minimum then expand"
+        //  animation.
         // ============================================================
         let resetTimer = null;
 
@@ -1406,8 +1633,9 @@
                 const protocol = this.dataset.protocol;
                 if (!protocol) return;
 
-                // Static layer (data): no expansion, no internal structure;
-                // on hover clear highlights and show "all lower layers = bearer" on the ruler
+                // static layer (data layer): does not expand and has no
+                // internal structure; on hover clear the highlights and
+                // show "all lower layers = bearer" in the ruler
                 if (this.classList.contains('layer-static')) {
                     layerEls.forEach(l => {
                         l.classList.remove('active', 'inactive');
@@ -1430,16 +1658,18 @@
             });
 
             layer.addEventListener('mouseleave', function(e) {
-                // 250ms grace period: entering another protocol during this cancels the reset
+                // 250ms grace period: entering another protocol during it
+                // cancels the reset
                 scheduleReset(250);
             });
         });
 
         // ============================================================
-        //  Re-align after the height transition ends
-        //  .layer.active height transitions from 44px to 88px over 0.4s;
-        //  measuring mid-transition would yield inaccurate percentages,
-        //  so recompute once the transition ends (geometry is stable).
+        //  Realign after the height transition ends
+        //  .layer.active height transitions from 44px to 88px over 0.4s.
+        //  Measuring during the transition yields inaccurate percentages,
+        //  so after the height transition ends (geometry is stable) we
+        //  recompute once to ensure the final perfect alignment.
         // ============================================================
         let recalcScheduled = false;
         layerEls.forEach((layer) => {
@@ -1462,7 +1692,8 @@
 
         const container = document.querySelector('.container');
         container.addEventListener('mouseleave', function() {
-            // leaving the container counts as a real leave; use a shorter grace period to reset quickly
+            // leaving the container counts as a true leave; use a shorter
+            // grace period to reset promptly
             scheduleReset(40);
         });
 
@@ -1470,8 +1701,9 @@
         window.addEventListener('resize', function() {
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => {
-                // re-capture layout constants (narrow-screen breakpoints change layer height),
-                // leftmost column width, and divider offsets
+                // recapture layout constants (narrow-screen breakpoints
+                // change layer heights), the left-column width, and the
+                // divider offsets
                 LAYOUT = captureLayout();
                 updateNameBarWidth();
                 updateDividerOffsets();
@@ -1486,7 +1718,7 @@
         });
 
         // ============================================================
-        //  Initialization: automatically compute the leftmost column width
+        //  Initialization: automatically compute the left-column width
         // ============================================================
         updateNameBarWidth();
         updateDividerOffsets();
@@ -1494,15 +1726,15 @@
             document.fonts.ready.then(updateNameBarWidth);
         }
 
-        // Initial no-hover state: no protocol highlighted automatically;
-        // the right ruler stays dimmed, waiting for user hover.
-        // Apply the neutral ruler layout immediately so labels and
-        // boundary lines start at their default positions rather than
-        // stacking at the top of the ruler before the first hover.
+        // initially in the no-hover state: no protocol is highlighted
+        // automatically, and the right-side ruler stays dimmed, waiting
+        // for the user to hover. After the page loads, apply the ruler's
+        // neutral layout immediately so the labels and boundaries start
+        // at their default positions rather than stacking at the top of
+        // the ruler before the first hover.
         updateRuler(null);
 
     })();
 </script>
 
-</body>
-</html>
+</body></html>
