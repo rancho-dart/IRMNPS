@@ -215,8 +215,8 @@
             font-weight: 600;
             background: #f6f8fa;
         }
-        .cp-table .cp-head .cp-control { color: #8250df; }
-        .cp-table .cp-head .cp-forward { color: #1a7f37; }
+        .cp-table .cp-head .cp-control { color: #0969da; }
+        .cp-table .cp-head .cp-forward { color: #0969da; }
         /* 网络层说明行（位于 2×2 表格上方；如 HTTP：直连可达，跨节点转发由外部转发器实现） */
         .cp-table .cp-row.cp-note .cp-cell {
             justify-content: flex-start;
@@ -224,7 +224,7 @@
             color: #656d76;
             padding: 3px 10px;
         }
-        /* 内容行：芯片样式 */
+        /* 内容行：芯片样式（网络层统一蓝色；控制面/转发面仅以文字标签区分） */
         .cp-table .cp-body .cp-cell .hl {
             font-size: 10px;
             padding: 0 6px;
@@ -233,24 +233,20 @@
         .cp-table .cp-body .cp-cell .dim {
             font-size: 10px;
         }
-        .cp-table .cp-body .cp-control .hl {
-            color: #8250df;
-            background: #f3eafc;
-            border: 1px solid #d8c4ef;
-        }
-        .cp-table .cp-body .cp-control .dim { color: #8b62c9; }
-        /* 控制面：静态（紫）与动态（蓝）协议以色彩区分 */
-        .cp-table .cp-body .cp-control .hl.dyn {
+        .cp-table .cp-body .cp-control .hl,
+        .cp-table .cp-body .cp-forward .hl {
             color: #0969da;
             background: #eaf3ff;
-            border-color: #bfd8f5;
+            border: 1px solid #bfd8f5;
         }
-        .cp-table .cp-body .cp-forward .hl {
-            color: #1a7f37;
-            background: #e8f6ec;
-            border: 1px solid #bfe0c9;
+        .cp-table .cp-body .cp-control .dim,
+        .cp-table .cp-body .cp-forward .dim { color: #6e88b0; }
+        /* 动态控制面（OSPF/BGP/GMPLS 等）用更深一档蓝色 */
+        .cp-table .cp-body .cp-control .hl.dyn {
+            color: #0550ae;
+            background: #dce9fb;
+            border-color: #9db8e8;
         }
-        .cp-table .cp-body .cp-forward .dim { color: #2da44e; }
 
         /* 网络层展开高度由内容自适应（2×2 表格），随窗口宽度自动伸缩 */
         .layer.layer-tall.active {
@@ -281,22 +277,22 @@
             border: 1px solid #eae2a8;
         }
 
-        /* 选链层：青色/蓝绿色（区别于复用层琥珀、网络层蓝、链路层绿、控制面紫） */
-        .layer-tall .inner-row.select-layer {
+        /* 端路层：紫色/靛蓝（区别于复用层琥珀、网络层蓝、链路层绿、接口层品红） */
+        .layer-tall .inner-row.select-end-layer {
             height: auto;
             min-height: 32px;
             padding: 4px 12px;
         }
-        .inner-row.select-layer .tag {
-            color: #0a7e8c;
+        .inner-row.select-end-layer .tag {
+            color: #8250df;
         }
-        .inner-row.select-layer .desc .hl {
-            color: #0a7e8c;
-            background: #e0f2f4;
-            border: 1px solid #a8d5da;
+        .inner-row.select-end-layer .desc .hl {
+            color: #8250df;
+            background: #f3eafc;
+            border: 1px solid #d8c4ef;
         }
 
-        /* 接口层：品红/粉紫（位于网络层之上；区别于网络层蓝、链路层绿、选链层青、复用层琥珀、控制面紫） */
+        /* 接口层：品红/粉紫（位于网络层之上；区别于网络层蓝、链路层绿、复用层琥珀、控制面紫） */
         .layer-tall .inner-row.iface-layer {
             height: auto;
             min-height: 32px;
@@ -326,8 +322,8 @@
             min-width: 52px;
             flex-shrink: 0;
         }
-        /* 下行接口层：与上行接口同族（品红），位于层底部，作为向下交付的出口；
-           虚线左边框提示其位于层底边界（边框颜色/虚线规则见下方通用规则之后） */
+        /* 下接口层：与上接口同族（品红），位于层底部，作为向下交付的出口；
+           左边框与上接口同为实线（同族标识） */
 
         /* 编码调制层控制面：静态（紫）/ 动态（蓝）两组，仅用色彩区分 */
         .cp-table .cp-body .cp-control .cp-group {
@@ -497,9 +493,8 @@
             display: flex;
         }
 
-        /* 选链层：青色/蓝绿色（区别于复用层琥珀、网络层蓝、链路层绿、控制面紫） */
-        .inner-row.select-layer {
-            border-left-color: #0a7e8c;
+        .inner-row.select-end-layer {
+            border-left-color: #8250df;
         }
 
         /* 接口层：品红/粉紫 */
@@ -508,7 +503,6 @@
         }
         .inner-row.down-iface-layer {
             border-left-color: #bf3989;
-            border-left-style: dashed;
         }
 
         .inner-row.net-layer {
@@ -523,6 +517,11 @@
         }
         .inner-row.link-layer .tag {
             color: #1a7f37;
+        }
+        .inner-row.link-layer .desc .hl {
+            color: #1a7f37;
+            background: #e8f6ec;
+            border: 1px solid #bfe0c9;
         }
 
         .inner-row.null-layer {
@@ -556,6 +555,11 @@
             border-radius: 10px;
             border: 1px solid #bfd8f5;
             font-size: 12px;
+        }
+
+        /* 异端（如 NAT 映射、MITM）：文字标红，保留默认芯片底色 */
+        .inner-row .desc .hl.anomaly {
+            color: #cf222e;
         }
 
         .inner-row .desc .dim {
@@ -691,7 +695,7 @@
             z-index: 1;
         }
 
-        /* 背景色带：上行接口区 / 中间区 / 下行接口区。
+        /* 背景色带：上接口区 / 中间区 / 下接口区。
            灰色、无圆角；颜色在左右两侧淡出（横向渐变）。
            两个接口层各加一条较淡的灰色背景，
            两接口层之间的各层再覆盖一条更淡的背景加以区分 */
@@ -801,16 +805,16 @@
                             <span class="tag">📦 链路</span>
                             <span class="desc"><span class="hl">Keep-Alive（连接复用）</span> <span class="hl">压缩（Gzip等）</span> <span class="hl">缓存</span></span>
                         </div>
-                        <div class="inner-row select-layer">
-                            <span class="tag">🧭 选链</span>
-                            <span class="desc"><span class="hl">流拣选</span> <span class="dim">（根据 Stream ID 为每个请求/响应分配独立流，实现并行传输）</span></span>
-                        </div>
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
                             <span class="desc"><span class="hl">多路复用（Stream ID）</span> <span class="dim">（在下层提供的端到端透明承载通道上创建多个并行传输的请求/响应流）</span></span>
                         </div>
+                        <div class="inner-row select-end-layer">
+                            <span class="tag">🎯 端路</span>
+                            <span class="desc"><span class="null-box">空</span> <span class="dim">（承载层 TLS 已提供端到端通道，本层无需再建立）</span></span>
+                        </div>
                         <div class="inner-row iface-layer down-iface-layer">
-                            <span class="tag">🧩 下行接口</span>
+                            <span class="tag">🧩 下接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">目标</span>
@@ -843,10 +847,11 @@
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row iface-layer">
-                            <span class="tag">🧩 上行接口</span>
+                            <span class="tag">🧩 上接口</span>
                             <span class="desc">
                                 <span class="iface-item">
-                                    <span class="iface-key">承诺</span>
+                                    <span class="iface-key">类型</span>
+                                    <span class="hl">端到端连接</span>
                                     <span class="hl">机密性（加密）</span>
                                     <span class="hl">完整性（防篡改校验）</span>
                                     <span class="hl">身份认证（对端可验证）</span>
@@ -868,41 +873,29 @@
                                 </span>
                             </span>
                         </div>
-                        <div class="inner-row net-layer">
+                        <div class="inner-row net-layer" style="min-height:32px;">
                             <span class="tag">🌐 网络</span>
-                            <span class="desc cp-table">
-                                <span class="cp-row cp-head">
-                                    <span class="cp-cell cp-control">控制面</span>
-                                    <span class="cp-cell cp-forward">转发面</span>
-                                </span>
-                                <span class="cp-row cp-body">
-                                    <span class="cp-cell cp-control">
-                                        <span class="null-box">空</span>
-                                        <span class="dim">（TLS设计目标禁止被转发）</span>
-                                    </span>
-                                    <span class="cp-cell cp-forward">
-                                        <span class="null-box">空</span>
-                                        <span class="dim">（TLS设计目标禁止被转发）</span>
-                                        <span class="hl">MITM</span>
-                                        <span class="dim">（违反设计目标的攻击行为）</span>
-                                    </span>
-                                </span>
-                            </span>
+                            <span class="desc"><span class="null-box">空</span> <span class="dim">（TLS 无网络层职能，设计目标禁止被转发）</span></span>
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 链路</span>
-                            <span class="desc"><span class="hl">加密</span> <span class="hl">身份认证</span> <span class="hl">完整性校验</span></span>
-                        </div>
-                        <div class="inner-row select-layer">
-                            <span class="tag">🧭 选链</span>
-                            <span class="desc"><span class="null-box">空</span> <span class="dim">（下层提供单一端到端链路）</span></span>
+                            <span class="desc">
+                                <span class="hl">加密</span>
+                                <span class="hl">身份认证</span>
+                                <span class="hl">完整性校验</span>
+                                <span class="hl anomaly">MITM（违反设计目标的攻击行为）</span>
+                            </span>
                         </div>
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
                             <span class="desc"><span class="null-box">空</span> </span>
                         </div>
+                        <div class="inner-row select-end-layer">
+                            <span class="tag">🎯 端路</span>
+                            <span class="desc"><span class="null-box">空</span> <span class="dim">（承载层 TCP 已提供端到端通道，本层无需再建立）</span></span>
+                        </div>
                         <div class="inner-row iface-layer down-iface-layer">
-                            <span class="tag">🧩 下行接口</span>
+                            <span class="tag">🧩 下接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">目标</span>
@@ -940,13 +933,13 @@
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row iface-layer">
-                            <span class="tag">🧩 上行接口</span>
+                            <span class="tag">🧩 上接口</span>
                             <span class="desc">
                                 <span class="iface-item">
-                                    <span class="iface-key">承诺</span>
+                                    <span class="iface-key">类型</span>
+                                    <span class="hl">端到端连接</span>
                                     <span class="hl">可靠有序（不丢不重）</span>
                                     <span class="hl">全双工字节流</span>
-                                    <span class="hl">流控 / 拥塞控制</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">参数</span>
@@ -964,52 +957,31 @@
                                 </span>
                             </span>
                         </div>
-                        <div class="inner-row net-layer">
+                        <div class="inner-row net-layer" style="min-height:32px;">
                             <span class="tag">🌐 网络</span>
-                            <span class="desc cp-table">
-                                <span class="cp-row cp-head">
-                                    <span class="cp-cell cp-control">控制面</span>
-                                    <span class="cp-cell cp-forward">转发面</span>
-                                </span>
-                                <span class="cp-row cp-body">
-                                    <span class="cp-cell cp-control">
-                                        <span class="cp-mode">
-                                            <span class="cp-mode-tag">网络模式（NAT）</span>
-                                            <span class="hl">NAT映射规则管理</span>
-                                        </span>
-                                        <span class="cp-mode">
-                                            <span class="cp-mode-tag">SSH端口转发</span>
-                                            <span class="hl">SSH转发规则配置（-L / -R / -D）</span>
-                                        </span>
-                                    </span>
-                                    <span class="cp-cell cp-forward">
-                                        <span class="cp-mode">
-                                            <span class="cp-mode-tag">网络模式（NAT）</span>
-                                            <span class="hl">查NAT映射表→内部主机</span>
-                                        </span>
-                                        <span class="cp-mode">
-                                            <span class="cp-mode-tag">SSH端口转发</span>
-                                            <span class="hl">查SSH转发规则→远端主机</span>
-                                        </span>
-                                    </span>
-                                </span>
-                            </span>
+                            <span class="desc"><span class="null-box">空</span> <span class="dim">（TCP 无网络层职能，转发全由下层 IP 层承担）</span></span>
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 链路</span>
-                            <span class="desc"><span class="hl">连接状态管理（SYN/EST/FIN）</span> <span class="hl">校验和</span> <span class="hl">重传</span> <span class="hl">流控</span></span>
-                        </div>
-                        <div class="inner-row select-layer">
-                            <span class="tag">🧭 选链</span>
-                            <span class="desc"><span class="hl">地址族拣选（IPv4 / IPv6）</span> <span class="hl">五元组拣选</span> <span class="dim">（先选地址族，再从复用后的会话空间中拣选唯一会话）</span></span>
+                            <span class="desc">
+                                <span class="hl">连接状态管理（SYN/EST/FIN）</span>
+                                <span class="hl">校验和</span>
+                                <span class="hl">重传</span>
+                                <span class="hl">流控</span>
+                                <span class="hl anomaly">NAT映射</span>
+                            </span>
                         </div>
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
                             <span class="desc"><span class="hl">IPv4：全网连接复用（目标IPv4 + 目标端口 + 源端口）</span> <span class="dim">—— 创建 2³² × 2¹⁶ × 2¹⁶ 的会话空间</span></span>
                             <span class="desc"><span class="hl">IPv6：全网连接复用（目标IPv6 + 目标端口 + 源端口）</span> <span class="dim">—— 创建 2¹²⁸ × 2¹⁶ × 2¹⁶ 的会话空间</span></span>
                         </div>
+                        <div class="inner-row select-end-layer">
+                            <span class="tag">🎯 端路</span>
+                            <span class="desc"><span class="hl">建立到目标IP的逻辑通道</span> <span class="dim">（承载层 IP 为全连通的无连接服务，仅仅提供目标IP即可视为到目标的点到点通道已确定）</span></span>
+                        </div>
                         <div class="inner-row iface-layer down-iface-layer">
-                            <span class="tag">🧩 下行接口</span>
+                            <span class="tag">🧩 下接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">目标</span>
@@ -1049,13 +1021,14 @@
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row iface-layer">
-                            <span class="tag">🧩 上行接口</span>
+                            <span class="tag">🧩 上接口</span>
                             <span class="desc">
                                 <span class="iface-item">
-                                    <span class="iface-key">承诺</span>
-                                    <span class="hl">尽力而为投递（不保证可靠）</span>
-                                    <span class="hl">数据报传输（以 IP 数据报为单位）</span>
-                                    <span class="hl">统一寻址（IP 地址）</span>
+                                    <span class="iface-key">类型</span>
+                                    <span class="hl">全连通网络</span>
+                                    <span class="hl">统一寻址</span>
+                                    <span class="hl">数据包传输</span>
+                                    <span class="hl">尽力而为投递</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">参数</span>
@@ -1094,7 +1067,7 @@
                                         <span class="dim">（对内信令）</span>
                                     </span>
                                     <span class="cp-cell cp-forward">
-                                        <span class="hl">查表</span>
+                                        <span class="hl">路由查表选目标端口（出口/下一跳）</span>
                                         <span class="hl">搬包</span>
                                         <span class="hl">封装解封装</span>
                                         <span class="hl">TTL处理（每跳减1，超时丢弃）</span>
@@ -1107,16 +1080,16 @@
                             <span class="tag">📦 链路</span>
                             <span class="desc"><span class="hl">分片重组</span> <span class="hl">头部校验</span> <span class="hl">生存时间管理</span></span>
                         </div>
-                        <div class="inner-row select-layer">
-                            <span class="tag">🧭 选链</span>
-                            <span class="desc"><span class="hl">ARP拣选</span> <span class="dim">（从以太网层提供的广播域可达集合中拣选目标MAC）</span></span>
-                        </div>
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
-                            <span class="desc"><span class="hl">VLAN Tag复用（802.1Q）</span> <span class="hl">Type字段复用（IPv4 / ARP / IPv6）</span></span>
+                            <span class="desc"><span class="hl">Type字段复用（IPv4 / ARP / IPv6）</span></span>
+                        </div>
+                        <div class="inner-row select-end-layer">
+                            <span class="tag">🎯 端路</span>
+                            <span class="desc"><span class="hl">ARP（映射IP→MAC）</span> <span class="dim">（每次成功ARP建立一条IP→MAC的端到端连接，同一主机的多次ARP形成MAC表；本层经MAC表选择目标MAC——此为网络层经路由表选目标端口之后的第二次转发选择）</span></span>
                         </div>
                         <div class="inner-row iface-layer down-iface-layer">
-                            <span class="tag">🧩 下行接口</span>
+                            <span class="tag">🧩 下接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">目标</span>
@@ -1156,11 +1129,12 @@
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row iface-layer">
-                            <span class="tag">🧩 上行接口</span>
+                            <span class="tag">🧩 上接口</span>
                             <span class="desc">
                                 <span class="iface-item">
-                                    <span class="iface-key">承诺</span>
-                                    <span class="hl">传输最大 1500 字节数据包</span>
+                                    <span class="iface-key">类型</span>
+                                    <span class="hl">全连通网络</span>
+                                    <span class="hl">数据包传输（最大1500字节）</span>
                                     <span class="hl">尽力而为交付</span>
                                 </span>
                                 <span class="iface-item">
@@ -1191,18 +1165,16 @@
                                 </span>
                                 <span class="cp-row cp-body">
                                     <span class="cp-cell cp-control">
+                                        <span class="hl">VLAN 划分/配置</span>
                                         <span class="hl dyn">MAC地址学习（生成转发依据）</span>
                                         <span class="hl">PBB-TE (802.1Qay)</span>
-                                        <span class="hl dyn">G.8080 ASON</span>
                                         <span class="hl">MAC-in-MAC + 控制平面</span>
-                                        <span class="hl">地址空间分割</span>
-                                        <span class="dim">（对内信令）</span>
                                     </span>
                                     <span class="cp-cell cp-forward">
-                                        <span class="hl">根据MAC地址查表转发</span>
+                                        <span class="hl">按 VLAN 限定广播域</span>
+                                        <span class="hl">按 MAC 地址转发</span>
                                         <span class="hl">泛洪</span>
                                         <span class="hl">过滤</span>
-                                        <span class="dim">（对外服务）</span>
                                     </span>
                                 </span>
                             </span>
@@ -1217,16 +1189,16 @@
                                 <span class="dim">（不保证可靠，但会尽力重传）</span>
                             </span>
                         </div>
-                        <div class="inner-row select-layer">
-                            <span class="tag">🧭 选链</span>
-                            <span class="desc"><span class="null-box">无</span> <span class="dim">（下层提供单条通道无须拣选）</span></span>
-                        </div>
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
                             <span class="desc"><span class="null-box">无</span> <span class="dim">（下层编码调制层提供单条物理通道，以太网不复用）</span></span>
                         </div>
+                        <div class="inner-row select-end-layer">
+                            <span class="tag">🎯 端路</span>
+                            <span class="desc"><span class="null-box">空</span> <span class="dim">（承载层编码调制已提供端到端物理通道，本层无需再建立）</span></span>
+                        </div>
                         <div class="inner-row iface-layer down-iface-layer">
-                            <span class="tag">🧩 下行接口</span>
+                            <span class="tag">🧩 下接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">目标</span>
@@ -1265,10 +1237,10 @@
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row iface-layer">
-                            <span class="tag">🧩 上行接口</span>
+                            <span class="tag">🧩 上接口</span>
                             <span class="desc">
                                 <span class="iface-item">
-                                    <span class="iface-key">承诺</span>
+                                    <span class="iface-key">类型</span>
                                     <span class="hl">透明比特流传输（双向）</span>
                                 </span>
                                 <span class="iface-item">
@@ -1315,16 +1287,16 @@
                             <span class="tag">📦 链路</span>
                             <span class="desc"><span class="hl">数字 ↔ 物理信号映射（NRZ/PAM4/QAM）</span> <span class="hl">波长调制参数配置（中心频率/调制格式/FEC/功率）</span></span>
                         </div>
-                        <div class="inner-row select-layer">
-                            <span class="tag">🧭 选链</span>
-                            <span class="desc"><span class="hl">码道拣选</span> <span class="dim">（从复用层提供的多个码分通道中拣选一个或多个；注：不适用于标准以太网）</span></span>
-                        </div>
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
                             <span class="desc"><span class="hl">码分复用（CDMA）</span> <span class="dim">—— 在单一波长上通过不同扩频码区分多个并行通道（注：不适用于标准以太网）</span></span>
                         </div>
+                        <div class="inner-row select-end-layer">
+                            <span class="tag">🎯 端路</span>
+                            <span class="desc"><span class="null-box">空</span> <span class="dim">（承载层光波已提供端到端波长通道，本层无需再建立）</span></span>
+                        </div>
                         <div class="inner-row iface-layer down-iface-layer">
-                            <span class="tag">🧩 下行接口</span>
+                            <span class="tag">🧩 下接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">目标</span>
@@ -1363,10 +1335,11 @@
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row iface-layer">
-                            <span class="tag">🧩 上行接口</span>
+                            <span class="tag">🧩 上接口</span>
                             <span class="desc">
                                 <span class="iface-item">
-                                    <span class="iface-key">承诺</span>
+                                    <span class="iface-key">类型</span>
+                                    <span class="hl">端到端连接</span>
                                     <span class="hl">波长级透明转发</span>
                                 </span>
                                 <span class="iface-item">
@@ -1398,6 +1371,7 @@
                                     <span class="cp-cell cp-control">
                                         <span class="hl">波长通道选择（数据流↔波长映射）</span>
                                         <span class="hl dyn">GMPLS（OSPF-TE/RSVP-TE）</span>
+                                        <span class="hl dyn">G.8080 ASON</span>
                                     </span>
                                     <span class="cp-cell cp-forward">
                                         <span class="hl">ROADM波长交换</span>
@@ -1411,16 +1385,16 @@
                             <span class="tag">📦 链路</span>
                             <span class="desc"><span class="hl">波长寻址（λ₁/λ₂/…/λₙ）</span> <span class="hl">链路增强：光功率均衡</span> <span class="hl">色散补偿</span> <span class="hl">OSNR优化</span></span>
                         </div>
-                        <div class="inner-row select-layer">
-                            <span class="tag">🧭 选链</span>
-                            <span class="desc"><span class="hl">波长拣选</span> <span class="dim">（从下层提供的波长通道集合中拣选一个或多个）</span></span>
-                        </div>
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
                             <span class="desc"><span class="hl">WDM波分复用</span> <span class="dim">（将裸光纤复用为多个波长通道 λ₁/λ₂/…/λₙ）</span></span>
                         </div>
+                        <div class="inner-row select-end-layer">
+                            <span class="tag">🎯 端路</span>
+                            <span class="desc"><span class="null-box">空</span> <span class="dim">（承载层光纤已提供端到端透明通道；内部波分多通道不影响端到端，本层不拣选单通道）</span></span>
+                        </div>
                         <div class="inner-row iface-layer down-iface-layer">
-                            <span class="tag">🧩 下行接口</span>
+                            <span class="tag">🧩 下接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">目标</span>
@@ -1458,11 +1432,12 @@
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row iface-layer">
-                            <span class="tag">🧩 上行接口</span>
+                            <span class="tag">🧩 上接口</span>
                             <span class="desc">
                                 <span class="iface-item">
-                                    <span class="iface-key">承诺</span>
-                                    <span class="hl">物理介质透明传输（无处理）</span>
+                                    <span class="iface-key">类型</span>
+                                    <span class="hl">端到端连接</span>
+                                    <span class="hl">物理介质透明传输</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">参数</span>
@@ -1520,7 +1495,15 @@
                 <!-- 主竖线 -->
                 <div class="ruler-line" id="rulerLine"></div>
 
-                <!-- 背景色带：上行接口区（品红 8%）/ 中间区（更淡）/ 下行接口区（品红 8%） -->
+                <!-- 顶部 / 底部边界线（固定在标尺最上沿与最下沿，仅横线，避免竖线溢出） -->
+                <div class="ruler-cross" id="cross-top" style="top:0;">
+                    <div class="hline" id="hline-top"></div>
+                </div>
+                <div class="ruler-cross" id="cross-bottom" style="top:100%;">
+                    <div class="hline" id="hline-bottom"></div>
+                </div>
+
+                <!-- 背景色带：上接口区（品红 8%）/ 中间区（更淡）/ 下接口区（品红 8%） -->
                 <div class="ruler-zone up-iface" id="zone-up-interface"></div>
                 <div class="ruler-zone middle" id="zone-middle"></div>
                 <div class="ruler-zone down-iface" id="zone-down-interface"></div>
@@ -1546,23 +1529,23 @@
                     <div class="hline" id="hline-link-select"></div>
                     <div class="vmark" id="vmark-link-select"></div>
                 </div>
+                <div class="ruler-cross" id="cross-select-end">
+                    <div class="hline" id="hline-select-end"></div>
+                    <div class="vmark" id="vmark-select-end"></div>
+                </div>
                 <div class="ruler-cross" id="cross-down-iface">
                     <div class="hline" id="hline-down-iface"></div>
                     <div class="vmark" id="vmark-down-iface"></div>
                 </div>
-                <div class="ruler-cross" id="cross-bearing-link">
-                    <div class="hline" id="hline-bearing-link"></div>
-                    <div class="vmark" id="vmark-bearing-link"></div>
-                </div>
 
                 <!-- 8个文字标签 -->
                 <span class="ruler-label" id="label-transport">载荷层</span>
-                <span class="ruler-label" id="label-up-interface">上行接口层</span>
+                <span class="ruler-label" id="label-up-interface">上接口层</span>
                 <span class="ruler-label" id="label-mux">复用层</span>
                 <span class="ruler-label" id="label-network">网络层</span>
                 <span class="ruler-label" id="label-link">链路层</span>
-                <span class="ruler-label" id="label-select">选链层</span>
-                <span class="ruler-label" id="label-down-interface">下行接口层</span>
+                <span class="ruler-label" id="label-select-end">端路层</span>
+                <span class="ruler-label" id="label-down-interface">下接口层</span>
                 <span class="ruler-label" id="label-bearing">承载层</span>
             </div>
         </div>
@@ -1571,10 +1554,12 @@
 
     <div class="subtitle">
         <ul>
-            <li><strong>协议同构</strong> —— 每一个中间层协议都拥有相同的八层结构（承载层、下行接口层、复用层、选链层、链路层、网络层、上行接口层、载荷层），结构完全一致；</li>
+            <li><strong>协议同构</strong> —— 每一个中间层协议都拥有相同的八层结构（承载层、下接口层、端路层、复用层、链路层、网络层、上接口层、载荷层），结构完全一致；</li>
             <li><strong>双向递归</strong> —— 向下递归形成承载链（每一层以下层为承载链路），向上递归形成传输链（每一层以上层为载荷）；</li>
             <li><strong>边界异构</strong> —— 向上终止于数据层（不再封装），向下终止于介质层（不再承载）。</li>
             <li><strong>接口契约</strong> —— 接口双方必须就参数保持一致（协商一致 / 约定一致 / 与客观事实相符）才能正常对接；凡接收方向依赖该值完成分发（不符则无法交付）者，即为参数。</li>
+            <li><strong>端路层</strong> —— 在下层提供的承载服务中建立一个端到端的通道；若下层承载本身已是端到端的，则本层为空；下层通道内部即使含多通道（如波分），也不影响端到端的定义，本层不负责从中拣选单个通道。</li>
+            <li><strong>链路·复用·端路</strong> —— 链路层描述单链路；复用层向上提交单链路、向下提交聚合后的多链路；端路层内部可能包含多链路，但本身实现端到端的连接。</li>
         </ul>
     </div>
 
@@ -1588,14 +1573,14 @@
 
         // 协议索引: 0=数据层(静态), 1=HTTP层, 2=TLS层, 3=TCP, 4=IP, 5=以太网, 6=编码调制层, 7=光波层, 8=光纤层
 
-        // 每个协议的标尺映射（下行接口层位于本层底部）：
-        // transport_mux: 载荷层↔上行接口 分界 → 对准当前协议层的上边界 (top)
-        // iface_network: 上行接口↔网络层 分界 → 对准当前协议层接口/网络分隔线 (dividerIface)
+        // 每个协议的标尺映射（下接口层位于本层底部）：
+        // transport_mux: 载荷层↔上接口 分界 → 对准当前协议层的上边界 (top)
+        // iface_network: 上接口↔网络层 分界 → 对准当前协议层接口/网络分隔线 (dividerIface)
         // mux_network: 网络层↔链路层 分界 → 对准当前协议层网络/链路分隔线 (dividerNet)
-        // link_network: 链路层↔选链层 分界 → 对准当前协议层链路/选链分隔线 (dividerSelect)
-        // link_select: 选链层↔复用层 分界 → 对准当前协议层选链/复用分隔线 (dividerMux)
-        // down_iface: 复用层↔下行接口 分界 → 对准当前协议层复用/下行接口分隔线 (dividerDown)
-        // bearing_link: 下行接口↔承载层 分界 → 对准当前协议层的下边界 (bottom)
+        // link_network: 链路层↔复用层 分界 → 对准当前协议层链路/复用分隔线 (dividerMux)
+        // link_select: 复用层↔端路层 分界 → 对准当前协议层复用/端路分隔线 (dividerSelectEnd)
+        // select_end: 端路层↔下接口 分界 → 对准当前协议层端路/下接口分隔线 (dividerDown)
+        // down_iface: 下接口↔承载层 分界 → 对准当前协议层的下边界 (bottom)
         const RULER_MAPPINGS = {
             // 数据层：扁平、无内部结构，将全部下层视为承载层
             // → 全部分界都对准数据层的下边界（承载层起始处）
@@ -1605,80 +1590,80 @@
                 mux_network: { targetIndex: 0, boundary: 'bottom', state: null },
                 link_network: { targetIndex: 0, boundary: 'bottom', state: null },
                 link_select: { targetIndex: 0, boundary: 'bottom', state: null },
-                down_iface: { targetIndex: 0, boundary: 'bottom', state: null },
-                bearing_link: { targetIndex: 0, boundary: 'bottom', state: null }
+                select_end: { targetIndex: 0, boundary: 'bottom', state: null },
+                down_iface: { targetIndex: 0, boundary: 'bottom', state: null }
             },
             'app': {
                 transport_mux: { targetIndex: 1, boundary: 'top', state: null },
                 iface_network: { targetIndex: 1, boundary: 'dividerIface', state: null },
                 mux_network: { targetIndex: 1, boundary: 'dividerNet', state: null },
-                link_network: { targetIndex: 1, boundary: 'dividerSelect', state: 'highlight' },
-                link_select: { targetIndex: 1, boundary: 'dividerMux', state: 'highlight' },
-                down_iface: { targetIndex: 1, boundary: 'dividerDown', state: 'highlight' },
-                bearing_link: { targetIndex: 1, boundary: 'bottom', state: 'highlight' }
+                link_network: { targetIndex: 1, boundary: 'dividerMux', state: 'highlight' },
+                link_select: { targetIndex: 1, boundary: 'dividerSelectEnd', state: 'highlight' },
+                select_end: { targetIndex: 1, boundary: 'dividerDown', state: 'highlight' },
+                down_iface: { targetIndex: 1, boundary: 'bottom', state: 'highlight' }
             },
             'tls': {
                 transport_mux: { targetIndex: 2, boundary: 'top', state: null },
                 iface_network: { targetIndex: 2, boundary: 'dividerIface', state: null },
                 mux_network: { targetIndex: 2, boundary: 'dividerNet', state: null },
-                link_network: { targetIndex: 2, boundary: 'dividerSelect', state: 'highlight' },
-                link_select: { targetIndex: 2, boundary: 'dividerMux', state: 'highlight' },
-                down_iface: { targetIndex: 2, boundary: 'dividerDown', state: 'highlight' },
-                bearing_link: { targetIndex: 2, boundary: 'bottom', state: 'highlight' }
+                link_network: { targetIndex: 2, boundary: 'dividerMux', state: 'highlight' },
+                link_select: { targetIndex: 2, boundary: 'dividerSelectEnd', state: 'highlight' },
+                select_end: { targetIndex: 2, boundary: 'dividerDown', state: 'highlight' },
+                down_iface: { targetIndex: 2, boundary: 'bottom', state: 'highlight' }
             },
             'tcp': {
                 transport_mux: { targetIndex: 3, boundary: 'top', state: null },
                 iface_network: { targetIndex: 3, boundary: 'dividerIface', state: 'glow' },
                 mux_network: { targetIndex: 3, boundary: 'dividerNet', state: 'glow' },
-                link_network: { targetIndex: 3, boundary: 'dividerSelect', state: 'glow' },
-                link_select: { targetIndex: 3, boundary: 'dividerMux', state: 'glow' },
-                down_iface: { targetIndex: 3, boundary: 'dividerDown', state: 'glow' },
-                bearing_link: { targetIndex: 3, boundary: 'bottom', state: 'highlight' }
+                link_network: { targetIndex: 3, boundary: 'dividerMux', state: 'glow' },
+                link_select: { targetIndex: 3, boundary: 'dividerSelectEnd', state: 'glow' },
+                select_end: { targetIndex: 3, boundary: 'dividerDown', state: 'glow' },
+                down_iface: { targetIndex: 3, boundary: 'bottom', state: 'highlight' }
             },
             'ip': {
                 transport_mux: { targetIndex: 4, boundary: 'top', state: 'glow' },
                 iface_network: { targetIndex: 4, boundary: 'dividerIface', state: 'glow' },
                 mux_network: { targetIndex: 4, boundary: 'dividerNet', state: 'glow' },
-                link_network: { targetIndex: 4, boundary: 'dividerSelect', state: 'glow' },
-                link_select: { targetIndex: 4, boundary: 'dividerMux', state: 'glow' },
-                down_iface: { targetIndex: 4, boundary: 'dividerDown', state: 'glow' },
-                bearing_link: { targetIndex: 4, boundary: 'bottom', state: 'highlight' }
+                link_network: { targetIndex: 4, boundary: 'dividerMux', state: 'glow' },
+                link_select: { targetIndex: 4, boundary: 'dividerSelectEnd', state: 'glow' },
+                select_end: { targetIndex: 4, boundary: 'dividerDown', state: 'glow' },
+                down_iface: { targetIndex: 4, boundary: 'bottom', state: 'highlight' }
             },
             'eth': {
                 transport_mux: { targetIndex: 5, boundary: 'top', state: 'glow' },
                 iface_network: { targetIndex: 5, boundary: 'dividerIface', state: 'glow' },
                 mux_network: { targetIndex: 5, boundary: 'dividerNet', state: 'glow' },
-                link_network: { targetIndex: 5, boundary: 'dividerSelect', state: 'glow' },
-                link_select: { targetIndex: 5, boundary: 'dividerMux', state: 'glow' },
-                down_iface: { targetIndex: 5, boundary: 'dividerDown', state: 'glow' },
-                bearing_link: { targetIndex: 5, boundary: 'bottom', state: 'highlight' }
+                link_network: { targetIndex: 5, boundary: 'dividerMux', state: 'glow' },
+                link_select: { targetIndex: 5, boundary: 'dividerSelectEnd', state: 'glow' },
+                select_end: { targetIndex: 5, boundary: 'dividerDown', state: 'glow' },
+                down_iface: { targetIndex: 5, boundary: 'bottom', state: 'highlight' }
             },
             'physical': {
                 transport_mux: { targetIndex: 6, boundary: 'top', state: null },
                 iface_network: { targetIndex: 6, boundary: 'dividerIface', state: 'highlight' },
                 mux_network: { targetIndex: 6, boundary: 'dividerNet', state: 'highlight' },
-                link_network: { targetIndex: 6, boundary: 'dividerSelect', state: 'highlight' },
-                link_select: { targetIndex: 6, boundary: 'dividerMux', state: 'highlight' },
-                down_iface: { targetIndex: 6, boundary: 'dividerDown', state: 'highlight' },
-                bearing_link: { targetIndex: 6, boundary: 'bottom', state: null }
+                link_network: { targetIndex: 6, boundary: 'dividerMux', state: 'highlight' },
+                link_select: { targetIndex: 6, boundary: 'dividerSelectEnd', state: 'highlight' },
+                select_end: { targetIndex: 6, boundary: 'dividerDown', state: 'highlight' },
+                down_iface: { targetIndex: 6, boundary: 'bottom', state: null }
             },
             'wave': {
                 transport_mux: { targetIndex: 7, boundary: 'top', state: null },
                 iface_network: { targetIndex: 7, boundary: 'dividerIface', state: 'highlight' },
                 mux_network: { targetIndex: 7, boundary: 'dividerNet', state: 'highlight' },
-                link_network: { targetIndex: 7, boundary: 'dividerSelect', state: 'highlight' },
-                link_select: { targetIndex: 7, boundary: 'dividerMux', state: 'highlight' },
-                down_iface: { targetIndex: 7, boundary: 'dividerDown', state: 'highlight' },
-                bearing_link: { targetIndex: 7, boundary: 'bottom', state: null }
+                link_network: { targetIndex: 7, boundary: 'dividerMux', state: 'highlight' },
+                link_select: { targetIndex: 7, boundary: 'dividerSelectEnd', state: 'highlight' },
+                select_end: { targetIndex: 7, boundary: 'dividerDown', state: 'highlight' },
+                down_iface: { targetIndex: 7, boundary: 'bottom', state: null }
             },
             'fiber': {
                 transport_mux: { targetIndex: 8, boundary: 'top', state: null },
                 iface_network: { targetIndex: 8, boundary: 'dividerIface', state: 'highlight' },
                 mux_network: { targetIndex: 8, boundary: 'dividerNet', state: 'highlight' },
-                link_network: { targetIndex: 8, boundary: 'dividerSelect', state: 'highlight' },
-                link_select: { targetIndex: 8, boundary: 'dividerMux', state: 'highlight' },
-                down_iface: { targetIndex: 8, boundary: 'bottom', state: null },
-                bearing_link: { targetIndex: 8, boundary: 'bottom', state: null }
+                link_network: { targetIndex: 8, boundary: 'dividerMux', state: 'highlight' },
+                link_select: { targetIndex: 8, boundary: 'dividerSelectEnd', state: null },
+                select_end: { targetIndex: 8, boundary: 'dividerDown', state: null },
+                down_iface: { targetIndex: 8, boundary: 'bottom', state: null }
             }
         };
 
@@ -1689,8 +1674,8 @@
             mux_network: document.getElementById('hline-mux-network'),
             link_network: document.getElementById('hline-link-network'),
             link_select: document.getElementById('hline-link-select'),
-            down_iface: document.getElementById('hline-down-iface'),
-            bearing_link: document.getElementById('hline-bearing-link')
+            select_end: document.getElementById('hline-select-end'),
+            down_iface: document.getElementById('hline-down-iface')
         };
         const vmarks = {
             transport_mux: document.getElementById('vmark-transport-mux'),
@@ -1698,8 +1683,8 @@
             mux_network: document.getElementById('vmark-mux-network'),
             link_network: document.getElementById('vmark-link-network'),
             link_select: document.getElementById('vmark-link-select'),
-            down_iface: document.getElementById('vmark-down-iface'),
-            bearing_link: document.getElementById('vmark-bearing-link')
+            select_end: document.getElementById('vmark-select-end'),
+            down_iface: document.getElementById('vmark-down-iface')
         };
         const crosses = {
             transport_mux: document.getElementById('cross-transport-mux'),
@@ -1707,16 +1692,16 @@
             mux_network: document.getElementById('cross-mux-network'),
             link_network: document.getElementById('cross-link-network'),
             link_select: document.getElementById('cross-link-select'),
-            down_iface: document.getElementById('cross-down-iface'),
-            bearing_link: document.getElementById('cross-bearing-link')
+            select_end: document.getElementById('cross-select-end'),
+            down_iface: document.getElementById('cross-down-iface')
         };
         const labels = {
             transport: document.getElementById('label-transport'),
             up_interface: document.getElementById('label-up-interface'),
             network: document.getElementById('label-network'),
             link: document.getElementById('label-link'),
-            select: document.getElementById('label-select'),
             mux: document.getElementById('label-mux'),
+            select_end: document.getElementById('label-select-end'),
             down_interface: document.getElementById('label-down-interface'),
             bearing: document.getElementById('label-bearing')
         };
@@ -1755,8 +1740,8 @@
             mux_network: 0.375,
             link_network: 0.5,
             link_select: 0.625,
-            down_iface: 0.75,
-            bearing_link: 0.875
+            select_end: 0.75,
+            down_iface: 0.875
         };
 
         // ============================================================
@@ -1827,13 +1812,13 @@
                 // divider 定位到两行间隙中点（两行居中后即层中点），与左侧分隔线对齐
                 // 编码调制层网络层较高，其分隔线位置与普通层不同，使用按层测量的偏移
                 const proto = el.dataset.protocol;
-                const offs = DIVIDER_OFFSETS[proto] || { dividerIface: DIVIDER_OFFSET, dividerMux: DIVIDER_OFFSET, dividerNet: DIVIDER_OFFSET, dividerSelect: DIVIDER_OFFSET, dividerDown: DIVIDER_OFFSET };
+                const offs = DIVIDER_OFFSETS[proto] || { dividerIface: DIVIDER_OFFSET, dividerMux: DIVIDER_OFFSET, dividerNet: DIVIDER_OFFSET, dividerSelectEnd: DIVIDER_OFFSET, dividerDown: DIVIDER_OFFSET };
                 const dividerIface = (layerTopPx + LAYER_BORDER_TOP + offs.dividerIface) / finalRulerH;
                 const dividerMux = (layerTopPx + LAYER_BORDER_TOP + offs.dividerMux) / finalRulerH;
                 const dividerNet = (layerTopPx + LAYER_BORDER_TOP + offs.dividerNet) / finalRulerH;
-                const dividerSelect = (layerTopPx + LAYER_BORDER_TOP + offs.dividerSelect) / finalRulerH;
+                const dividerSelectEnd = (layerTopPx + LAYER_BORDER_TOP + offs.dividerSelectEnd) / finalRulerH;
                 const dividerDown = (layerTopPx + LAYER_BORDER_TOP + offs.dividerDown) / finalRulerH;
-                boundaries.push({ top, bottom, dividerIface, dividerMux, dividerNet, dividerSelect, dividerDown });
+                boundaries.push({ top, bottom, dividerIface, dividerMux, dividerNet, dividerSelectEnd, dividerDown });
                 y += h + gap;
             });
             return boundaries;
@@ -1862,17 +1847,22 @@
             document.documentElement.style.setProperty('--namebar-w', Math.ceil(maxW) + 'px');
         }
 
-        // 背景色带定位：上行接口区 = [transport_mux, iface_network]，
-        // 中间区 = [iface_network, down_iface]，下行接口区 = [down_iface, bearing_link]
-        function positionRulerZones(pos) {
+        // 背景色带定位：上接口区 = [transport_mux, iface_network]，
+        // 中间区 = [iface_network, select_end]，下接口区 = [select_end, down_iface]
+        // show 参数：层缺失对应行时隐藏该色带（如 HTTP 无上接口行 → 隐藏上接口区；
+        // 光纤无下接口行 → 隐藏下接口区，且中间区延伸到层底边，避免链路背景底部被截断）
+        function positionRulerZones(pos, show = { up: true, mid: true, down: true }) {
             const zones = {
-                'zone-up-interface':   { top: pos.transport_mux, bottom: pos.iface_network },
-                'zone-middle':         { top: pos.iface_network, bottom: pos.down_iface },
-                'zone-down-interface': { top: pos.down_iface,   bottom: pos.bearing_link }
+                'zone-up-interface':   { top: pos.transport_mux, bottom: pos.iface_network, on: show.up },
+                // 中间区：无上接口行时向上延伸到层顶（transport_mux），无下接口行时向下延伸到层底（down_iface）
+                'zone-middle':         { top: show.up ? pos.iface_network : pos.transport_mux, bottom: show.down ? pos.select_end : pos.down_iface, on: show.mid },
+                'zone-down-interface': { top: pos.select_end,    bottom: pos.down_iface,    on: show.down }
             };
             ['zone-up-interface', 'zone-middle', 'zone-down-interface'].forEach(name => {
                 const el = document.getElementById(name);
                 if (!el) return;
+                el.style.display = zones[name].on ? '' : 'none';
+                if (!zones[name].on) return;
                 const top = Math.max(0, Math.min(1, zones[name].top));
                 const bottom = Math.max(0, Math.min(1, zones[name].bottom));
                 const h = Math.max(0, bottom - top);
@@ -1892,7 +1882,7 @@
             // 数据层：扁平、无内部结构，只保留载荷层（数据层即载荷）与承载层
             const isFlatLayer = protocolKey === 'data';
             if (!mapping) {
-                const crossNames = ['transport_mux', 'iface_network', 'mux_network', 'link_network', 'link_select', 'down_iface', 'bearing_link'];
+                const crossNames = ['transport_mux', 'iface_network', 'mux_network', 'link_network', 'link_select', 'select_end', 'down_iface'];
                 crossNames.forEach(name => {
                     const hline = hlines[name];
                     const vmark = vmarks[name];
@@ -1908,8 +1898,8 @@
                     up_interface: 18.75,
                     network: 31.25,
                     link: 43.75,
-                    select: 56.25,
-                    mux: 68.75,
+                    mux: 56.25,
+                    select_end: 68.75,
                     down_interface: 81.25,
                     bearing: 93.75
                 };
@@ -1939,9 +1929,9 @@
                 : document.querySelector('.layer.active');
             const hasIfaceRow = !!(activeLayerEl && activeLayerEl.querySelector('.inner-row.iface-layer:not(.down-iface-layer)'));
             const hasMuxRow = !!(activeLayerEl && activeLayerEl.querySelector('.inner-row.mux-layer'));
-            const hasSelectRow = !!(activeLayerEl && activeLayerEl.querySelector('.inner-row.select-layer'));
+            const hasSelectEndRow = !!(activeLayerEl && activeLayerEl.querySelector('.inner-row.select-end-layer'));
             const hasDownIfaceRow = !!(activeLayerEl && activeLayerEl.querySelector('.inner-row.down-iface-layer'));
-            const crossNames = ['transport_mux', 'iface_network', 'mux_network', 'link_network', 'link_select', 'down_iface', 'bearing_link'];
+            const crossNames = ['transport_mux', 'iface_network', 'mux_network', 'link_network', 'link_select', 'select_end', 'down_iface'];
             crossNames.forEach(name => {
                 const hline = hlines[name];
                 const vmark = vmarks[name];
@@ -1962,8 +1952,8 @@
                         offset = b.dividerIface;
                     } else if (boundary === 'dividerMux') {
                         offset = b.dividerMux;
-                    } else if (boundary === 'dividerSelect') {
-                        offset = b.dividerSelect;
+                    } else if (boundary === 'dividerSelectEnd') {
+                        offset = b.dividerSelectEnd;
                     } else if (boundary === 'dividerDown') {
                         offset = b.dividerDown;
                     } else {
@@ -1984,15 +1974,15 @@
                 vmark.className = 'vmark';
 
                 // 载荷层不存在时（最上层）隐藏其上方分界线 transport_mux；
-                // 选链层不存在时（如光纤层）隐藏 链路↔选链、选链↔复用 分界线；
-                // 复用层不存在时（如光纤层）隐藏 选链↔复用 分界线；
-                // 承载层不存在时（最下层）隐藏其上方分界线 bearing_link
+                // 复用层不存在时（如光纤层）隐藏 链路↔复用 分界线；
+                // 端路层不存在时（如光纤层）隐藏 复用↔端路、端路↔下接口 分界线；
+                // 承载层不存在时（最下层）隐藏其上方分界线 down_iface
                 const hideCross = (name === 'transport_mux' && isTopLayer) ||
                                   (name === 'iface_network' && !hasIfaceRow) ||
-                                  (name === 'link_network' && !hasSelectRow) ||
-                                  (name === 'link_select' && (!hasSelectRow || !hasMuxRow)) ||
-                                  (name === 'down_iface' && !hasDownIfaceRow) ||
-                                  (name === 'bearing_link' && isBottomLayer);
+                                  (name === 'link_network' && !hasMuxRow) ||
+                                  (name === 'link_select' && (!hasSelectEndRow || !hasMuxRow)) ||
+                                  (name === 'select_end' && (!hasSelectEndRow || !hasDownIfaceRow)) ||
+                                  (name === 'down_iface' && isBottomLayer);
                 cross.style.display = hideCross ? 'none' : '';
 
                 if (state === 'highlight') {
@@ -2012,29 +2002,22 @@
                 crossPositions[name] = isNaN(pos) ? 0.25 : pos;
             });
 
-            // 背景色带跟随十字线定位
-            positionRulerZones(crossPositions);
+            // 背景色带跟随十字线定位；层缺失上接口/下接口行时隐藏对应色带
+            positionRulerZones(crossPositions, { up: hasIfaceRow, mid: true, down: hasDownIfaceRow });
 
-            // 更新8个文字标签的位置
-            // 载荷层/承载层标签：当对应区域过大时（如"展开所有"模式下悬停最底层，
-            // 载荷层区域从标尺顶部一直延伸到该层顶部，占满大半），若取区域中点，
-            // 标签会漂到标尺中部、与所在层脱节，看起来"定位不准"。
-            // 因此当区域超过阈值时，把标签限制在分界线附近。
+            // 更新文字标签的位置：一律取对应层区域的垂直中点（垂直居中），
+            // 载荷层/承载层区域即使很大（如光纤层的载荷区、数据层的承载区）也按中点居中。
             const transportMid = (0 + crossPositions.transport_mux) / 2;
-            const bearingMid = (crossPositions.bearing_link + 1) / 2;
+            const bearingMid = (crossPositions.down_iface + 1) / 2;
             const labelPositions = {
-                transport: crossPositions.transport_mux > 0.6
-                    ? crossPositions.transport_mux - 0.05
-                    : transportMid,
+                transport: transportMid,
                 up_interface: (crossPositions.transport_mux + crossPositions.iface_network) / 2,
                 network: (crossPositions.iface_network + crossPositions.mux_network) / 2,
                 link: (crossPositions.mux_network + crossPositions.link_network) / 2,
-                select: (crossPositions.link_network + crossPositions.link_select) / 2,
-                mux: (crossPositions.link_select + crossPositions.down_iface) / 2,
-                down_interface: (crossPositions.down_iface + crossPositions.bearing_link) / 2,
-                bearing: crossPositions.bearing_link < 0.4
-                    ? crossPositions.bearing_link + 0.05
-                    : bearingMid
+                mux: (crossPositions.link_network + crossPositions.link_select) / 2,
+                select_end: (crossPositions.link_select + crossPositions.select_end) / 2,
+                down_interface: (crossPositions.select_end + crossPositions.down_iface) / 2,
+                bearing: bearingMid
             };
 
             const labelStates = {
@@ -2042,10 +2025,10 @@
                 up_interface: mapping.iface_network.state,
                 network: mapping.mux_network.state,
                 link: mapping.link_network.state,
-                select: mapping.link_select.state,
-                mux: mapping.down_iface.state,
-                down_interface: mapping.down_iface.state,
-                bearing: mapping.bearing_link.state
+                mux: mapping.link_select.state,
+                select_end: mapping.select_end.state,
+                down_interface: mapping.select_end.state,
+                bearing: mapping.down_iface.state
             };
 
             Object.keys(labels).forEach(key => {
@@ -2063,15 +2046,15 @@
                 } else {
                     // 先恢复所有标签可见（避免残留数据层隐藏的状态）
                     label.style.display = '';
-                    // 最上层之上没有载荷层、选链层/复用层缺失（如光纤层）、最下层之下没有承载层 → 隐藏对应标签
+                    // 最上层之上没有载荷层、复用层/端路层缺失（如光纤层）、最下层之下没有承载层 → 隐藏对应标签
                     if (key === 'transport') {
                         label.style.display = isTopLayer ? 'none' : '';
                     } else if (key === 'up_interface') {
                         label.style.display = hasIfaceRow ? '' : 'none';
-                    } else if (key === 'select') {
-                        label.style.display = hasSelectRow ? '' : 'none';
                     } else if (key === 'mux') {
                         label.style.display = hasMuxRow ? '' : 'none';
+                    } else if (key === 'select_end') {
+                        label.style.display = hasSelectEndRow ? '' : 'none';
                     } else if (key === 'down_interface') {
                         label.style.display = hasDownIfaceRow ? '' : 'none';
                     } else if (key === 'bearing') {
@@ -2105,9 +2088,9 @@
             const muxRow = body && body.querySelector('.inner-row.mux-layer');
             const netRow = body && body.querySelector('.inner-row.net-layer');
             const linkRow = body && body.querySelector('.inner-row.link-layer');
-            const selectRow = body && body.querySelector('.inner-row.select-layer');
+            const selectEndRow = body && body.querySelector('.inner-row.select-end-layer');
             const downRow = body && body.querySelector('.inner-row.down-iface-layer');
-            if (!sample || !body || !netRow || !linkRow) return { dividerIface: 46, dividerMux: 46, dividerNet: 46, dividerSelect: 46, dividerDown: 46 };
+            if (!sample || !body || !netRow || !linkRow) return { dividerIface: 46, dividerMux: 46, dividerNet: 46, dividerSelectEnd: 46, dividerDown: 46 };
             // 临时禁用层与 body 的过渡并展开，直接读取最终布局
             // （同步测量后恢复，无闪烁）
             const prevSampleTrans = sample.style.transition;
@@ -2127,21 +2110,20 @@
             }
             const linkRect = linkRow.getBoundingClientRect();
             const linkMid = (netRect.bottom + linkRect.top) / 2;
-            // 选链层↔链路层 分界：链路行底边与选链行顶边的中点
-            let selectMid = linkRect.bottom;
-            let selectRect = null;
-            if (selectRow) {
-                selectRect = selectRow.getBoundingClientRect();
-                selectMid = (linkRect.bottom + selectRect.top) / 2;
-            }
-            // 复用层↔选链层 分界：选链行底边与复用行顶边的中点
-            let muxMid = selectRect ? selectRect.bottom : linkRect.bottom;
+            // 复用层↔链路层 分界：链路行底边与复用行顶边的中点
+            let muxMid = linkRect.bottom;
             if (muxRow) {
                 const muxRect = muxRow.getBoundingClientRect();
                 muxMid = (muxMid + muxRect.top) / 2;
             }
-            // 复用层↔下行接口层 分界：复用行底边与下行接口行顶边的中点（下行接口层位于本层底部）
-            let downMid = muxRow ? muxRow.getBoundingClientRect().bottom : (selectRect ? selectRect.bottom : linkRect.bottom);
+            // 端路层↔复用层 分界：复用行底边与端路行顶边的中点
+            let selectEndMid = muxRow ? muxRow.getBoundingClientRect().bottom : linkRect.bottom;
+            if (selectEndRow) {
+                const seRect = selectEndRow.getBoundingClientRect();
+                selectEndMid = (selectEndMid + seRect.top) / 2;
+            }
+            // 端路层↔下接口层 分界：端路行底边与下接口行顶边的中点（下接口层位于本层底部）
+            let downMid = selectEndRow ? selectEndRow.getBoundingClientRect().bottom : (muxRow ? muxRow.getBoundingClientRect().bottom : linkRect.bottom);
             if (downRow) {
                 const downRect = downRow.getBoundingClientRect();
                 downMid = (downMid + downRect.top) / 2;
@@ -2154,7 +2136,7 @@
                 dividerIface: Math.round(ifaceMid - layerTopPx),
                 dividerMux: Math.round(muxMid - layerTopPx),
                 dividerNet: Math.round(linkMid - layerTopPx),
-                dividerSelect: Math.round(selectMid - layerTopPx),
+                dividerSelectEnd: Math.round(selectEndMid - layerTopPx),
                 dividerDown: Math.round(downMid - layerTopPx)
             };
         }
