@@ -932,7 +932,7 @@
                         <div class="inner-row select-end-layer">
                             <span class="tag">🎯 端路</span>
                             <span class="desc"><span class="hl">逻辑通道：对端 HTTP 服务器</span> <span class="dim">（承载目标确定即视为端到端通道确立）</span></span>
-                            <span class="desc"><span class="hl">初始化：调用 TLS 服务接口建链</span> <span class="dim">（经协议接口层调用 TLS：connect(目标IP, 目标端口) 建立 TCP 连接，再 TLS 握手 ClientHello / ServerHello / 证书交换 / 密钥协商）</span></span>
+                            <span class="desc"><span class="hl">初始化：调用 TLS 服务接口建链</span> <span class="dim">（调用承载 TLS 的服务接口 connect(目标IP, 目标端口) 建立连接；TLS 握手 ClientHello / ServerHello / 证书交换 / 密钥协商 由承载 TLS 自身完成，不在本层）</span></span>
                             <span class="desc"><span class="hl">常态：向 TLS 连接交付请求/响应</span> <span class="dim">（复用已建立的连接，无需每包额外寻址）</span></span>
                         </div>
                     </div>
@@ -1008,7 +1008,7 @@
                         <div class="inner-row select-end-layer">
                             <span class="tag">🎯 端路</span>
                             <span class="desc"><span class="hl">逻辑通道：对端 TCP 连接（五元组）</span> <span class="dim">（目标IP、目标端口、源IP、源端口、协议号确定即视为通道确立）</span></span>
-                            <span class="desc"><span class="hl">初始化：调用 TCP 服务接口建链</span> <span class="dim">——调用TCP层服务接口提供的初始化函数connect()建立连接</span></span>
+                            <span class="desc"><span class="hl">初始化：调用 TCP 服务接口建链</span> <span class="dim">（调用承载 TCP 的服务接口 connect() 建立连接；TCP 三次握手由承载 TCP 自身完成，不在本层）</span></span>
                             <span class="desc"><span class="hl">常态：向 TCP 连接交付 TLS 记录</span> <span class="dim">（复用已建立的连接，无需每包额外寻址）</span></span>
                         </div>
                     </div>
@@ -1084,9 +1084,9 @@
                         </div>
                         <div class="inner-row select-end-layer">
                             <span class="tag">🎯 端路</span>
-                            <span class="desc"><span class="hl">逻辑通道：目标IP（五元组确定）</span> <span class="dim">（IP承载层为全连通无连接网络，提供目标IP即可视为到目标的点到点通道已确定；UDP 确定五元组后通道客观存在，无需握手）</span></span>
-                            <span class="desc"><span class="hl">初始化：TCP 需三次握手，UDP 无需</span> <span class="dim">（面向连接协议发起握手；无连接协议仅需确定参数）</span></span>
-                            <span class="desc"><span class="hl">常态：每包指定目标IP交付</span> <span class="dim">（承载寻址参数为目标IP，随每个TCP/UDP报文交付）</span></span>
+                            <span class="desc"><span class="hl">逻辑通道：在 IP 网络上建立端到端通道</span> <span class="dim">（IP承载层为全连通无连接网络，指定目标IP即可视为到目标的端到端通道已确立）</span></span>
+                            <span class="desc"><span class="hl">初始化：无</span> <span class="dim">（IP 无连接、无需握手；TCP 连接的建立属于 TCP 自身连接管理，不在本层）</span></span>
+                            <span class="desc"><span class="hl">常态：每包指定目标IP交付</span> <span class="dim">（承载寻址参数为目标IP，随每个TCP段交付）</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-tcp"></div>
@@ -1181,9 +1181,9 @@
                         </div>
                         <div class="inner-row select-end-layer">
                             <span class="tag">🎯 端路</span>
-                            <span class="desc"><span class="hl">逻辑通道：对端 IP 主机</span> <span class="dim">（目标IP确定即视为到目标的逻辑通道确立）</span></span>
-                            <span class="desc"><span class="hl">初始化：ARP 解析（映射IP→MAC）</span> <span class="dim">多次ARP形成MAC表；发送前查询MAC表选择目标MAC</span></span>
-                            <span class="desc"><span class="hl">常态：每包指定目标MAC交付</span> <span class="dim">经协议接口层向下交付时指定目标MAC；MAC报头封装由承载层完成</span></span>
+                            <span class="desc"><span class="hl">逻辑通道：相邻 IP 节点（下一跳，可能是路由器）</span> <span class="dim">（IP 网络层选好下一跳后，在以太网承载上建立到该相邻节点的通道；目标IP确定即视为通道确立）</span></span>
+                            <span class="desc"><span class="hl">初始化：ARP 解析（映射下一跳IP→MAC）</span> <span class="dim">多次ARP形成MAC表；发送前查询MAC表选择下一跳的目标MAC</span></span>
+                            <span class="desc"><span class="hl">常态：每包指定下一跳目标MAC交付</span> <span class="dim">经协议接口层向下交付时指定下一跳目标MAC；MAC报头封装由承载层完成</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-ip"></div>
@@ -1614,8 +1614,8 @@
                 <tr><td>网络层</td><td>转发与寻址决策：控制面（路由 / 转发规则）与转发面（查表、转发、封装解封装）。</td></tr>
                 <tr><td>链路层</td><td>单链路上的语义：连接状态、差错检测、校验、重传、流控等。</td></tr>
                 <tr><td>复用层</td><td>向上提交单链路、向下提交聚合后的多链路，把下层多条承载通道复用 / 聚合为一条。</td></tr>
-                <tr><td>协议接口层</td><td>通信两端同层次端点之间的接口——本层端点与对端同层端点对接，交付本层数据单元（如 TCP 向对端 TCP 交付 TCP 段、IP 向对端 IP 交付 IP 数据报）。这是<b>对等（peer）通信</b>而非调用关系，因此无需像服务接口那样携带参数 / 初始化契约——对端同层既不是调用者也不是被调用者，契约仅含「目标」（对端同层端点）与「交付」（本层数据单元）。封装式层次为离散 PDU（报文 / 记录 / 段 / 数据报 / 帧），连续式层次（编码调制、光波）为比特流 / 光信号。与下层承载的对接（调用下层服务接口、提供寻址参数）由端路层负责；逐级递归直至对端。建链（连接建立 / 握手）由端路层负责。</td></tr>
-                <tr><td>端路层</td><td>调用下层协议的服务接口，在承载网络上建立端到端通道的层次——本层在此扮演<b>调用者</b>：下层服务接口定义了参数，端路层负责提供参数值并调用。通道建立分三阶段：<b>逻辑通道</b>——端到端通道在承载参数（如 TCP/UDP 五元组：源/目标 IP、源/目标端口、协议号）确定时客观上已确立；无连接协议（如 UDP）确定参数后通道即视为存在，无需握手；<b>初始化</b>——面向连接协议（如 TCP）经下层服务接口发起握手建立连接，无连接协议（如 UDP）无需任何初始化；<b>常态通信</b>——每次交付时向底层同时提供承载寻址参数（如 TCP/UDP 每包交付五元组、IP 每包指定目标 MAC）。若下层承载本身已是端到端，本层不再另行建路，仅负责发起建链；内部可能包含多链路，但本身实现端到端的连接。</td></tr>
+                <tr><td>协议接口层</td><td>通信两端同层次端点之间的接口——本层端点与对端同层端点对接，交付本层数据单元（如 TCP 向对端 TCP 交付 TCP 段、IP 向对端 IP 交付 IP 数据报）。这是<b>对等（peer）通信</b>而非调用关系，因此无需像服务接口那样携带参数 / 初始化契约——对端同层既不是调用者也不是被调用者，契约仅含「目标」（对端同层端点）与「交付」（本层数据单元）。封装式层次为离散 PDU（报文 / 记录 / 段 / 数据报 / 帧），连续式层次（编码调制、光波）为比特流 / 光信号。与下层承载的对接（调用下层服务接口、提供寻址参数）由端路层负责；逐级递归直至对端。连接建立 / 握手（如 TCP 三次握手）属于协议自身的连接管理，由链路层与协议接口层承载，不在端路层。</td></tr>
+                <tr><td>端路层</td><td>调用下层协议的服务接口，在<b>下层承载网络</b>上建立端到端通道的层次——本层在此扮演<b>调用者</b>：下层服务接口定义了参数，端路层负责提供参数值并调用。通道建立分三阶段：<b>逻辑通道</b>——指定下层承载寻址参数（如 IP 选好下一跳后指定其目标IP、以太网指定目标MAC）即可视为端到端通道确立；<b>初始化</b>——调用下层服务接口前的地址解析 / 参数准备（如 IP 在以太网上先经 ARP 解析出下一跳的目标 MAC）；<b>常态通信</b>——每次交付时向底层提供承载寻址参数（如 IP 每包指定下一跳目标IP、以太网每包指定目标MAC）。若下层承载本身已是端到端，本层不再另行建路，仅负责发起建链。注意：本协议自身的连接建立 / 握手（如 TCP 三次握手）属于协议自身连接管理，不在本层。</td></tr>
                 <tr><td>承载层</td><td>本协议以下层整体作为承载链路；在递归模型中，下层即本层的承载。</td></tr>
             </tbody>
         </table>
