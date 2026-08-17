@@ -357,19 +357,19 @@
             border: 1px solid #eae2a8;
         }
 
-        /* 端路层：紫色/靛蓝（区别于复用层琥珀、网络层蓝、链路层绿、接口层品红） */
+        /* 端路层：青色/teal（区别于服务接口品红、协议接口紫、复用层琥珀、网络层蓝、链路层绿） */
         .layer-tall .inner-row.select-end-layer {
             height: auto;
             min-height: 32px;
             padding: 4px 12px;
         }
         .inner-row.select-end-layer .tag {
-            color: #8250df;
+            color: #0e8a8a;
         }
         .inner-row.select-end-layer .desc .hl {
-            color: #8250df;
-            background: #f3eafc;
-            border: 1px solid #d8c4ef;
+            color: #0e8a8a;
+            background: #e3f2f2;
+            border: 1px solid #b6d6d6;
         }
 
         /* 接口层：品红/粉紫（位于网络层之上；区别于网络层蓝、链路层绿、复用层琥珀、控制面紫） */
@@ -409,8 +409,19 @@
             min-width: 52px;
             flex-shrink: 0;
         }
-        /* 下接口层：与上接口同族（品红），位于层底部，作为向下交付的出口；
-           左边框与上接口同为实线（同族标识） */
+        /* 协议接口层：紫/靛蓝（区别于服务接口层品红；位于层底部，作为向下交付的出口；
+           覆盖同族的 iface-layer 品红样式，换成独立主题色） */
+        .inner-row.down-iface-layer .tag {
+            color: #8250df;
+        }
+        .inner-row.down-iface-layer .desc .hl {
+            color: #8250df;
+            background: #f3eafc;
+            border: 1px solid #d8c4ef;
+        }
+        .inner-row.down-iface-layer .desc .iface-key {
+            color: #8250df;
+        }
 
         /* 编码调制层控制面：静态（紫）/ 动态（蓝）两组，仅用色彩区分 */
         .cp-table .cp-body .cp-control .cp-group {
@@ -581,7 +592,7 @@
         }
 
         .inner-row.select-end-layer {
-            border-left-color: #8250df;
+            border-left-color: #0e8a8a;
         }
 
         /* 接口层：品红/粉紫 */
@@ -589,7 +600,7 @@
             border-left-color: #bf3989;
         }
         .inner-row.down-iface-layer {
-            border-left-color: #bf3989;
+            border-left-color: #8250df;
         }
 
         .inner-row.net-layer {
@@ -782,7 +793,7 @@
             z-index: 1;
         }
 
-        /* 背景色带：上接口区 / 中间区 / 下接口区。
+        /* 背景色带：服务接口区 / 中间区 / 协议接口区。
            灰色、无圆角；颜色在左右两侧淡出（横向渐变）。
            两个接口层各加一条较淡的灰色背景，
            两接口层之间的各层再覆盖一条更淡的背景加以区分 */
@@ -903,12 +914,8 @@
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
                             <span class="desc"><span class="hl">多路复用（Stream ID）</span> <span class="dim">（在下层提供的端到端透明承载通道上创建多个并行传输的请求/响应流）</span></span>
                         </div>
-                        <div class="inner-row select-end-layer">
-                            <span class="tag">🎯 端路</span>
-                            <span class="desc"><span class="hl">建立到目标主机的端到端连接</span> <span class="dim">（经下接口层调用 TLS：connect(目标IP, 目标端口) 建立 TCP 连接，再 TLS 握手 ClientHello / ServerHello / 证书交换 / 密钥协商）</span></span>
-                        </div>
                         <div class="inner-row iface-layer down-iface-layer">
-                            <span class="tag">🧩 下接口</span>
+                            <span class="tag">🧩 协议接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">目标</span>
@@ -921,6 +928,12 @@
                                     <span class="hl">上行：明文HTTP响应报文</span>
                                 </span>
                             </span>
+                        </div>
+                        <div class="inner-row select-end-layer">
+                            <span class="tag">🎯 端路</span>
+                            <span class="desc"><span class="hl">逻辑通道：对端 HTTP 服务器</span> <span class="dim">（承载目标确定即视为端到端通道确立）</span></span>
+                            <span class="desc"><span class="hl">初始化：调用 TLS 服务接口建链</span> <span class="dim">（经协议接口层调用 TLS：connect(目标IP, 目标端口) 建立 TCP 连接，再 TLS 握手 ClientHello / ServerHello / 证书交换 / 密钥协商）</span></span>
+                            <span class="desc"><span class="hl">常态：向 TLS 连接交付请求/响应</span> <span class="dim">（复用已建立的连接，无需每包额外寻址）</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-app"></div>
@@ -936,7 +949,7 @@
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row iface-layer">
-                            <span class="tag">🧩 上接口</span>
+                            <span class="tag">🧩 服务接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">类型</span>
@@ -958,7 +971,6 @@
                                 <span class="iface-item">
                                     <span class="iface-key">交付</span>
                                     <span class="hl">明文数据</span>
-                                    <span class="dim">（下行：明文数据经 TLS 加密、完整性保护后交付 TCP；上行：对端 TLS 解密后交付明文数据）</span>
                                 </span>
                             </span>
                         </div>
@@ -979,22 +991,12 @@
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
                             <span class="desc"><span class="null-box">空</span> </span>
                         </div>
-                        <div class="inner-row select-end-layer">
-                            <span class="tag">🎯 端路</span>
-                            <span class="desc"><span class="hl">建立到目标主机的端到端安全连接</span> <span class="dim">（经下接口层调用 TCP：connect(目标IP, 目标端口) 三次握手建立连接，返回连接句柄）</span></span>
-                        </div>
                         <div class="inner-row iface-layer down-iface-layer">
-                            <span class="tag">🧩 下接口</span>
+                            <span class="tag">🧩 协议接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">目标</span>
                                     <span class="hl">对端 TLS 服务器（目标主机上的 TLS 会话实例）</span>
-                                    <span class="dim">（本层以为在与对端 TLS 对话；实际经 TCP 连接承载；同一目标IP+端口可有多个连接，靠五元组区分，各对应独立句柄）</span>
-                                </span>
-                                <span class="iface-item">
-                                    <span class="iface-key">参数</span>
-                                    <span class="hl">五元组（目标IP、目标端口、源IP、源端口、协议号）</span>
-                                    <span class="dim">（唯一标识连接）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">交付</span>
@@ -1002,6 +1004,12 @@
                                     <span class="dim">（写入该连接句柄对应的 TCP 连接传输）</span>
                                 </span>
                             </span>
+                        </div>
+                        <div class="inner-row select-end-layer">
+                            <span class="tag">🎯 端路</span>
+                            <span class="desc"><span class="hl">逻辑通道：对端 TCP 连接（五元组）</span> <span class="dim">（目标IP、目标端口、源IP、源端口、协议号确定即视为通道确立）</span></span>
+                            <span class="desc"><span class="hl">初始化：调用 TCP 服务接口建链</span> <span class="dim">——调用TCP层服务接口提供的初始化函数connect()建立连接</span></span>
+                            <span class="desc"><span class="hl">常态：向 TCP 连接交付 TLS 记录</span> <span class="dim">（复用已建立的连接，无需每包额外寻址）</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-tls"></div>
@@ -1017,7 +1025,7 @@
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row iface-layer">
-                            <span class="tag">🧩 上接口</span>
+                            <span class="tag">🧩 服务接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">类型</span>
@@ -1060,31 +1068,25 @@
                             <span class="desc"><span class="hl">IPv4：全网连接复用（目标IPv4 + 目标端口 + 源端口）</span> <span class="dim">—— 创建 2³² × 2¹⁶ × 2¹⁶ 的会话空间</span></span>
                             <span class="desc"><span class="hl">IPv6：全网连接复用（目标IPv6 + 目标端口 + 源端口）</span> <span class="dim">—— 创建 2¹²⁸ × 2¹⁶ × 2¹⁶ 的会话空间</span></span>
                         </div>
-                        <div class="inner-row select-end-layer">
-                            <span class="tag">🎯 端路</span>
-                            <span class="desc"><span class="hl">建立到目标IP的逻辑通道</span> <span class="dim">（承载层 IP 为全连通的无连接服务，仅仅提供目标IP即可视为到目标的点到点通道已确定）</span></span>
-                        </div>
                         <div class="inner-row iface-layer down-iface-layer">
-                            <span class="tag">🧩 下接口</span>
+                            <span class="tag">🧩 协议接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">目标</span>
-                                    <span class="hl">对端 TCP 连接（目标IP : 目标端口）</span>
-                                    <span class="dim">（本层以为在与对端 TCP 对话；实际经 IP 层承载，IPv4/IPv6 由套接字地址族 + DNS 解析选定，如 Happy Eyeballs 双栈竞争）</span>
-                                </span>
-                                <span class="iface-item">
-                                    <span class="iface-key">参数</span>
-                                    <span class="hl">协议号字段（6=TCP，由本层确定）</span>
-                                    <span class="hl">本机IP地址（单向接收，从 IP 层读取，构成五元组源IP）</span>
-                                    <span class="hl">MTU（从 IP 层读取，据此推导 MSS）</span>
+                                    <span class="hl"> TCP 连接对端（目标IP : 目标端口）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">交付</span>
-                                    <span class="hl">下行：目标IP + TCP段（按MSS分段 + TCP头）</span>
-                                    <span class="hl">上行：TCP段</span>
-                                    <span class="dim">（目标IP随数据一起交给 IP 层封装为数据报；上行由 IP 层按协议号解封装后交付 TCP 段）</span>
+                                    <span class="hl">下行：TCP段（按MSS分段 + TCP头，向对端 TCP 交付）</span>
+                                    <span class="hl">上行：TCP段（来自对端 TCP）</span>
                                 </span>
                             </span>
+                        </div>
+                        <div class="inner-row select-end-layer">
+                            <span class="tag">🎯 端路</span>
+                            <span class="desc"><span class="hl">逻辑通道：目标IP（五元组确定）</span> <span class="dim">（IP承载层为全连通无连接网络，提供目标IP即可视为到目标的点到点通道已确定；UDP 确定五元组后通道客观存在，无需握手）</span></span>
+                            <span class="desc"><span class="hl">初始化：TCP 需三次握手，UDP 无需</span> <span class="dim">（面向连接协议发起握手；无连接协议仅需确定参数）</span></span>
+                            <span class="desc"><span class="hl">常态：每包指定目标IP交付</span> <span class="dim">（承载寻址参数为目标IP，随每个TCP/UDP报文交付）</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-tcp"></div>
@@ -1100,7 +1102,7 @@
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row iface-layer">
-                            <span class="tag">🧩 上接口</span>
+                            <span class="tag">🧩 服务接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">类型</span>
@@ -1111,21 +1113,21 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">参数</span>
-                                    <span class="hl">协议号字段（6=TCP / 17=UDP / 1=ICMP，上行时据此分发给对应的上层协议）</span>
+                                    <span class="hl">协议号字段（6=TCP / 17=UDP / 1=ICMP）</span>
+                                    <span class="dim">（上行时据此分发给对应的上层协议）</span>
+                                    
                                     <span class="hl">本机IP地址（由 IP 层管理）</span>
                                     <span class="hl">MTU（自下层读取）</span>
-                                    <span class="dim">（对端IP不列入参数，随数据在交付中下发）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">初始化</span>
                                     <span class="null-box">无</span>
-                                    <span class="dim">（无连接，不需要握手）</span>
+                                    <span class="dim">（无连接）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">交付</span>
                                     <span class="hl">下行：目标IP + 数据块</span>
                                     <span class="hl">上行：数据块</span>
-                                    <span class="dim">（下行：上层交付数据块与目标 IP，IP 层封装为数据报发送；上行：IP 层按协议号解封装后交付数据块）</span>
                                 </span>
                             </span>
                         </div>
@@ -1157,39 +1159,31 @@
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 链路</span>
-                            <span class="desc"><span class="hl">分片重组</span> <span class="hl">头部校验</span> <span class="hl">生存时间管理</span></span>
+                            <span class="desc"><span class="hl">分片重组</span> <span class="hl">头部校验</span></span>
                         </div>
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
                             <span class="desc"><span class="hl">Type字段复用（IPv4 / ARP / IPv6）</span></span>
                         </div>
-                        <div class="inner-row select-end-layer">
-                            <span class="tag">🎯 端路</span>
-                            <span class="desc"><span class="hl">ARP（映射IP→MAC）</span> <span class="dim">多次ARP形成MAC表；发送时查询MAC表选择目标MAC</span></span>
-                            <span class="desc"><span class="hl">建立到目标MAC的逻辑通道</span> <span class="dim">承载层为全连通无连接网络，提供目标MAC即可视为到目标的点到点通道已确定</span></span>
-                        </div>
                         <div class="inner-row iface-layer down-iface-layer">
-                            <span class="tag">🧩 下接口</span>
+                            <span class="tag">🧩 协议接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">目标</span>
                                     <span class="hl">对端 IP 主机（目标IP地址）</span>
-                                    <span class="dim">（本层以为在与对端 IP 对话；实际经路由表选定出口网络接口，逐跳转发）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">交付</span>
-                                    <span class="hl">下行：目标MAC + IP数据报（Type=0x0800）</span>
-                                    <span class="hl">上行：IP数据报 + 源MAC</span>
-                                    <span class="hl">ARP下行：请求→目标MAC=广播地址 / 应答→目标MAC=请求方MAC（Type=0x0806）</span>
-                                    <span class="hl">ARP上行：请求/应答 + 源MAC</span>
-                                    <span class="dim">（受MTU 1500约束，超限分片）</span>
-                                </span>
-                                <span class="iface-item">
-                                    <span class="iface-key">参数</span>
-                                    <span class="hl">MTU（单向接收，1500字节，从以太网层读取）</span>
-                                    <span class="hl">本机MAC地址（单向接收，仅ARP构造报文时从以太网层读取，填SHA字段）</span>
+                                    <span class="hl">下行：IP数据报（向对端 IP 主机交付）</span>
+                                    <span class="hl">上行：IP数据报（来自对端 IP 主机）</span>
                                 </span>
                             </span>
+                        </div>
+                        <div class="inner-row select-end-layer">
+                            <span class="tag">🎯 端路</span>
+                            <span class="desc"><span class="hl">逻辑通道：对端 IP 主机</span> <span class="dim">（目标IP确定即视为到目标的逻辑通道确立）</span></span>
+                            <span class="desc"><span class="hl">初始化：ARP 解析（映射IP→MAC）</span> <span class="dim">多次ARP形成MAC表；发送前查询MAC表选择目标MAC</span></span>
+                            <span class="desc"><span class="hl">常态：每包指定目标MAC交付</span> <span class="dim">经协议接口层向下交付时指定目标MAC；MAC报头封装由承载层完成</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-ip"></div>
@@ -1205,7 +1199,7 @@
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row iface-layer">
-                            <span class="tag">🧩 上接口</span>
+                            <span class="tag">🧩 服务接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">类型</span>
@@ -1228,7 +1222,6 @@
                                     <span class="iface-key">交付</span>
                                     <span class="hl">下行：目标MAC + 数据</span>
                                     <span class="hl">上行：数据 + 源MAC</span>
-                                    <span class="dim">（目标MAC由上层经ARP提供，本层填帧头发送；上行本层解帧后交付数据与源MAC）</span>
                                 </span>
                             </span>
                         </div>
@@ -1265,14 +1258,10 @@
                         </div>
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
-                            <span class="desc"><span class="null-box">无</span> <span class="dim">（下层编码调制层提供单条物理通道，以太网不复用）</span></span>
-                        </div>
-                        <div class="inner-row select-end-layer">
-                            <span class="tag">🎯 端路</span>
-                            <span class="desc"><span class="null-box">空</span> <span class="dim">（承载层编码调制已提供端到端物理通道，本层无需再建立）</span></span>
+                            <span class="desc"><span class="null-box">无</span> <span class="dim"></span></span>
                         </div>
                         <div class="inner-row iface-layer down-iface-layer">
-                            <span class="tag">🧩 下接口</span>
+                            <span class="tag">🧩 协议接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">目标</span>
@@ -1284,14 +1273,11 @@
                                     <span class="hl">双向以太网帧</span>
                                     <span class="dim">（本层以为在对对端以太网节点交付以太网帧；实际经编码调制层将帧视为连续比特流承载，上行从比特流中还原出帧）</span>
                                 </span>
-                                <span class="iface-item">
-                                    <span class="iface-key">参数</span>
-                                    <span class="hl">速率（双向，10/100/1000/10000M，可读可设）</span>
-                                    <span class="hl">双工模式（双向，全双工/半双工，可读可设）</span>
-                                    <span class="hl">冲突状态（单向接收，发生冲突/正常）</span>
-                                    <span class="hl">链路状态（单向接收，链路可用/故障）</span>
-                                </span>
                             </span>
+                        </div>
+                        <div class="inner-row select-end-layer">
+                            <span class="tag">🎯 端路</span>
+                            <span class="desc"><span class="null-box">空</span> <span class="dim">（承载层编码调制已提供端到端物理通道）</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-eth"></div>
@@ -1307,7 +1293,7 @@
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row iface-layer">
-                            <span class="tag">🧩 上接口</span>
+                            <span class="tag">🧩 服务接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">类型</span>
@@ -1345,8 +1331,6 @@
                                         <span class="dim">（不涉及转发路径决策）</span>
                                     </span>
                                     <span class="cp-cell cp-forward">
-                                        <span class="hl">中继器</span>
-                                        <span class="hl">带整形的光放大器（如SOA 3R再生）</span>
                                         <span class="hl">波长转换器</span>
                                         <span class="hl">带O-E-O转换的ROADM/OTN</span>
                                     </span>
@@ -1356,35 +1340,30 @@
                         <div class="inner-row link-layer">
                             <span class="tag">📦 链路</span>
                             <span class="desc"><span class="hl">数字 ↔ 物理信号映射（NRZ/PAM4/QAM）</span> <span class="hl">波长调制参数配置（中心频率/调制格式/FEC/功率）</span></span>
+                            <span class="desc"><span class="hl">链路增强：再生中继器（O-E-O，解调→判决→再调制，理解编码）</span></span>
                         </div>
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
                             <span class="desc"><span class="hl">码分复用（CDMA）</span> <span class="dim">—— 在单一波长上通过不同扩频码区分多个并行通道（注：不适用于标准以太网）</span></span>
                         </div>
-                        <div class="inner-row select-end-layer">
-                            <span class="tag">🎯 端路</span>
-                            <span class="desc"><span class="null-box">空</span> <span class="dim">（承载层光波已提供端到端波长通道，本层无需再建立）</span></span>
-                        </div>
                         <div class="inner-row iface-layer down-iface-layer">
-                            <span class="tag">🧩 下接口</span>
+                            <span class="tag">🧩 协议接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">目标</span>
                                     <span class="hl">对端调制解调器（对端收发实例）</span>
-                                    <span class="dim">（本层以为在与对端编码调制对话；实际经固定波长通道 λᵢ 承载，波长组网时分配确定，运行时不从 λ₁/λ₂/…/λₙ 中拣选）</span>
-                                </span>
-                                <span class="iface-item">
-                                    <span class="iface-key">参数</span>
-                                    <span class="hl">波长通道方向（静态，上行 / 下行）</span>
-                                    <span class="hl">波长通道状态（经控制/管理面读取，可用 / 占用 / 故障）</span>
-                                    <span class="dim">（经控制/管理面获取，非数据通道；故障亦可本端 LOS 本地检测）</span>
+                                    <span class="dim">（本层以为在与对端编码调制对话；实际经波长通道承载，发送 λᵢ / 接收 λⱼ，组网时分配确定，运行时不从 λ₁…λₙ 中拣选）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">交付</span>
                                     <span class="hl">特定波长光信号</span>
-                                    <span class="dim">（下行：本层调制到目标波长 λᵢ，交给光波层做波长级转发；上行：接收光波层交付的该波长信号，解调还原为数字比特流）</span>
+                                    <span class="dim">（下行：本层调制到发送波长 λᵢ，交给光波层做波长级转发；上行：接收光波层交付的接收波长 λⱼ 信号，解调还原为数字比特流）</span>
                                 </span>
                             </span>
+                        </div>
+                        <div class="inner-row select-end-layer">
+                            <span class="tag">🎯 端路</span>
+                            <span class="desc"><span class="null-box">空</span> <span class="dim">（承载层光波已提供端到端波长通道，本层无需再建立）</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-physical"></div>
@@ -1400,7 +1379,7 @@
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row iface-layer">
-                            <span class="tag">🧩 上接口</span>
+                            <span class="tag">🧩 服务接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">类型</span>
@@ -1409,9 +1388,15 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">参数</span>
-                                    <span class="hl">波长通道标识（λ₁/λ₂/…/λₙ，静态，WDM 系统固有）</span>
-                                    <span class="hl">波长通道方向（静态，上行 / 下行）</span>
-                                    <span class="hl">波长通道状态（经控制/管理面，可用 / 占用 / 故障）</span>
+                                    <span class="desc">
+                                        <span class="hl">发送波长通道（λᵢ，静态，下行）</span>
+                                        <span class="hl">接收波长通道（λⱼ，静态，上行）</span>
+                                        <span class="dim">（λᵢ ≠ λⱼ：同一波长不能同时用于收发）</span>
+                                    </span>
+                                    <span class="desc">
+                                        <span class="hl">波长通道状态（可用 / 占用 / 故障）</span>
+                                        <span class="dim">（经控制/管理面发送）</span>
+                                    </span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">初始化</span>
@@ -1421,7 +1406,7 @@
                                 <span class="iface-item">
                                     <span class="iface-key">交付</span>
                                     <span class="hl">特定波长光信号</span>
-                                    <span class="dim">（下行：交付光信号做波长级转发；上行：将到达信号交付回上层对应波长通道）</span>
+                                    <span class="dim">（下行：将 λᵢ 光信号做波长级转发；上行：将到达的 λⱼ 信号交付回上层对应波长通道）</span>
                                 </span>
                             </span>
                         </div>
@@ -1441,43 +1426,35 @@
                                     <span class="cp-cell cp-forward">
                                         <span class="hl">ROADM波长交换</span>
                                         <span class="hl">GMPLS动态光路</span>
-                                        <span class="hl">光放大器（不带整形，如EDFA）</span>
                                     </span>
                                 </span>
                             </span>
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 链路</span>
-                            <span class="desc"><span class="hl">波长寻址（λ₁/λ₂/…/λₙ）</span> <span class="hl">链路增强：光功率均衡</span> <span class="hl">色散补偿</span> <span class="hl">OSNR优化</span></span>
+                            <span class="desc"><span class="hl">波长寻址（发送 λᵢ / 接收 λⱼ）</span> <span class="hl">链路增强：光功率均衡</span> <span class="hl">光放大器（不带整形，如EDFA）</span> <span class="hl">带整形的光放大器（SOA 3R，波形层整形/重定时，不解码）</span> <span class="hl">色散补偿</span> <span class="hl">OSNR优化</span></span>
                         </div>
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
-                            <span class="desc"><span class="hl">WDM波分复用</span> <span class="dim">（将裸光纤复用为多个波长通道 λ₁/λ₂/…/λₙ）</span></span>
-                        </div>
-                        <div class="inner-row select-end-layer">
-                            <span class="tag">🎯 端路</span>
-                            <span class="desc"><span class="null-box">空</span> <span class="dim">（承载层光纤已提供端到端透明通道；内部波分多通道不影响端到端，本层不拣选单通道）</span></span>
+                            <span class="desc"><span class="hl">WDM波分复用</span> <span class="dim">（将裸光纤复用为多个波长通道 λ₁…λₙ，本端发送 λᵢ、接收 λⱼ，同一波长不能同时用于收发，全双工占用两波长）</span></span>
                         </div>
                         <div class="inner-row iface-layer down-iface-layer">
-                            <span class="tag">🧩 下接口</span>
+                            <span class="tag">🧩 协议接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">目标</span>
                                     <span class="hl">对端光节点（对端波长转发实例）</span>
-                                    <span class="dim">（本层以为在与对端光波对话；实际经光纤（物理介质）承载）</span>
-                                </span>
-                                <span class="iface-item">
-                                    <span class="iface-key">参数</span>
-                                    <span class="hl">光纤类型（静态配置，单模 / 多模）</span>
-                                    <span class="hl">物理接口类型（静态配置，LC / SC / MPO 等）</span>
-                                    <span class="hl">光纤长度 / 衰减 / 色散等物理特性（静态配置）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">交付</span>
                                     <span class="hl">一组多波长光信号（WDM 聚合）</span>
-                                    <span class="dim">（经 WDM 波分复用，λ₁/λ₂/…/λₙ 一起入纤透明传输）</span>
+                                    <span class="dim">（经 WDM 波分复用，λ₁…λₙ 一起入纤透明传输）</span>
                                 </span>
                             </span>
+                        </div>
+                        <div class="inner-row select-end-layer">
+                            <span class="tag">🎯 端路</span>
+                            <span class="desc"><span class="null-box">空</span> <span class="dim">（承载层光纤已提供端到端透明通道）</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-wave"></div>
@@ -1493,7 +1470,7 @@
                     <div class="layer-body">
                         <span class="collapsed-hint">— 悬停展开 —</span>
                         <div class="inner-row iface-layer">
-                            <span class="tag">🧩 上接口</span>
+                            <span class="tag">🧩 服务接口</span>
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">类型</span>
@@ -1504,6 +1481,7 @@
                                     <span class="iface-key">参数</span>
                                     <span class="hl">光纤类型（单模 / 多模）</span>
                                     <span class="hl">物理接口类型（LC / SC / MPO 等）</span>
+                                    <span class="hl">通道方向（静态，上行 / 下行；光纤为单向介质，双向各用一根纤芯）</span>
                                     <span class="hl">光纤长度 / 衰减 / 色散等物理特性</span>
                                     <span class="dim">（光纤为不加电的无源硬件，参数皆客观属性）</span>
                                 </span>
@@ -1564,7 +1542,7 @@
                     <div class="hline" id="hline-bottom"></div>
                 </div>
 
-                <!-- 背景色带：上接口区（品红 8%）/ 中间区（更淡）/ 下接口区（品红 8%） -->
+                <!-- 背景色带：服务接口区（品红 8%）/ 中间区（更淡）/ 协议接口区（品红 8%） -->
                 <div class="ruler-zone up-iface" id="zone-up-interface"></div>
                 <div class="ruler-zone middle" id="zone-middle"></div>
                 <div class="ruler-zone down-iface" id="zone-down-interface"></div>
@@ -1601,12 +1579,12 @@
 
                 <!-- 8个文字标签 -->
                 <span class="ruler-label" id="label-transport">载荷层</span>
-                <span class="ruler-label" id="label-up-interface">上接口层</span>
+                <span class="ruler-label" id="label-up-interface">服务接口层</span>
                 <span class="ruler-label" id="label-mux">复用层</span>
                 <span class="ruler-label" id="label-network">网络层</span>
                 <span class="ruler-label" id="label-link">链路层</span>
+                <span class="ruler-label" id="label-down-interface">协议接口层</span>
                 <span class="ruler-label" id="label-select-end">端路层</span>
-                <span class="ruler-label" id="label-down-interface">下接口层</span>
                 <span class="ruler-label" id="label-bearing">承载层</span>
             </div>
         </div>
@@ -1632,12 +1610,12 @@
             </thead>
             <tbody>
                 <tr><td>载荷层</td><td>本协议向上交付 / 接收的数据本体；上层协议的数据作为载荷在本层传递。</td></tr>
-                <tr><td>上接口层</td><td>向上层提供的接口契约（类型 / 参数 / 初始化 / 交付），上层经它调用本层服务。</td></tr>
+                <tr><td>服务接口层</td><td>向上层提供的接口契约（类型 / 参数 / 初始化 / 交付），上层经它调用本层服务。类似软件库对外暴露的函数签名——<b>本层定义参数</b>，调用它的上层只需<b>提供参数值</b>，无需自己准备这个接口；接口是单边定义的，由下层定义、由上层（调用者）消费。</td></tr>
                 <tr><td>网络层</td><td>转发与寻址决策：控制面（路由 / 转发规则）与转发面（查表、转发、封装解封装）。</td></tr>
                 <tr><td>链路层</td><td>单链路上的语义：连接状态、差错检测、校验、重传、流控等。</td></tr>
                 <tr><td>复用层</td><td>向上提交单链路、向下提交聚合后的多链路，把下层多条承载通道复用 / 聚合为一条。</td></tr>
-                <tr><td>端路层</td><td>在下层承载服务上建立端到端通道（建链：经下接口层发起连接建立 / 握手）；内部可能包含多链路，但本身实现端到端的连接；若下层承载本身已是端到端，本层不再另行建路，仅负责发起建链。</td></tr>
-                <tr><td>下接口层</td><td>向下层交付的接口契约（目标 / 参数 / 交付）；逻辑上以为在向对端同层实例交付本层数据单元——封装式层次为离散的 PDU（报文 / 记录 / 段 / 数据报 / 帧），连续式层次（编码调制、光波）为比特流 / 光信号——客观上将数据交给下层（承载层）透明承载，逐级递归直至对端。建链（连接建立 / 握手）由端路层负责。</td></tr>
+                <tr><td>协议接口层</td><td>通信两端同层次端点之间的接口——本层端点与对端同层端点对接，交付本层数据单元（如 TCP 向对端 TCP 交付 TCP 段、IP 向对端 IP 交付 IP 数据报）。这是<b>对等（peer）通信</b>而非调用关系，因此无需像服务接口那样携带参数 / 初始化契约——对端同层既不是调用者也不是被调用者，契约仅含「目标」（对端同层端点）与「交付」（本层数据单元）。封装式层次为离散 PDU（报文 / 记录 / 段 / 数据报 / 帧），连续式层次（编码调制、光波）为比特流 / 光信号。与下层承载的对接（调用下层服务接口、提供寻址参数）由端路层负责；逐级递归直至对端。建链（连接建立 / 握手）由端路层负责。</td></tr>
+                <tr><td>端路层</td><td>调用下层协议的服务接口，在承载网络上建立端到端通道的层次——本层在此扮演<b>调用者</b>：下层服务接口定义了参数，端路层负责提供参数值并调用。通道建立分三阶段：<b>逻辑通道</b>——端到端通道在承载参数（如 TCP/UDP 五元组：源/目标 IP、源/目标端口、协议号）确定时客观上已确立；无连接协议（如 UDP）确定参数后通道即视为存在，无需握手；<b>初始化</b>——面向连接协议（如 TCP）经下层服务接口发起握手建立连接，无连接协议（如 UDP）无需任何初始化；<b>常态通信</b>——每次交付时向底层同时提供承载寻址参数（如 TCP/UDP 每包交付五元组、IP 每包指定目标 MAC）。若下层承载本身已是端到端，本层不再另行建路，仅负责发起建链；内部可能包含多链路，但本身实现端到端的连接。</td></tr>
                 <tr><td>承载层</td><td>本协议以下层整体作为承载链路；在递归模型中，下层即本层的承载。</td></tr>
             </tbody>
         </table>
@@ -1660,14 +1638,14 @@
 
         // 协议索引: 0=数据层(静态), 1=HTTP层, 2=TLS层, 3=TCP, 4=IP, 5=以太网, 6=编码调制层, 7=光波层, 8=光纤层
 
-        // 每个协议的标尺映射（下接口层位于本层底部）：
-        // transport_mux: 载荷层↔上接口 分界 → 对准当前协议层的上边界 (top)
-        // iface_network: 上接口↔网络层 分界 → 对准当前协议层接口/网络分隔线 (dividerIface)
+        // 每个协议的标尺映射（端路层位于本层底部）：
+        // transport_mux: 载荷层↔服务接口 分界 → 对准当前协议层的上边界 (top)
+        // iface_network: 服务接口↔网络层 分界 → 对准当前协议层接口/网络分隔线 (dividerIface)
         // mux_network: 网络层↔链路层 分界 → 对准当前协议层网络/链路分隔线 (dividerNet)
         // link_network: 链路层↔复用层 分界 → 对准当前协议层链路/复用分隔线 (dividerMux)
-        // link_select: 复用层↔端路层 分界 → 对准当前协议层复用/端路分隔线 (dividerSelectEnd)
-        // select_end: 端路层↔下接口 分界 → 对准当前协议层端路/下接口分隔线 (dividerDown)
-        // down_iface: 下接口↔承载层 分界 → 对准当前协议层的下边界 (bottom)
+        // link_select: 复用层↔协议接口层 分界 → 对准当前协议层复用/协议接口分隔线 (dividerSelectEnd)
+        // select_end: 协议接口层↔端路层 分界 → 对准当前协议层协议接口/端路分隔线 (dividerDown)
+        // down_iface: 端路层↔承载层 分界 → 对准当前协议层的下边界 (bottom)
         const RULER_MAPPINGS = {
             // 数据层：扁平、无内部结构，将全部下层视为承载层
             // → 全部分界都对准数据层的下边界（承载层起始处）
@@ -1934,16 +1912,16 @@
             document.documentElement.style.setProperty('--namebar-w', Math.ceil(maxW) + 'px');
         }
 
-        // 背景色带定位：上接口区 = [transport_mux, iface_network]，
-        // 中间区 = [iface_network, select_end]，下接口区 = [select_end, down_iface]
-        // show 参数：层缺失对应行时隐藏该色带（如 HTTP 无上接口行 → 隐藏上接口区；
-        // 光纤无下接口行 → 隐藏下接口区，且中间区延伸到层底边，避免链路背景底部被截断）
+        // 背景色带定位：服务接口区 = [transport_mux, iface_network]，
+        // 中间区 = [iface_network, link_select]，协议接口区 = [link_select, down_iface]
+        // show 参数：层缺失对应行时隐藏该色带（如 HTTP 无服务接口行 → 隐藏服务接口区；
+        // 光纤无协议接口行 → 隐藏协议接口区，且中间区延伸到层底边，避免链路背景底部被截断）
         function positionRulerZones(pos, show = { up: true, mid: true, down: true }) {
             const zones = {
                 'zone-up-interface':   { top: pos.transport_mux, bottom: pos.iface_network, on: show.up },
-                // 中间区：无上接口行时向上延伸到层顶（transport_mux），无下接口行时向下延伸到层底（down_iface）
-                'zone-middle':         { top: show.up ? pos.iface_network : pos.transport_mux, bottom: show.down ? pos.select_end : pos.down_iface, on: show.mid },
-                'zone-down-interface': { top: pos.select_end,    bottom: pos.down_iface,    on: show.down }
+                // 中间区：无服务接口行时向上延伸到层顶（transport_mux），无协议接口行时向下延伸到层底（down_iface）
+                'zone-middle':         { top: show.up ? pos.iface_network : pos.transport_mux, bottom: show.down ? pos.link_select : pos.down_iface, on: show.mid },
+                'zone-down-interface': { top: pos.link_select,    bottom: pos.down_iface,    on: show.down }
             };
             ['zone-up-interface', 'zone-middle', 'zone-down-interface'].forEach(name => {
                 const el = document.getElementById(name);
@@ -1977,8 +1955,9 @@
                     hline.className = 'hline';
                     vmark.className = 'vmark';
                     cross.style.display = ''; // 复位时恢复所有分界线可见
-                    const defaultPos = DEFAULT_POSITIONS[name] * 100;
-                    cross.style.top = defaultPos + '%';
+                const defaultPos = DEFAULT_POSITIONS[name] * 100;
+                cross.style.top = defaultPos + '%';
+                cross.dataset.rawTop = defaultPos;
                 });
                 const defaultLabelPositions = {
                     transport: 6.25,
@@ -2049,6 +2028,8 @@
                 } else {
                     offset = DEFAULT_POSITIONS[name];
                 }
+                // 保存未 clamp 的原始偏移（供色带边界使用，色带允许贴近 100%）
+                cross.dataset.rawTop = Math.max(0, Math.min(1, offset)) * 100;
                 // 允许贴近标尺上下边缘：底部锚定层（如光纤层）的"底部分界"位于 100% 附近，
                 // 若被钳制在 99% 会向上错位约 1%（数百 px 的标尺上十分明显）；
                 // 仍保留极小边距，避免元素完全贴边被裁切
@@ -2062,12 +2043,13 @@
 
                 // 载荷层不存在时（最上层）隐藏其上方分界线 transport_mux；
                 // 复用层不存在时（如光纤层）隐藏 链路↔复用 分界线；
-                // 端路层不存在时（如光纤层）隐藏 复用↔端路、端路↔下接口 分界线；
+                // 协议接口层不存在时（如光纤层）隐藏 复用↔协议接口 分界线；
+                // 端路层不存在时（如光纤层）隐藏 协议接口↔端路 分界线；
                 // 承载层不存在时（最下层）隐藏其上方分界线 down_iface
                 const hideCross = (name === 'transport_mux' && isTopLayer) ||
                                   (name === 'iface_network' && !hasIfaceRow) ||
                                   (name === 'link_network' && !hasMuxRow) ||
-                                  (name === 'link_select' && (!hasSelectEndRow || !hasMuxRow)) ||
+                                  (name === 'link_select' && (!hasDownIfaceRow || !hasMuxRow)) ||
                                   (name === 'select_end' && (!hasSelectEndRow || !hasDownIfaceRow)) ||
                                   (name === 'down_iface' && isBottomLayer);
                 cross.style.display = hideCross ? 'none' : '';
@@ -2081,16 +2063,20 @@
                 }
             });
 
-            // 获取全部十字线的实际位置
+            // 获取全部十字线的实际位置（zone 用未 clamp 的原始边界，保证色带能到 100%）
             const crossPositions = {};
+            const rawCrossPositions = {};
             crossNames.forEach(name => {
                 const cross = crosses[name];
                 const pos = parseFloat(cross.style.top) / 100;
                 crossPositions[name] = isNaN(pos) ? 0.25 : pos;
+                // 未 clamp 的原始偏移：记录在 data 属性（cross 定位时保存，供色带边界使用）
+                const raw = parseFloat(cross.dataset.rawTop) / 100;
+                rawCrossPositions[name] = isNaN(raw) ? crossPositions[name] : raw;
             });
 
-            // 背景色带跟随十字线定位；层缺失上接口/下接口行时隐藏对应色带
-            positionRulerZones(crossPositions, { up: hasIfaceRow, mid: true, down: hasDownIfaceRow });
+            // 背景色带跟随十字线定位；层缺失服务接口/协议接口行时隐藏对应色带
+            positionRulerZones(rawCrossPositions, { up: hasIfaceRow, mid: true, down: hasDownIfaceRow });
 
             // 更新文字标签的位置：一律取对应层区域的垂直中点（垂直居中），
             // 载荷层/承载层区域即使很大（如光纤层的载荷区、数据层的承载区）也按中点居中。
@@ -2102,8 +2088,8 @@
                 network: (crossPositions.iface_network + crossPositions.mux_network) / 2,
                 link: (crossPositions.mux_network + crossPositions.link_network) / 2,
                 mux: (crossPositions.link_network + crossPositions.link_select) / 2,
-                select_end: (crossPositions.link_select + crossPositions.select_end) / 2,
-                down_interface: (crossPositions.select_end + crossPositions.down_iface) / 2,
+                down_interface: (crossPositions.link_select + crossPositions.select_end) / 2,
+                select_end: (crossPositions.select_end + crossPositions.down_iface) / 2,
                 bearing: bearingMid
             };
 
@@ -2133,7 +2119,7 @@
                 } else {
                     // 先恢复所有标签可见（避免残留数据层隐藏的状态）
                     label.style.display = '';
-                    // 最上层之上没有载荷层、复用层/端路层缺失（如光纤层）、最下层之下没有承载层 → 隐藏对应标签
+                    // 最上层之上没有载荷层、复用层/协议接口层缺失（如光纤层）、最下层之下没有承载层 → 隐藏对应标签
                     if (key === 'transport') {
                         label.style.display = isTopLayer ? 'none' : '';
                     } else if (key === 'up_interface') {
@@ -2203,17 +2189,17 @@
                 const muxRect = muxRow.getBoundingClientRect();
                 muxMid = (muxMid + muxRect.top) / 2;
             }
-            // 端路层↔复用层 分界：复用行底边与端路行顶边的中点
+            // 协议接口层↔复用层 分界：复用行底边与协议接口行顶边的中点
             let selectEndMid = muxRow ? muxRow.getBoundingClientRect().bottom : linkRect.bottom;
-            if (selectEndRow) {
-                const seRect = selectEndRow.getBoundingClientRect();
-                selectEndMid = (selectEndMid + seRect.top) / 2;
-            }
-            // 端路层↔下接口层 分界：端路行底边与下接口行顶边的中点（下接口层位于本层底部）
-            let downMid = selectEndRow ? selectEndRow.getBoundingClientRect().bottom : (muxRow ? muxRow.getBoundingClientRect().bottom : linkRect.bottom);
             if (downRow) {
                 const downRect = downRow.getBoundingClientRect();
-                downMid = (downMid + downRect.top) / 2;
+                selectEndMid = (selectEndMid + downRect.top) / 2;
+            }
+            // 协议接口层↔端路层 分界：协议接口行底边与端路行顶边的中点（端路层位于本层底部）
+            let downMid = downRow ? downRow.getBoundingClientRect().bottom : (muxRow ? muxRow.getBoundingClientRect().bottom : linkRect.bottom);
+            if (selectEndRow) {
+                const seRect = selectEndRow.getBoundingClientRect();
+                downMid = (downMid + seRect.top) / 2;
             }
             sample.classList.remove('active');
             sample.style.transition = prevSampleTrans;
