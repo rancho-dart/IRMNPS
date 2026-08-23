@@ -362,14 +362,43 @@
             height: auto;
             min-height: 32px;
             padding: 4px 12px;
+            /* 端路层四阶段（逻辑通道规划/建链/通信/拆链）以 4 列并排显示 */
+            flex-wrap: nowrap;
+            align-items: stretch;
         }
+        /* 端路层每一阶段为一列：标签（hl）置顶、说明（dim）在其下方，各列等宽 */
         .inner-row.select-end-layer .tag {
             color: #0e8a8a;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            align-self: stretch;
+            min-width: 44px;
+        }
+        .inner-row.select-end-layer .desc {
+            flex: 1 1 0;
+            min-width: 0;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+            gap: 2px 8px;
+        }
+        /* 空的端路层（仅一个 desc，如以太网/编码调制/光波：下层已提供端到端通道）：
+           不按 4 列布局，恢复单行紧凑展示 */
+        .inner-row.select-end-layer.empty .desc {
+            flex: 0 1 auto;
+            flex-direction: row;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 4px 8px;
         }
         .inner-row.select-end-layer .desc .hl {
             color: #0e8a8a;
             background: #e3f2f2;
             border: 1px solid #b6d6d6;
+        }
+        .inner-row.select-end-layer .desc .dim {
+            line-height: 1.4;
         }
 
         /* 接口层：品红/粉紫（位于网络层之上；区别于网络层蓝、链路层绿、复用层琥珀、控制面紫） */
@@ -793,10 +822,8 @@
             z-index: 1;
         }
 
-        /* 背景色带：服务接口区 / 中间区 / 协议接口区。
-           灰色、无圆角；颜色在左右两侧淡出（横向渐变）。
-           两个接口层各加一条较淡的灰色背景，
-           两接口层之间的各层再覆盖一条更淡的背景加以区分 */
+        /* 背景色带：六个内部层各一条，底色与左侧对应层次主题色对齐；
+           无圆角；颜色在左右两侧淡出（横向渐变） */
         .ruler-zone {
             position: absolute;
             left: 4%;
@@ -806,12 +833,29 @@
             pointer-events: none;
             transition: top 0.4s ease, height 0.4s ease, opacity 0.4s ease;
         }
-        .ruler-zone.up-iface,
-        .ruler-zone.down-iface {
-            background: linear-gradient(to right, transparent, rgba(88, 96, 106, 0.06) 15%, rgba(88, 96, 106, 0.06) 85%, transparent);
+        /* 服务接口层：品红 */
+        .ruler-zone.service {
+            background: linear-gradient(to right, transparent, rgba(191, 57, 137, 0.07) 15%, rgba(191, 57, 137, 0.07) 85%, transparent);
         }
-        .ruler-zone.middle {
-            background: linear-gradient(to right, transparent, rgba(88, 96, 106, 0.03) 15%, rgba(88, 96, 106, 0.03) 85%, transparent);
+        /* 网络层：蓝 */
+        .ruler-zone.network {
+            background: linear-gradient(to right, transparent, rgba(9, 105, 218, 0.07) 15%, rgba(9, 105, 218, 0.07) 85%, transparent);
+        }
+        /* 链路层：绿 */
+        .ruler-zone.link {
+            background: linear-gradient(to right, transparent, rgba(26, 127, 55, 0.07) 15%, rgba(26, 127, 55, 0.07) 85%, transparent);
+        }
+        /* 复用层：琥珀 */
+        .ruler-zone.mux {
+            background: linear-gradient(to right, transparent, rgba(154, 103, 0, 0.07) 15%, rgba(154, 103, 0, 0.07) 85%, transparent);
+        }
+        /* 协议接口层：紫/靛蓝 */
+        .ruler-zone.proto {
+            background: linear-gradient(to right, transparent, rgba(130, 80, 223, 0.07) 15%, rgba(130, 80, 223, 0.07) 85%, transparent);
+        }
+        /* 端路层：青 */
+        .ruler-zone.select-end {
+            background: linear-gradient(to right, transparent, rgba(14, 138, 138, 0.07) 15%, rgba(14, 138, 138, 0.07) 85%, transparent);
         }
         /* 无悬停（变暗）时色带几乎不可见 */
         .right-panel.dimmed .ruler-zone {
@@ -931,9 +975,10 @@
                         </div>
                         <div class="inner-row select-end-layer">
                             <span class="tag">🎯 端路</span>
-                            <span class="desc"><span class="hl">逻辑通道：对端 HTTP 服务器</span> <span class="dim">（承载目标确定即视为端到端通道确立）</span></span>
-                            <span class="desc"><span class="hl">初始化：调用 TLS 服务接口建链</span> <span class="dim">（调用承载 TLS 的服务接口 connect(目标IP, 目标端口) 建立连接；TLS 握手 ClientHello / ServerHello / 证书交换 / 密钥协商 由承载 TLS 自身完成，不在本层）</span></span>
-                            <span class="desc"><span class="hl">常态：向 TLS 连接交付请求/响应</span> <span class="dim">（复用已建立的连接，无需每包额外寻址）</span></span>
+                            <span class="desc"><span class="hl">逻辑通道规划</span> <span class="dim">对端 HTTP 服务器确定</span></span>
+                            <span class="desc"><span class="hl">建链</span> <span class="dim">调用 TLS 服务接口建链函数</span></span>
+                            <span class="desc"><span class="hl">通信</span> <span class="dim">复用已建立的TLS连接</span></span>
+                            <span class="desc"><span class="hl">拆链</span> <span class="dim">关闭 TLS 连接</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-app"></div>
@@ -964,12 +1009,12 @@
                                     <span class="dim">（TLS 复用 TCP 连接，端口号由上层决定）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">初始化</span>
+                                    <span class="iface-key">建链</span>
                                     <span class="hl">TLS 握手</span>
                                     <span class="dim">（ClientHello / ServerHello / 证书交换 / 密钥协商）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">交付</span>
+                                    <span class="iface-key">通信</span>
                                     <span class="hl">明文数据</span>
                                 </span>
                             </span>
@@ -1007,9 +1052,10 @@
                         </div>
                         <div class="inner-row select-end-layer">
                             <span class="tag">🎯 端路</span>
-                            <span class="desc"><span class="hl">逻辑通道：对端 TCP 连接（五元组）</span> <span class="dim">（目标IP、目标端口、源IP、源端口、协议号确定即视为通道确立）</span></span>
-                            <span class="desc"><span class="hl">初始化：调用 TCP 服务接口建链</span> <span class="dim">（调用承载 TCP 的服务接口 connect() 建立连接；TCP 三次握手由承载 TCP 自身完成，不在本层）</span></span>
-                            <span class="desc"><span class="hl">常态：向 TCP 连接交付 TLS 记录</span> <span class="dim">（复用已建立的连接，无需每包额外寻址）</span></span>
+                            <span class="desc"><span class="hl">逻辑通道规划</span> <span class="dim">目标IP、目标端口确定即视为通道确立（五元组中的另外三元为TCP层自动分配）</span></span>
+                            <span class="desc"><span class="hl">建链</span> <span class="dim">调用承载 TCP 服务接口建链函数</span></span>
+                            <span class="desc"><span class="hl">通信</span> <span class="dim">在已建立的TCP连接中收发数据</span></span>
+                            <span class="desc"><span class="hl">拆链</span> <span class="dim">关闭 TCP 连接</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-tls"></div>
@@ -1039,12 +1085,12 @@
                                     <span class="dim">（目标IP、目标端口由上层提供；源IP、源端口、协议号由 TCP 自身确定）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">初始化</span>
+                                    <span class="iface-key">建链</span>
                                     <span class="hl">connect(目标IP, 目标端口)</span>
                                     <span class="dim">—— 三次握手，建立连接</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">交付</span>
+                                    <span class="iface-key">通信</span>
                                     <span class="hl">字节流（任意大小，无边界）</span>
                                 </span>
                             </span>
@@ -1084,9 +1130,13 @@
                         </div>
                         <div class="inner-row select-end-layer">
                             <span class="tag">🎯 端路</span>
-                            <span class="desc"><span class="hl">逻辑通道：在 IP 网络上建立端到端通道</span> <span class="dim">（IP承载层为全连通无连接网络，指定目标IP即可视为到目标的端到端通道已确立）</span></span>
-                            <span class="desc"><span class="hl">初始化：无</span> <span class="dim">（IP 无连接、无需握手；TCP 连接的建立属于 TCP 自身连接管理，不在本层）</span></span>
-                            <span class="desc"><span class="hl">常态：每包指定目标IP交付</span> <span class="dim">（承载寻址参数为目标IP，随每个TCP段交付）</span></span>
+                            <span class="desc"><span class="hl">逻辑通道规划</span> 
+                            <span class="dim">DNS</span>
+                            <span class="dim">确定目标IP</span>
+                        </span>
+                            <span class="desc"><span class="hl">建链</span> <span class="dim">无</span></span>
+                            <span class="desc"><span class="hl">通信</span> <span class="dim">承载寻址参数为目标IP，随每个TCP段交付</span></span>
+                            <span class="desc"><span class="hl">拆链</span> <span class="dim">无</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-tcp"></div>
@@ -1120,12 +1170,12 @@
                                     <span class="hl">MTU（自下层读取）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">初始化</span>
+                                    <span class="iface-key">建链</span>
                                     <span class="null-box">无</span>
                                     <span class="dim">（无连接）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">交付</span>
+                                    <span class="iface-key">通信</span>
                                     <span class="hl">下行：目标IP + 数据块</span>
                                     <span class="hl">上行：数据块</span>
                                 </span>
@@ -1181,9 +1231,14 @@
                         </div>
                         <div class="inner-row select-end-layer">
                             <span class="tag">🎯 端路</span>
-                            <span class="desc"><span class="hl">逻辑通道：相邻 IP 节点（下一跳，可能是路由器）</span> <span class="dim">（IP 网络层选好下一跳后，在以太网承载上建立到该相邻节点的通道；目标IP确定即视为通道确立）</span></span>
-                            <span class="desc"><span class="hl">初始化：ARP 解析（映射下一跳IP→MAC）</span> <span class="dim">多次ARP形成MAC表；发送前查询MAC表选择下一跳的目标MAC</span></span>
-                            <span class="desc"><span class="hl">常态：每包指定下一跳目标MAC交付</span> <span class="dim">经协议接口层向下交付时指定下一跳目标MAC；MAC报头封装由承载层完成</span></span>
+                            <span class="desc">
+                                <span class="hl">逻辑通道规划</span> 
+                                <span class="dim">ARP</span>
+                                <span class="dim">确定目标MAC</span>
+                            </span>
+                            <span class="desc"><span class="hl">建链</span> <span class="dim">无</span></span>
+                            <span class="desc"><span class="hl">通信</span> <span class="dim">每包指定下一跳目标MAC交付</span></span>
+                            <span class="desc"><span class="hl">拆链</span> <span class="dim">通讯结束时释放 ARP 缓存表项与逻辑通道状态</span></span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-ip"></div>
@@ -1214,12 +1269,12 @@
                                     <span class="hl">MTU（由以太网层提供）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">初始化</span>
+                                    <span class="iface-key">建链</span>
                                     <span class="null-box">无</span>
                                     <span class="dim">（无连接，不需握手）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">交付</span>
+                                    <span class="iface-key">通信</span>
                                     <span class="hl">下行：目标MAC + 数据</span>
                                     <span class="hl">上行：数据 + 源MAC</span>
                                 </span>
@@ -1275,7 +1330,7 @@
                                 </span>
                             </span>
                         </div>
-                        <div class="inner-row select-end-layer">
+                        <div class="inner-row select-end-layer empty">
                             <span class="tag">🎯 端路</span>
                             <span class="desc"><span class="null-box">空</span> <span class="dim">（承载层编码调制已提供端到端物理通道）</span></span>
                         </div>
@@ -1307,12 +1362,12 @@
                                     <span class="hl">链路状态（单向上报，链路可用/故障）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">初始化</span>
+                                    <span class="iface-key">建链</span>
                                     <span class="null-box">无</span>
                                     <span class="dim">（静态配置，运行时不变）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">交付</span>
+                                    <span class="iface-key">通信</span>
                                     <span class="hl">双向比特流</span>
                                     <span class="dim">（下行：数字比特流映射为物理信号交付下层；上行：物理信号还原为数字比特流交付上层）</span>
                                 </span>
@@ -1361,7 +1416,7 @@
                                 </span>
                             </span>
                         </div>
-                        <div class="inner-row select-end-layer">
+                        <div class="inner-row select-end-layer empty">
                             <span class="tag">🎯 端路</span>
                             <span class="desc"><span class="null-box">空</span> <span class="dim">（承载层光波已提供端到端波长通道，本层无需再建立）</span></span>
                         </div>
@@ -1399,12 +1454,12 @@
                                     </span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">初始化</span>
+                                    <span class="iface-key">建链</span>
                                     <span class="null-box">无</span>
                                     <span class="dim">（已预置：波长通道在建设/规划时经 ROADM / 光交叉连接，通过 GMPLS 或工程规划配置，运行时不需上层调用）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">交付</span>
+                                    <span class="iface-key">通信</span>
                                     <span class="hl">特定波长光信号</span>
                                     <span class="dim">（下行：将 λᵢ 光信号做波长级转发；上行：将到达的 λⱼ 信号交付回上层对应波长通道）</span>
                                 </span>
@@ -1452,7 +1507,7 @@
                                 </span>
                             </span>
                         </div>
-                        <div class="inner-row select-end-layer">
+                        <div class="inner-row select-end-layer empty">
                             <span class="tag">🎯 端路</span>
                             <span class="desc"><span class="null-box">空</span> <span class="dim">（承载层光纤已提供端到端透明通道）</span></span>
                         </div>
@@ -1486,12 +1541,12 @@
                                     <span class="dim">（光纤为不加电的无源硬件，参数皆客观属性）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">初始化</span>
+                                    <span class="iface-key">建链</span>
                                     <span class="null-box">无</span>
                                     <span class="dim">（已预置：光纤铺设、熔接、ODF跳纤在建设时完成，运行时不需上层调用）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">交付</span>
+                                    <span class="iface-key">通信</span>
                                     <span class="hl">光信号</span>
                                     <span class="dim"></span>
                                 </span>
@@ -1542,10 +1597,13 @@
                     <div class="hline" id="hline-bottom"></div>
                 </div>
 
-                <!-- 背景色带：服务接口区（品红 8%）/ 中间区（更淡）/ 协议接口区（品红 8%） -->
-                <div class="ruler-zone up-iface" id="zone-up-interface"></div>
-                <div class="ruler-zone middle" id="zone-middle"></div>
-                <div class="ruler-zone down-iface" id="zone-down-interface"></div>
+                <!-- 背景色带：六个内部层各一条，底色与左侧对应层次主题色对齐 -->
+                <div class="ruler-zone service" id="zone-service"></div>
+                <div class="ruler-zone network" id="zone-network"></div>
+                <div class="ruler-zone link" id="zone-link"></div>
+                <div class="ruler-zone mux" id="zone-mux"></div>
+                <div class="ruler-zone proto" id="zone-proto"></div>
+                <div class="ruler-zone select-end" id="zone-select-end"></div>
 
                 <!-- 7条十字线 -->
                 <div class="ruler-cross" id="cross-transport-mux">
@@ -1610,12 +1668,12 @@
             </thead>
             <tbody>
                 <tr><td>载荷层</td><td>本协议向上交付 / 接收的数据本体；上层协议的数据作为载荷在本层传递。</td></tr>
-                <tr><td>服务接口层</td><td>向上层提供的接口契约（类型 / 参数 / 初始化 / 交付），上层经它调用本层服务。类似软件库对外暴露的函数签名——<b>本层定义参数</b>，调用它的上层只需<b>提供参数值</b>，无需自己准备这个接口；接口是单边定义的，由下层定义、由上层（调用者）消费。</td></tr>
+                <tr><td>服务接口层</td><td>向上层提供的接口契约（类型 / 参数 / 建链 / 通信），上层经它调用本层服务。类似软件库对外暴露的函数签名——<b>本层定义参数</b>，调用它的上层只需<b>提供参数值</b>，无需自己准备这个接口；接口是单边定义的，由下层定义、由上层（调用者）消费。</td></tr>
                 <tr><td>网络层</td><td>转发与寻址决策：控制面（路由 / 转发规则）与转发面（查表、转发、封装解封装）。</td></tr>
                 <tr><td>链路层</td><td>单链路上的语义：连接状态、差错检测、校验、重传、流控等。</td></tr>
                 <tr><td>复用层</td><td>向上提交单链路、向下提交聚合后的多链路，把下层多条承载通道复用 / 聚合为一条。</td></tr>
                 <tr><td>协议接口层</td><td>通信两端同层次端点之间的接口——本层端点与对端同层端点对接，交付本层数据单元（如 TCP 向对端 TCP 交付 TCP 段、IP 向对端 IP 交付 IP 数据报）。这是<b>对等（peer）通信</b>而非调用关系，因此无需像服务接口那样携带参数 / 初始化契约——对端同层既不是调用者也不是被调用者，契约仅含「目标」（对端同层端点）与「交付」（本层数据单元）。封装式层次为离散 PDU（报文 / 记录 / 段 / 数据报 / 帧），连续式层次（编码调制、光波）为比特流 / 光信号。与下层承载的对接（调用下层服务接口、提供寻址参数）由端路层负责；逐级递归直至对端。连接建立 / 握手（如 TCP 三次握手）属于协议自身的连接管理，由链路层与协议接口层承载，不在端路层。</td></tr>
-                <tr><td>端路层</td><td>调用下层协议的服务接口，在<b>下层承载网络</b>上建立端到端通道的层次——本层在此扮演<b>调用者</b>：下层服务接口定义了参数，端路层负责提供参数值并调用。通道建立分三阶段：<b>逻辑通道</b>——指定下层承载寻址参数（如 IP 选好下一跳后指定其目标IP、以太网指定目标MAC）即可视为端到端通道确立；<b>初始化</b>——调用下层服务接口前的地址解析 / 参数准备（如 IP 在以太网上先经 ARP 解析出下一跳的目标 MAC）；<b>常态通信</b>——每次交付时向底层提供承载寻址参数（如 IP 每包指定下一跳目标IP、以太网每包指定目标MAC）。若下层承载本身已是端到端，本层不再另行建路，仅负责发起建链。注意：本协议自身的连接建立 / 握手（如 TCP 三次握手）属于协议自身连接管理，不在本层。</td></tr>
+                <tr><td>端路层</td><td>调用下层协议的服务接口，在<b>下层承载网络</b>上建立端到端通道的层次——本层在此扮演<b>调用者</b>：下层服务接口定义了参数，端路层负责提供参数值并调用。通道生命周期分四阶段：<b>逻辑通道规划</b>——指定下层承载寻址参数（如 IP 选好下一跳后指定其目标IP、以太网指定目标MAC）即可视为端到端通道确立；<b>初始化</b>——调用下层服务接口前的地址解析 / 参数准备（如 IP 在以太网上先经 ARP 解析出下一跳的目标 MAC）；<b>正常通讯</b>——每次交付时向底层提供承载寻址参数（如 IP 每包指定下一跳目标IP、以太网每包指定目标MAC）；<b>拆除通道</b>——通讯结束时经下层服务接口释放通道（如关闭连接、删除通道状态）。若下层承载本身已是端到端，本层不再另行建路，仅负责发起建链。注意：本协议自身的连接建立 / 握手（如 TCP 三次握手）属于协议自身连接管理，不在本层。</td></tr>
                 <tr><td>承载层</td><td>本协议以下层整体作为承载链路；在递归模型中，下层即本层的承载。</td></tr>
             </tbody>
         </table>
@@ -1912,18 +1970,38 @@
             document.documentElement.style.setProperty('--namebar-w', Math.ceil(maxW) + 'px');
         }
 
-        // 背景色带定位：服务接口区 = [transport_mux, iface_network]，
-        // 中间区 = [iface_network, link_select]，协议接口区 = [link_select, down_iface]
-        // show 参数：层缺失对应行时隐藏该色带（如 HTTP 无服务接口行 → 隐藏服务接口区；
-        // 光纤无协议接口行 → 隐藏协议接口区，且中间区延伸到层底边，避免链路背景底部被截断）
-        function positionRulerZones(pos, show = { up: true, mid: true, down: true }) {
+        // 背景色带定位：六个内部层各一条，按对应十字线边界定位：
+        // 服务接口层 = [transport_mux, iface_network]，网络层 = [iface_network, mux_network]，
+        // 链路层 = [mux_network, link_network]，复用层 = [link_network, link_select]，
+        // 协议接口层 = [link_select, select_end]，端路层 = [select_end, down_iface]
+        // show 参数：层缺失对应行时隐藏该色带。
+        // 边缘延伸：无服务接口行时最上可见色带延伸到层顶（transport_mux）；
+        // 无复用/协议接口/端路行时最下可见色带延伸到层底（down_iface），避免背景缺口。
+        function positionRulerZones(pos, show = {}) {
+            const order = ['zone-service', 'zone-network', 'zone-link', 'zone-mux', 'zone-proto', 'zone-select-end'];
             const zones = {
-                'zone-up-interface':   { top: pos.transport_mux, bottom: pos.iface_network, on: show.up },
-                // 中间区：无服务接口行时向上延伸到层顶（transport_mux），无协议接口行时向下延伸到层底（down_iface）
-                'zone-middle':         { top: show.up ? pos.iface_network : pos.transport_mux, bottom: show.down ? pos.link_select : pos.down_iface, on: show.mid },
-                'zone-down-interface': { top: pos.link_select,    bottom: pos.down_iface,    on: show.down }
+                'zone-service':   { top: pos.transport_mux, bottom: pos.iface_network,  on: show.service },
+                'zone-network':   { top: pos.iface_network, bottom: pos.mux_network,     on: show.network },
+                'zone-link':      { top: pos.mux_network,   bottom: pos.link_network,    on: show.link },
+                'zone-mux':       { top: pos.link_network,  bottom: pos.link_select,     on: show.mux },
+                'zone-proto':     { top: pos.link_select,   bottom: pos.select_end,      on: show.proto },
+                'zone-select-end':{ top: pos.select_end,    bottom: pos.down_iface,      on: show.selectEnd }
             };
-            ['zone-up-interface', 'zone-middle', 'zone-down-interface'].forEach(name => {
+            const visible = order.filter(name => zones[name].on);
+            // 最上可见色带的顶边：若 service 不可见（无服务接口行），顶到层顶
+            if (visible.length && !zones['zone-service'].on && zones['zone-network'].on) {
+                zones['zone-network'].top = pos.transport_mux;
+            }
+            // 最下可见色带的底边：若其下方无任何可见色带（无复用/协议接口/端路行），底到层底
+            const lastVisible = visible[visible.length - 1];
+            if (lastVisible) {
+                const lastIdx = order.indexOf(lastVisible);
+                const belowHidden = order.slice(lastIdx + 1).every(name => !zones[name].on);
+                if (belowHidden) {
+                    zones[lastVisible].bottom = pos.down_iface;
+                }
+            }
+            order.forEach(name => {
                 const el = document.getElementById(name);
                 if (!el) return;
                 el.style.display = zones[name].on ? '' : 'none';
@@ -1974,7 +2052,7 @@
                     labels[key].style.top = defaultLabelPositions[key] + '%';
                     labels[key].style.display = ''; // 复位时恢复所有标签可见
                 });
-                positionRulerZones(DEFAULT_POSITIONS); // 复位：色带回到默认分界位置
+                positionRulerZones(DEFAULT_POSITIONS, { service: true, network: true, link: true, mux: true, proto: true, selectEnd: true }); // 复位：色带回到默认分界位置
                 rulerLine.className = 'ruler-line';
                 rulerPanel.classList.remove('active');
                 rulerPanel.classList.add('dimmed'); // 无悬停：标尺变暗
@@ -1994,6 +2072,8 @@
                 ? Array.prototype.find.call(layerEls, l => l.dataset.protocol === protocolKey) || null
                 : document.querySelector('.layer.active');
             const hasIfaceRow = !!(activeLayerEl && activeLayerEl.querySelector('.inner-row.iface-layer:not(.down-iface-layer)'));
+            const hasNetRow = !!(activeLayerEl && activeLayerEl.querySelector('.inner-row.net-layer'));
+            const hasLinkRow = !!(activeLayerEl && activeLayerEl.querySelector('.inner-row.link-layer'));
             const hasMuxRow = !!(activeLayerEl && activeLayerEl.querySelector('.inner-row.mux-layer'));
             const hasSelectEndRow = !!(activeLayerEl && activeLayerEl.querySelector('.inner-row.select-end-layer'));
             const hasDownIfaceRow = !!(activeLayerEl && activeLayerEl.querySelector('.inner-row.down-iface-layer'));
@@ -2075,8 +2155,15 @@
                 rawCrossPositions[name] = isNaN(raw) ? crossPositions[name] : raw;
             });
 
-            // 背景色带跟随十字线定位；层缺失服务接口/协议接口行时隐藏对应色带
-            positionRulerZones(rawCrossPositions, { up: hasIfaceRow, mid: true, down: hasDownIfaceRow });
+            // 背景色带跟随十字线定位；层缺失对应行时隐藏该层色带
+            positionRulerZones(rawCrossPositions, {
+                service: hasIfaceRow,
+                network: hasNetRow,
+                link: hasLinkRow,
+                mux: hasMuxRow,
+                proto: hasDownIfaceRow,
+                selectEnd: hasSelectEndRow
+            });
 
             // 更新文字标签的位置：一律取对应层区域的垂直中点（垂直居中），
             // 载荷层/承载层区域即使很大（如光纤层的载荷区、数据层的承载区）也按中点居中。
