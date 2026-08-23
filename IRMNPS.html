@@ -133,6 +133,39 @@
             font-weight: 600;
         }
 
+        /* ---------- 标题下：导出 PNG 按钮 ---------- */
+        .export-btn {
+            padding: 6px 18px;
+            border: 1px solid #d0d7de;
+            background: #ffffff;
+            border-radius: 18px;
+            font-size: 13px;
+            color: #57606a;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+        }
+        .export-btn:hover {
+            border-color: #0969da;
+            color: #0969da;
+        }
+        .export-btn:active {
+            background: #ddf4ff;
+        }
+        .export-btn:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        /* 导出时禁用所有 CSS 过渡，保证瞬时呈现最终布局 */
+        .exporting * {
+            transition: none !important;
+            animation: none !important;
+        }
+
         .subtitle {
             text-align: left; /* 三行文字向左对齐 */
             color: #656d76;
@@ -517,6 +550,12 @@
 
         .layer:hover {
             border-color: #0969da44;
+        }
+
+        /* 键盘选择的协议层：高亮边框以示焦点 */
+        .layer.kb-focus {
+            border-color: #0969da;
+            box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.25);
         }
 
         .layer-physical {
@@ -913,6 +952,7 @@
             <span class="slider"></span>
             <span class="switch-text" id="expandAllText">悬停展开</span>
         </label>
+        <button class="export-btn" id="exportBtn" title="导出当前呈现状态为 PNG 图片（快捷键 Ctrl+E）">🖼 导出 PNG</button>
     </div>
 
     <div class="main-layout">
@@ -1770,7 +1810,7 @@
     </div>
 
     <div class="hint">
-        <span>🖱 <strong>悬停</strong> 左侧协议层，右侧标尺动态展示当前协议视角下的协议栈</span>
+        <span>🖱 <strong>悬停</strong> 或 <strong>↑↓ 键选择</strong> 左侧协议层，右侧标尺动态展示当前协议视角下的协议栈（<strong>Enter/Space</strong> 展开所有协议，<strong>←→</strong> 切换标签页，<strong>Esc</strong> 复位，<strong>Ctrl+E</strong> 导出当前状态为 PNG）</span>
     </div>
     </div>
 
@@ -2495,6 +2535,8 @@
 
         layerEls.forEach((layer) => {
             layer.addEventListener('mouseenter', function(e) {
+                // 键盘接管期间，忽略由布局变化引起的"伪悬停"（鼠标未移动）
+                if (!mouseMoved) return;
                 // 进入新协议：取消任何待执行的复位
                 clearTimeout(resetTimer);
 
@@ -2646,6 +2688,237 @@
                 tabPanels.forEach(p => p.classList.toggle('active', p.id === 'tab-' + this.dataset.tab));
             });
         });
+
+        // ============================================================
+        //  键盘支持：↑/↓ 选择协议层（等价于悬停），Enter/Space 切换
+        //  "展开所有协议"，←/→ 切换标签页，Escape 清除选择并复位
+        // ============================================================
+        const KB_LAYERS = Array.from(layerEls); // 保持 DOM 顺序 = 协议栈顺序
+        let kbIndex = -1; // -1 表示当前无键盘选择
+        let mouseMoved = true; // 鼠标是否已真正移动（键盘接管后需移动才恢复悬停）
+
+        function selectLayerByKeyboard(i) {
+            if (i < 0 || i >= KB_LAYERS.length) return;
+            kbIndex = i;
+            mouseMoved = false; // 键盘接管：此后需鼠标真正移动才恢复悬停
+            const layer = KB_LAYERS[i];
+            KB_LAYERS.forEach(l => l.classList.remove('kb-focus'));
+            layer.classList.add('kb-focus');
+            clearTimeout(resetTimer);
+
+            const protocol = layer.dataset.protocol;
+            if (!protocol) return;
+
+            // 静态层（数据层）：不展开，标尺展示"所有下层 = 承载层"
+            if (layer.classList.contains('layer-static')) {
+                if (!expandAll) {
+                    KB_LAYERS.forEach(l => l.classList.remove('active', 'inactive'));
+                }
+                updateAll(protocol);
+                layer.scrollIntoView({ block: 'nearest' });
+                return;
+            }
+
+            if (expandAll) {
+                updateAll(protocol);
+                layer.scrollIntoView({ block: 'nearest' });
+                return;
+            }
+
+            KB_LAYERS.forEach(l => l.classList.remove('active', 'inactive'));
+            layer.classList.add('active');
+            KB_LAYERS.forEach(l => {
+                if (l !== layer) l.classList.add('inactive');
+            });
+            updateAll(protocol);
+            layer.scrollIntoView({ block: 'nearest' });
+        }
+
+        // 当前"展示中"的协议层索引（键盘选择优先，其次为悬停/激活层）
+        function currentShownIndex() {
+            if (kbIndex >= 0) return kbIndex;
+            const active = document.querySelector('.layer.active');
+            if (active) {
+                const idx = KB_LAYERS.indexOf(active);
+                if (idx >= 0) return idx;
+            }
+            return -1;
+        }
+
+        document.addEventListener('keydown', function(e) {
+            // 导出快捷键 Ctrl/Cmd+E：不依赖鼠标，任何焦点下均生效
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'e' || e.key === 'E')) {
+                e.preventDefault();
+                exportPNG();
+                return;
+            }
+            // 焦点位于可交互控件上时不劫持（保留原生 Tab/Enter 行为）
+            const tag = (e.target && e.target.tagName) || '';
+            if (tag === 'INPUT' || tag === 'BUTTON' || tag === 'A' || tag === 'TEXTAREA' || tag === 'SELECT') {
+                return;
+            }
+
+            switch (e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    selectLayerByKeyboard(currentShownIndex() < 0
+                        ? 0
+                        : Math.min(KB_LAYERS.length - 1, currentShownIndex() + 1));
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    selectLayerByKeyboard(currentShownIndex() < 0
+                        ? KB_LAYERS.length - 1
+                        : Math.max(0, currentShownIndex() - 1));
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === 'notes'));
+                    tabPanels.forEach(p => p.classList.toggle('active', p.id === 'tab-notes'));
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === 'stack'));
+                    tabPanels.forEach(p => p.classList.toggle('active', p.id === 'tab-stack'));
+                    break;
+                case 'Enter':
+                case ' ':
+                    e.preventDefault();
+                    expandAllToggle.checked = !expandAllToggle.checked;
+                    expandAllToggle.dispatchEvent(new Event('change'));
+                    // 关闭"展开所有"后，恢复键盘所选层的展开状态
+                    if (!expandAllToggle.checked && kbIndex >= 0) {
+                        selectLayerByKeyboard(kbIndex);
+                    }
+                    break;
+                case 'Escape':
+                    KB_LAYERS.forEach(l => l.classList.remove('kb-focus'));
+                    kbIndex = -1;
+                    if (expandAllToggle.checked) {
+                        // 完全复位：关闭"展开所有"，回到初始悬停模式
+                        expandAllToggle.checked = false;
+                        expandAllToggle.dispatchEvent(new Event('change'));
+                    } else {
+                        scheduleReset(0);
+                    }
+                    break;
+            }
+        });
+
+        // 鼠标交互开始时清除键盘焦点，避免两者状态冲突；
+        // 但键盘接管期间（鼠标未移动）忽略由布局变化引起的"伪悬停"
+        KB_LAYERS.forEach(layer => {
+            layer.addEventListener('mouseenter', function() {
+                if (!mouseMoved) return;
+                KB_LAYERS.forEach(l => l.classList.remove('kb-focus'));
+                kbIndex = -1;
+            });
+        });
+
+        // 鼠标实际移动时才允许悬停重新接管键盘
+        document.addEventListener('mousemove', function() {
+            mouseMoved = true;
+        });
+
+        // ============================================================
+        //  导出 PNG：把整页卡片（含全部展开的协议栈与标尺）导出为图片
+        //  流程：临时切到协议栈标签页 + 展开所有协议 → 禁用过渡
+        //       → SVG foreignObject 渲染容器 → Canvas 绘制 → 下载
+        //  用系统字体与 emoji，无外部图片，不会污染 canvas。
+        // ============================================================
+        function collectCssText() {
+            let css = '';
+            document.querySelectorAll('style').forEach(function(s) {
+                css += s.textContent + '\n';
+            });
+            return css;
+        }
+
+        async function exportPNG() {
+            const btn = document.getElementById('exportBtn');
+            const container = document.querySelector('.container');
+
+            // 记住键盘选择状态，导出后恢复（不打扰键盘导航）
+            const prevKbIndex = kbIndex;
+            const prevKbFocus = KB_LAYERS.map(l => l.classList.contains('kb-focus'));
+
+            btn.disabled = true;
+            btn.textContent = '⏳ 生成中…';
+            try {
+                // 导出"当前呈现状态"：不展开、不切换标签页，所见即所得。
+                // 仅临时去掉键盘蓝色焦点框（UI 提示而非模型内容），导出后恢复。
+                KB_LAYERS.forEach(l => l.classList.remove('kb-focus'));
+
+                // 禁用过渡并等待两帧，确保悬停/选中后的布局已为最终状态
+                container.classList.add('exporting');
+                await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+                // 用 SVG foreignObject 承载克隆的容器
+                const rect = container.getBoundingClientRect();
+                const scale = 2;
+                const svgNs = 'http://www.w3.org/2000/svg';
+                const xhtmlNs = 'http://www.w3.org/1999/xhtml';
+                const svg = document.createElementNS(svgNs, 'svg');
+                svg.setAttribute('width', rect.width);
+                svg.setAttribute('height', rect.height);
+                svg.setAttribute('viewBox', '0 0 ' + rect.width + ' ' + rect.height);
+                const foreign = document.createElementNS(svgNs, 'foreignObject');
+                foreign.setAttribute('width', '100%');
+                foreign.setAttribute('height', '100%');
+                const clone = container.cloneNode(true);
+                // 导出的图片中不出现导出按钮自身
+                const cloneBtn = clone.querySelector('#exportBtn');
+                if (cloneBtn) cloneBtn.remove();
+                // 注入页面样式，使克隆内容在独立 SVG 文档中按原样渲染
+                const styleEl = document.createElementNS(xhtmlNs, 'style');
+                styleEl.setAttribute('type', 'text/css');
+                styleEl.textContent = collectCssText();
+                clone.insertBefore(styleEl, clone.firstChild);
+                foreign.appendChild(clone);
+                svg.appendChild(foreign);
+
+                const serializer = new XMLSerializer();
+                const svgText = serializer.serializeToString(svg);
+                // 注意：必须用 data URL——blob URL 加载 SVG 再绘制会污染 canvas
+                // （SecurityError: Tainted canvases may not be exported）
+                const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgText);
+
+                // 加载 SVG 并绘制到 Canvas（2 倍缩放，图片更清晰）
+                const img = new Image();
+                await new Promise((resolve, reject) => {
+                    img.onload = resolve;
+                    img.onerror = reject;
+                    img.src = url;
+                });
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.round(rect.width * scale);
+                canvas.height = Math.round(rect.height * scale);
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.scale(scale, scale);
+                ctx.drawImage(img, 0, 0, rect.width, rect.height);
+
+                const a = document.createElement('a');
+                a.download = 'IRMNPS-同构递归模型.png';
+                a.href = canvas.toDataURL('image/png');
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            } catch (err) {
+                console.error('导出 PNG 失败：', err);
+                alert('导出 PNG 失败，请打开控制台查看错误。');
+            } finally {
+                // 恢复原状态（键盘焦点框等）
+                container.classList.remove('exporting');
+                kbIndex = prevKbIndex;
+                KB_LAYERS.forEach((l, i) => l.classList.toggle('kb-focus', prevKbFocus[i]));
+                btn.disabled = false;
+                btn.textContent = '🖼 导出 PNG';
+            }
+        }
+
+        document.getElementById('exportBtn').addEventListener('click', exportPNG);
 
         // ============================================================
         //  初始化：自动计算最左列宽度
