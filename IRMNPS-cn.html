@@ -523,6 +523,19 @@
             position: relative;
             padding-left: 60px;
         }
+        /* 服务接口项内“标签 + 注释”成组：两者合并为一个 flex 项，注释折行时贴着
+           自己的标签下方续行，不会作为独立项被甩到下一行而与标签脱节 */
+        .inner-row.iface-layer .desc .iface-item .iface-branch {
+            display: inline-flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 2px 6px;
+            min-width: 0;
+        }
+        /* 需要独占一行开头的分支（如“ASON 按需”备选） */
+        .inner-row.iface-layer .desc .iface-item .iface-branch.line {
+            flex: 1 1 100%;
+        }
         .inner-row.iface-layer .desc .iface-key {
             position: absolute;
             left: 0;
@@ -1336,7 +1349,7 @@
                                 <span class="iface-item">
                                     <span class="iface-key">参数</span>
                                     <span class="hl">协议号字段（6=TCP / 17=UDP / 1=ICMP）</span>
-                                    <span class="dim">（上行时据此分发给对应的上层协议）</span>
+                                    <span class="dim">（供收端把报文上抛给对应上层；由上层经其端路规划提供，如 TCP 指定协议号 6）</span>
                                     
                                     <span class="hl">本机IP地址（由 IP 层管理）</span>
                                     <span class="hl">MTU（自下层读取）</span>
@@ -1390,7 +1403,7 @@
                         </div>
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
-                            <span class="desc"><span class="hl">Type字段复用（IPv4 / ARP / IPv6）</span></span>
+                            <span class="desc"><span class="null-box">空</span> <span class="dim">（IP 无可细分链路、影响自身转发的复用字段：协议号不影响转发，仅收端上抛分发→属服务接口参数，由上层端路提供）</span></span>
                         </div>
                         <div class="inner-row iface-layer down-iface-layer">
                             <span class="tag">🧩 协议接口</span>
@@ -1486,8 +1499,7 @@
                                     <span class="cp-cell cp-control">
                                         <span class="hl">端口→VLAN 成员配置（Access）</span>
                                         <span class="hl dyn">MAC地址学习（生成转发依据）</span>
-                                        <span class="hl">PBB-TE (802.1Qay)</span>
-                                        <span class="hl">MAC-in-MAC + 控制平面</span>
+                                        <span class="hl">STP/RSTP（生成树防环）</span>
                                     </span>
                                     <span class="cp-cell cp-forward">
                                         <span class="hl">按端口成员限定广播域</span>
@@ -1499,15 +1511,13 @@
                                 </span>
                             </span>
                         </div>
-                        <div class="inner-row link-layer">
+                        <div class="inner-row link-layer" style="min-height:32px;">
                             <span class="tag">📦 链路</span>
-                            <span class="desc">
-                                <span class="hl">CRC校验（检测帧损坏）</span>
-                            </span>
+                            <span class="desc"><span class="null-box">空</span></span>
                         </div>
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
-                            <span class="desc"><span class="hl">802.1Q Tag 复用（VID）</span> <span class="dim">—— 报文携带 VLAN Tag 时（Trunk），在单条物理链路上复用出多个 VLAN 逻辑网络</span></span>
+                            <span class="desc"><span class="hl">802.1Q Tag 复用（VID）</span></span>
                         </div>
                         <div class="inner-row iface-layer down-iface-layer">
                             <span class="tag">🧩 协议接口</span>
@@ -1515,6 +1525,7 @@
                                 <span class="iface-item">
                                     <span class="iface-key">交付</span>
                                     <span class="hl">以太网帧</span>
+                                    <span class="dim">（不含 Preamble/SFD/FCS/IFG 传输信封）</span>
                                 </span>
                             </span>
                         </div>
@@ -1532,10 +1543,9 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
+                                    <span class="hl">前导/SFD/FCS/IFG 封装</span>
                                     <span class="hl end-mode fiber">点对点全双工直发</span>
-                                    <span class="dim end-mode fiber">（专用链路，无共享冲突域，无需介质访问控制）</span>
-                                    <span class="hl end-mode copper">CSMA/CD 介质访问</span>
-                                    <span class="dim end-mode copper">载波监听 → 空闲即发送 → 冲突检测；冲突则 停发 → Jam Signal → 退避 → 重传（最多16次）</span>
+                                    <span class="hl end-mode copper">CSMA/CD 介质访问（争得介质即发送帧）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
@@ -1603,7 +1613,7 @@
                         <div class="inner-row link-layer">
                             <span class="tag">📦 链路</span>
                             <span class="desc"><span class="hl">数字 ↔ 物理信号映射（NRZ/PAM4/QAM）</span> <span class="hl">波长调制参数配置（中心频率/调制格式/FEC/功率）</span></span>
-                            <span class="desc"><span class="hl">链路增强：再生中继器（O-E-O，解调→判决→再调制，理解编码；可另选波长 λ₁→λ₂）</span> <span class="hl">链路增强：带整形的光放大器（SOA 3R，波形层整形/重定时，不解码）</span></span>
+                            <span class="desc"><span class="hl">链路增强：再生中继器（O-E-O，解调→判决→再调制，理解编码、不解析上层帧；可另选波长 λ₁→λ₂）</span> <span class="hl">链路增强：带整形的光放大器（SOA 3R，波形层整形/重定时，不解码）</span></span>
                         </div>
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
@@ -1665,8 +1675,8 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
-                                    <span class="null-box">无</span>
-                                    <span class="dim">（已预置：波长通道在建设/规划时经 ROADM / 光交叉连接，通过 GMPLS 或工程规划配置，运行时不需上层调用）</span>
+                                    <span class="iface-branch"><span class="hl">预置（默认）</span><span class="dim">（波长通道在建设/规划时经 ROADM / 光交叉连接配置，固定存在，运行时不需上层调用）</span></span>
+                                    <span class="iface-branch line"><span class="hl dyn">ASON 按需</span><span class="dim">（交换连接：上层可经 GMPLS/ASON 信令实时请求建立/拆除光路，而非仅预置）</span></span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
@@ -1676,7 +1686,7 @@
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
                                     <span class="null-box">无</span>
-                                    <span class="dim">（同建链：已预置，运行时不需上层调用）</span>
+                                    <span class="dim">（预置光路固定存在不拆；ASON 按需光路在通信结束后由信令释放）</span>
                                 </span>
                             </span>
                         </div>
@@ -1702,7 +1712,7 @@
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 链路</span>
-                            <span class="desc"><span class="hl">波长寻址（发送 λᵢ / 接收 λⱼ）</span> <span class="hl">链路增强：光功率均衡</span> <span class="hl">光放大器（不带整形，如EDFA）</span> <span class="hl">色散补偿</span> <span class="hl">OSNR优化</span></span>
+                            <span class="desc"><span class="hl">链路增强：光功率均衡</span> <span class="hl">光放大器（不带整形，如EDFA）</span> <span class="hl">色散补偿</span> <span class="hl">OSNR优化</span></span>
                         </div>
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
