@@ -17,7 +17,7 @@
             display: flex;
             flex-direction: column;
             align-items: flex-start; /* 用 margin:auto 居中，避免窄窗口时左侧被裁掉 */
-            justify-content: center;
+            justify-content: flex-start; /* 顶对齐：内容高度变化时（悬停展开/承载切换）卡片不上下跳动 */
             min-height: 100vh;
             padding: 30px 20px;
             overflow-x: auto; /* 窄窗口时允许横向滚动，容器保持最小宽度 */
@@ -81,6 +81,57 @@
             border-color: #0969da;
             font-weight: 600;
         }
+        /* 承载模式切换按钮：光纤 / 铜线 / 无线 */
+        .mode-group {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-right: 8px;
+        }
+        .mode-label {
+            font-size: 12px;
+            color: #57606a;
+            margin-right: 2px;
+        }
+        .mode-btn {
+            padding: 4px 12px;
+            border: 1px solid #d0d7de;
+            background: #ffffff;
+            border-radius: 14px;
+            font-size: 12px;
+            color: #57606a;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .mode-btn:hover {
+            border-color: #8250df;
+            color: #8250df;
+        }
+        .mode-btn.active {
+            background: #8250df;
+            color: #ffffff;
+            border-color: #8250df;
+            font-weight: 600;
+        }
+        /* 承载组切换：非当前模式的层整体隐藏（不参与布局） */
+        .layer[hidden] {
+            display: none !important;
+        }
+        /* 承载切换动画期间：容器整体裁剪，滑动层彻底滑出卡片、不溢出到右侧标尺 */
+        .container.animating {
+            overflow: hidden;
+        }
+        /* 高度测量（临时 .active 展开量高）期间禁用一切过渡，避免提交瞬间边框“闪蓝”淡回 */
+        .stack.measuring,
+        .stack.measuring .layer,
+        .stack.measuring .layer * {
+            transition: none !important;
+        }
+        /* 以太网端路层内容随承载模式切换（同一以太网层：光纤=点对点/无需介质访问；铜线=共享总线/CSMA/CD 运行） */
+        #layer-eth .end-mode { display: none; }
+        #layer-eth .end-mode.fiber { display: inline; }
+        body.bearer-copper #layer-eth .end-mode.fiber { display: none; }
+        body.bearer-copper #layer-eth .end-mode.copper { display: inline; }
         .tab-panel {
             display: none;
         }
@@ -584,6 +635,7 @@
             gap: 6px;
             padding: 0 10px;
             border-right: 1px solid #eaeef2;
+            border-radius: 12px 0 0 12px; /* 匹配 .layer 的 14px 圆角（14 - 边框 2），避免方形背景遮住左上/左下角 */
             transition: background 0.3s;
             flex-shrink: 0;
             z-index: 2;
@@ -952,6 +1004,12 @@
             <span class="slider"></span>
             <span class="switch-text" id="expandAllText">悬停展开</span>
         </label>
+        <span class="mode-group">
+            <span class="mode-label">承载</span>
+            <button class="mode-btn active" id="modeBtnFiber" title="光纤承载：802.3 以太网 → 编码调制(光) → 光波(WDM) → 光纤">🔌 光纤</button>
+            <button class="mode-btn" id="modeBtnCopper" title="铜线总线承载：802.3 以太网（共享总线 → CSMA/CD 运行）→ 编码调制(铜/基带) → 同轴总线(细缆/粗缆)">🟠 铜线</button>
+            <button class="mode-btn" id="modeBtnWlan" title="无线承载：802.11 WLAN → 射频编码调制 → 频段复用 → 无线电波">📶 无线</button>
+        </span>
         <button class="export-btn" id="exportBtn" title="导出当前呈现状态为 PNG 图片（快捷键 Ctrl+E）">🖼 导出 PNG</button>
     </div>
 
@@ -1361,7 +1419,7 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
-                                    <span class="dim">通讯结束时释放 ARP 缓存表项与逻辑通道状态</span>
+                                    <span class="null-box">无</span>
                                 </span>
                             </span>
                         </div>
@@ -1370,7 +1428,7 @@
                 </div>
 
                 <!-- 以太网 -->
-                <div class="layer layer-tall" id="layer-eth" data-protocol="eth">
+                <div class="layer layer-tall" id="layer-eth" data-protocol="eth" data-bearer="fiber copper">
                     <div class="layer-name-bar">
                         <span class="icon">🔌</span>
                         <span class="name">以太网层</span>
@@ -1426,16 +1484,17 @@
                                 </span>
                                 <span class="cp-row cp-body">
                                     <span class="cp-cell cp-control">
-                                        <span class="hl">VLAN 划分/配置</span>
+                                        <span class="hl">端口→VLAN 成员配置（Access）</span>
                                         <span class="hl dyn">MAC地址学习（生成转发依据）</span>
                                         <span class="hl">PBB-TE (802.1Qay)</span>
                                         <span class="hl">MAC-in-MAC + 控制平面</span>
                                     </span>
                                     <span class="cp-cell cp-forward">
-                                        <span class="hl">按 VLAN 限定广播域</span>
+                                        <span class="hl">按端口成员限定广播域</span>
                                         <span class="hl">按 MAC 地址转发</span>
                                         <span class="hl">泛洪</span>
                                         <span class="hl">过滤</span>
+                                        <span class="dim">（Access：VLAN 身份按端口成员配置，报文无 Tag）</span>
                                     </span>
                                 </span>
                             </span>
@@ -1444,13 +1503,11 @@
                             <span class="tag">📦 链路</span>
                             <span class="desc">
                                 <span class="hl">CRC校验（检测帧损坏）</span>
-                                <span class="hl">碰撞检测（CSMA/CD）</span>
-                                <span class="dim">—— 半双工/电信号承载时启用；检测到冲突后：停止发送 → Jam Signal → 退避 → 重传（最多16次）</span>
                             </span>
                         </div>
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
-                            <span class="desc"><span class="null-box">无</span> <span class="dim"></span></span>
+                            <span class="desc"><span class="hl">802.1Q Tag 复用（VID）</span> <span class="dim">—— 报文携带 VLAN Tag 时（Trunk），在单条物理链路上复用出多个 VLAN 逻辑网络</span></span>
                         </div>
                         <div class="inner-row iface-layer down-iface-layer">
                             <span class="tag">🧩 协议接口</span>
@@ -1461,16 +1518,37 @@
                                 </span>
                             </span>
                         </div>
-                        <div class="inner-row select-end-layer empty">
+                        <div class="inner-row select-end-layer">
                             <span class="tag">🎯 端路</span>
-                            <span class="desc"><span class="null-box">空</span> <span class="dim">（承载层编码调制已提供端到端物理通道）</span></span>
+                            <span class="desc">
+                                <span class="iface-item">
+                                    <span class="iface-key">规划</span>
+                                    <span class="dim end-mode fiber">承载拓扑：点对点全双工 → 无需介质访问（CSMA/CD 不运行）</span>
+                                    <span class="dim end-mode copper">承载拓扑：共享半双工总线 → 启用 CSMA/CD</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">建链</span>
+                                    <span class="null-box">无</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">通信</span>
+                                    <span class="hl end-mode fiber">点对点全双工直发</span>
+                                    <span class="dim end-mode fiber">（专用链路，无共享冲突域，无需介质访问控制）</span>
+                                    <span class="hl end-mode copper">CSMA/CD 介质访问</span>
+                                    <span class="dim end-mode copper">载波监听 → 空闲即发送 → 冲突检测；冲突则 停发 → Jam Signal → 退避 → 重传（最多16次）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">拆链</span>
+                                    <span class="null-box">无</span>
+                                </span>
+                            </span>
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-eth"></div>
                 </div>
 
                 <!-- 编码调制层 -->
-                <div class="layer layer-physical layer-tall" id="layer-physical" data-protocol="physical">
+                <div class="layer layer-physical layer-tall" id="layer-physical" data-protocol="physical" data-bearer="fiber">
                     <div class="layer-name-bar">
                         <span class="icon">⚡</span>
                         <span class="name">编码调制层</span>
@@ -1518,33 +1596,18 @@
                                 </span>
                             </span>
                         </div>
-                        <div class="inner-row net-layer">
+                        <div class="inner-row net-layer" style="min-height:32px;">
                             <span class="tag">🌐 网络</span>
-                            <span class="desc cp-table">
-                                <span class="cp-row cp-head">
-                                    <span class="cp-cell cp-control">控制面</span>
-                                    <span class="cp-cell cp-forward">转发面</span>
-                                </span>
-                                <span class="cp-row cp-body">
-                                    <span class="cp-cell cp-control">
-                                        <span class="null-box">空</span>
-                                        <span class="dim">（不涉及转发路径决策）</span>
-                                    </span>
-                                    <span class="cp-cell cp-forward">
-                                        <span class="hl">波长转换器</span>
-                                        <span class="hl">带O-E-O转换的ROADM/OTN</span>
-                                    </span>
-                                </span>
-                            </span>
+                            <span class="desc"><span class="null-box">空</span> <span class="dim">（点对点链路，无跨节点转发职能；长距离信号再生见链路层）</span></span>
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 链路</span>
                             <span class="desc"><span class="hl">数字 ↔ 物理信号映射（NRZ/PAM4/QAM）</span> <span class="hl">波长调制参数配置（中心频率/调制格式/FEC/功率）</span></span>
-                            <span class="desc"><span class="hl">链路增强：再生中继器（O-E-O，解调→判决→再调制，理解编码）</span> <span class="hl">链路增强：带整形的光放大器（SOA 3R，波形层整形/重定时，不解码）</span></span>
+                            <span class="desc"><span class="hl">链路增强：再生中继器（O-E-O，解调→判决→再调制，理解编码；可另选波长 λ₁→λ₂）</span> <span class="hl">链路增强：带整形的光放大器（SOA 3R，波形层整形/重定时，不解码）</span></span>
                         </div>
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
-                            <span class="desc"><span class="hl">码分复用（CDMA）</span> <span class="dim">—— 在单一波长上通过不同扩频码区分多个并行通道（注：不适用于标准以太网）</span></span>
+                            <span class="desc"><span class="null-box">空</span> <span class="dim">（单波长点对点比特流，无本层复用；WDM 多波长复用归光波层）</span></span>
                         </div>
                         <div class="inner-row iface-layer down-iface-layer">
                             <span class="tag">🧩 协议接口</span>
@@ -1564,7 +1627,7 @@
                 </div>
 
                 <!-- 光波层（波长级转发；操作粒度：单个波长） -->
-                <div class="layer layer-tall" id="layer-wave" data-protocol="wave">
+                <div class="layer layer-tall" id="layer-wave" data-protocol="wave" data-bearer="fiber">
                     <div class="layer-name-bar">
                         <span class="icon">🌈</span>
                         <span class="name">光波层</span>
@@ -1663,7 +1726,7 @@
                 </div>
 
                 <!-- 光纤层（物理介质 · 递归终点） -->
-                <div class="layer layer-tall" id="layer-fiber" data-protocol="fiber">
+                <div class="layer layer-tall" id="layer-fiber" data-protocol="fiber" data-bearer="fiber">
                     <div class="layer-name-bar">
                         <span class="icon">🧵</span>
                         <span class="name">光纤层</span>
@@ -1738,6 +1801,534 @@
                         </div>
                     </div>
                     <div class="layer-divider" id="divider-fiber"></div>
+                </div>
+
+                <!-- 编码调制层（铜线 · 基带总线；共享以太网层之下） -->
+                <div class="layer layer-physical layer-tall" id="layer-cmod" data-protocol="cmod" data-bearer="copper" hidden>
+                    <div class="layer-name-bar">
+                        <span class="icon">⚡</span>
+                        <span class="name">编码调制层</span>
+                        <span class="badge">曼彻斯特/基带</span>
+                    </div>
+                    <div class="layer-body">
+                        <span class="collapsed-hint">— 悬停展开 —</span>
+                        <div class="inner-row iface-layer">
+                            <span class="tag">🧩 服务接口</span>
+                            <span class="desc">
+                                <span class="iface-item">
+                                    <span class="iface-key">拓扑</span>
+                                    <span class="hl">多址共享（总线，半双工）</span>
+                                    <span class="dim">—— 一条同轴总线由多站点共享；有线可边发边听 → 能自检冲突（驱动上层以太网端路启用 CSMA/CD）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">数据格式</span>
+                                    <span class="hl">连续的比特流</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">服务承诺</span>
+                                    <span class="hl">透明</span>
+                                    <span class="dim">（透明比特流传输；冲突处理由上层以太网 CSMA/CD 承担）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">参数</span>
+                                    <span class="hl">速率（10 Mbps 基带）</span>
+                                    <span class="hl">编码方式（曼彻斯特编码）</span>
+                                    <span class="hl">冲突状态（单向上报，检测到冲突/正常——供上层 CSMA/CD 判定）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">建链</span>
+                                    <span class="null-box">无</span>
+                                    <span class="dim">（静态：接入总线即就绪）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">通信</span>
+                                    <span class="hl">半双工比特流</span>
+                                    <span class="dim">（下行：比特流经曼彻斯特编码送上总线并边发边听；上行：总线信号解码还原为比特流）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">拆链</span>
+                                    <span class="null-box">无</span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="inner-row net-layer" style="min-height:32px;">
+                            <span class="tag">🌐 网络</span>
+                            <span class="desc"><span class="null-box">空</span> <span class="dim">（共享总线广播投递，站点直发直收，无跨节点转发职能）</span></span>
+                        </div>
+                        <div class="inner-row link-layer">
+                            <span class="tag">📦 链路</span>
+                            <span class="desc"><span class="hl">曼彻斯特编码（基带 10M，跳变中含时钟）</span> <span class="hl">冲突检测（边发边听比对，超阈值判冲突 → 上报）</span> <span class="hl">收发器（MAU）驱动 / 阻抗匹配</span></span>
+                        </div>
+                        <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
+                            <span class="tag" style="color:#9a6700;">📡 复用</span>
+                            <span class="desc"><span class="null-box">空</span> <span class="dim">（单信道基带总线，无本层复用；对照：光纤在此用 WDM、无线用 FDM/OFDM）</span></span>
+                        </div>
+                        <div class="inner-row iface-layer down-iface-layer">
+                            <span class="tag">🧩 协议接口</span>
+                            <span class="desc">
+                                <span class="iface-item">
+                                    <span class="iface-key">交付</span>
+                                    <span class="hl">基带电信号（单信道总线）</span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="inner-row select-end-layer empty">
+                            <span class="tag">🎯 端路</span>
+                            <span class="desc"><span class="null-box">空</span> <span class="dim">（介质为共享广播总线，随发随收；介质访问仲裁（CSMA/CD）在以太网层端路）</span></span>
+                        </div>
+                    </div>
+                    <div class="layer-divider" id="divider-cmod"></div>
+                </div>
+
+                <!-- 同轴总线介质层（物理介质 · 递归终点） -->
+                <div class="layer layer-tall" id="layer-coax" data-protocol="coax" data-bearer="copper" hidden>
+                    <div class="layer-name-bar">
+                        <span class="icon">🧵</span>
+                        <span class="name">同轴总线层</span>
+                        <span class="badge">共享介质 · 递归终点</span>
+                    </div>
+                    <div class="layer-body">
+                        <span class="collapsed-hint">— 悬停展开 —</span>
+                        <div class="inner-row iface-layer">
+                            <span class="tag">🧩 服务接口</span>
+                            <span class="desc">
+                                <span class="iface-item">
+                                    <span class="iface-key">拓扑</span>
+                                    <span class="hl">多址共享（总线，广播）</span>
+                                    <span class="dim">—— 一站点发送全总线可见，各站凭目标 MAC 直接接收；有线介质可边发边听 → 冲突可检测（对照无线：收不到自己 → 用 CSMA/CA）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">数据格式</span>
+                                    <span class="hl">电信号（连续的比特流）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">服务承诺</span>
+                                    <span class="hl">透明传播</span>
+                                    <span class="dim">（总线介质；衰减与站点数受限，需终端电阻匹配）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">参数</span>
+                                    <span class="hl">同轴类型（细缆 RG-58 / 粗缆 RG-8）</span>
+                                    <span class="hl">特性阻抗 50Ω / 终端电阻</span>
+                                    <span class="hl">总线长度与节点上限（10BASE2 ≈185m/30 节点；10BASE5 ≈500m/100 节点）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">建链</span>
+                                    <span class="null-box">无</span>
+                                    <span class="dim">（已预置：施工时铺设、T 型头接入、终端电阻，运行时不需上层调用）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">通信</span>
+                                    <span class="hl">基带信号广播传播</span>
+                                    <span class="dim">（介质透明传播，不做加工）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">拆链</span>
+                                    <span class="null-box">无</span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="inner-row net-layer">
+                            <span class="tag">🌐 网络</span>
+                            <span class="desc cp-table">
+                                <span class="cp-row cp-head">
+                                    <span class="cp-cell cp-control">控制面</span>
+                                    <span class="cp-cell cp-forward">转发面</span>
+                                </span>
+                                <span class="cp-row cp-body">
+                                    <span class="cp-cell cp-control">
+                                        <span class="hl">总线铺设规划（长度 / 节点数 / 终端电阻布置）</span>
+                                        <span class="hl">中继器延伸规划（跨段扩展）</span>
+                                    </span>
+                                    <span class="cp-cell cp-forward">
+                                        <span class="null-box">空</span>
+                                        <span class="dim">（介质本身不转发，广播投递）</span>
+                                    </span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="inner-row link-layer">
+                            <span class="tag">📦 链路</span>
+                            <span class="desc"><span class="hl">同轴总线（细缆/粗缆）</span> <span class="dim">（共享总线介质本身）</span></span>
+                        </div>
+                    </div>
+                    <div class="layer-divider" id="divider-coax"></div>
+                </div>
+
+                <!-- 802.11 无线局域网层（WLAN） -->
+                <div class="layer layer-tall" id="layer-wlan" data-protocol="wlan" data-bearer="wlan" hidden>
+                    <div class="layer-name-bar">
+                        <span class="icon">📶</span>
+                        <span class="name">WLAN层</span>
+                        <span class="badge">802.11</span>
+                    </div>
+                    <div class="layer-body">
+                        <span class="collapsed-hint">— 悬停展开 —</span>
+                        <div class="inner-row iface-layer">
+                            <span class="tag">🧩 服务接口</span>
+                            <span class="desc">
+                                <span class="iface-item">
+                                    <span class="iface-key">拓扑</span>
+                                    <span class="hl">全连通网络（BSS）</span>
+                                    <span class="dim">—— 星型：STA 经 AP 关联后同 BSS 内互相可达，对上层表现为一个无线 LAN</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">数据格式</span>
+                                    <span class="hl">数据包（802.11 帧）</span>
+                                    <span class="dim">（帧体为 LLC/SNAP 封装的 IP 载荷）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">服务承诺</span>
+                                    <span class="hl">尽力而为</span>
+                                    <span class="dim">（共享无线信道、易受干扰；MAC 层 ARQ 尽力重传弥补）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">参数</span>
+                                    <span class="hl">Type 字段（经 LLC/SNAP 承载 EtherType，上行据此分发给 IPv4/ARP/IPv6）</span>
+                                    <span class="hl">本机 MAC / BSSID（RA/TA 语义，由 WLAN 管理）</span>
+                                    <span class="hl">链路状态（单向上报：已关联/漫游中/断连、RSSI）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">建链</span>
+                                    <span class="hl">关联（Association）</span>
+                                    <span class="dim">—— 扫描 → 认证（开放/WPA）→ 关联，建立到 AP 的逻辑连接</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">通信</span>
+                                    <span class="hl">下行：目标MAC + 数据</span>
+                                    <span class="hl">上行：数据 + 源MAC</span>
+                                    <span class="dim">（每帧发送前由端路层做 CSMA/CA 介质访问）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">拆链</span>
+                                    <span class="hl">解除关联</span>
+                                    <span class="dim">（Disassociation / Deauthentication）</span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="inner-row net-layer">
+                            <span class="tag">🌐 网络</span>
+                            <span class="desc cp-table">
+                                <span class="cp-row cp-head">
+                                    <span class="cp-cell cp-control">控制面</span>
+                                    <span class="cp-cell cp-forward">转发面</span>
+                                </span>
+                                <span class="cp-row cp-body">
+                                    <span class="cp-cell cp-control">
+                                        <span class="hl">接入控制（关联表管理）</span>
+                                        <span class="hl dyn">漫游管理（BSS 间切换）</span>
+                                        <span class="hl">信道 / 功率管理（802.11h/k）</span>
+                                        <span class="dim">（对内信令）</span>
+                                    </span>
+                                    <span class="cp-cell cp-forward">
+                                        <span class="hl">按 RA/TA 转发（STA↔AP↔目标）</span>
+                                        <span class="hl">BSS 内组播 / 广播</span>
+                                        <span class="hl">桥接到分布系统（DS）</span>
+                                        <span class="dim">（对外服务）</span>
+                                    </span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="inner-row link-layer">
+                            <span class="tag">📦 链路</span>
+                            <span class="desc"><span class="hl">帧校验（FCS，检测帧损坏）</span> <span class="hl">ARQ 确认重传（单播 ACK，失败重发）</span> <span class="hl">RTS/CTS（隐藏节点预约）</span> <span class="hl">分片（抗干扰）</span></span>
+                        </div>
+                        <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
+                            <span class="tag" style="color:#9a6700;">📡 复用</span>
+                            <span class="desc"><span class="hl">BSS/SSID 复用（一信道多 BSS）</span> <span class="dim">—— 类比以太网 802.1Q：一个无线信道上经 SSID 区分多个逻辑 WLAN；亦承载 802.1Q（无线→有线 trunk）</span></span>
+                        </div>
+                        <div class="inner-row iface-layer down-iface-layer">
+                            <span class="tag">🧩 协议接口</span>
+                            <span class="desc">
+                                <span class="iface-item">
+                                    <span class="iface-key">交付</span>
+                                    <span class="hl">802.11 帧</span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="inner-row select-end-layer">
+                            <span class="tag">🎯 端路</span>
+                            <span class="desc">
+                                <span class="iface-item">
+                                    <span class="iface-key">规划</span>
+                                    <span class="dim">依承载拓扑判定：无线信道为多址共享（半双工、收不到自己）→ 需 CSMA/CA（而非 CSMA/CD）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">建链</span>
+                                    <span class="null-box">无</span>
+                                    <span class="dim">（关联已在服务接口完成）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">通信</span>
+                                    <span class="hl">CSMA/CA 介质访问</span>
+                                    <span class="dim">CCA 载波侦听 → 信道空闲且退避计数到 0 即发送 → 等 ACK；无 ACK 则指数退避重发；隐藏节点用 RTS/CTS 预约（DCF/EDCA）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">拆链</span>
+                                    <span class="null-box">无</span>
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="layer-divider" id="divider-wlan"></div>
+                </div>
+
+                <!-- 射频编码调制层 -->
+                <div class="layer layer-physical layer-tall" id="layer-rfmod" data-protocol="rfmod" data-bearer="wlan" hidden>
+                    <div class="layer-name-bar">
+                        <span class="icon">📻</span>
+                        <span class="name">射频编码调制层</span>
+                        <span class="badge">OFDM/QAM</span>
+                    </div>
+                    <div class="layer-body">
+                        <span class="collapsed-hint">— 悬停展开 —</span>
+                        <div class="inner-row iface-layer">
+                            <span class="tag">🧩 服务接口</span>
+                            <span class="desc">
+                                <span class="iface-item">
+                                    <span class="iface-key">拓扑</span>
+                                    <span class="hl">多址共享</span>
+                                    <span class="dim">—— 一个射频信道由同一 BSS 内多站点共享（一站点发，信道内皆可感知）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">数据格式</span>
+                                    <span class="hl">连续的比特流</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">服务承诺</span>
+                                    <span class="hl">透明</span>
+                                    <span class="dim">（透明比特流传输；CCA 可感知信道占用）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">参数</span>
+                                    <span class="hl">调制格式（OFDM：BPSK/QPSK/16-256QAM）</span>
+                                    <span class="hl">信道编码速率（FEC）</span>
+                                    <span class="hl">带宽（20/40/80MHz）</span>
+                                    <span class="hl">发射功率</span>
+                                    <span class="hl">链路状态（单向上报：RSSI/信噪比、CCA 忙/闲）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">建链</span>
+                                    <span class="null-box">无</span>
+                                    <span class="dim">（静态配置 / 速率自适应）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">通信</span>
+                                    <span class="hl">双向比特流 ↔ 射频信号</span>
+                                    <span class="dim">（下行：数字比特流经编码/调制映射为选定信道上的射频信号；上行反之）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">拆链</span>
+                                    <span class="null-box">无</span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="inner-row net-layer">
+                            <span class="tag">🌐 网络</span>
+                            <span class="desc cp-table">
+                                <span class="cp-row cp-head">
+                                    <span class="cp-cell cp-control">控制面</span>
+                                    <span class="cp-cell cp-forward">转发面</span>
+                                </span>
+                                <span class="cp-row cp-body">
+                                    <span class="cp-cell cp-control">
+                                        <span class="null-box">空</span>
+                                        <span class="dim">（不涉及转发路径决策）</span>
+                                    </span>
+                                    <span class="cp-cell cp-forward">
+                                        <span class="hl">信号再生 / 放大（中继器）</span>
+                                        <span class="hl">MIMO 空间流合并</span>
+                                    </span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="inner-row link-layer">
+                            <span class="tag">📦 链路</span>
+                            <span class="desc"><span class="hl">数字 ↔ 射频信号映射（OFDM 子载波 / QAM 星座）</span> <span class="hl">信道编码（FEC）与交织</span> <span class="hl">导频 / 训练序列（信道估计）</span></span>
+                        </div>
+                        <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
+                            <span class="tag" style="color:#9a6700;">📡 复用</span>
+                            <span class="desc"><span class="hl">OFDM 子载波 / MIMO 空间流复用</span> <span class="dim">—— 单信道内并行多路正交子载波与多空间流（同一时刻承载更多比特）</span></span>
+                        </div>
+                        <div class="inner-row iface-layer down-iface-layer">
+                            <span class="tag">🧩 协议接口</span>
+                            <span class="desc">
+                                <span class="iface-item">
+                                    <span class="iface-key">交付</span>
+                                    <span class="hl">选定信道上的射频信号（OFDM 符号）</span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="inner-row select-end-layer empty">
+                            <span class="tag">🎯 端路</span>
+                            <span class="desc"><span class="null-box">空</span> <span class="dim">（承载层频段复用已选定信道；介质访问仲裁在 WLAN 端路层）</span></span>
+                        </div>
+                    </div>
+                    <div class="layer-divider" id="divider-rfmod"></div>
+                </div>
+
+                <!-- 频段复用层（射频频谱切分；操作粒度：频段 / 信道） -->
+                <div class="layer layer-tall" id="layer-freq" data-protocol="freq" data-bearer="wlan" hidden>
+                    <div class="layer-name-bar">
+                        <span class="icon">🎛️</span>
+                        <span class="name">频段复用层</span>
+                        <span class="badge">信道划分</span>
+                    </div>
+                    <div class="layer-body">
+                        <span class="collapsed-hint">— 悬停展开 —</span>
+                        <div class="inner-row iface-layer">
+                            <span class="tag">🧩 服务接口</span>
+                            <span class="desc">
+                                <span class="iface-item">
+                                    <span class="iface-key">拓扑</span>
+                                    <span class="hl">多信道（每信道为共享无线通道）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">数据格式</span>
+                                    <span class="hl">射频载波信号（连续的比特流）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">服务承诺</span>
+                                    <span class="hl">信道隔离</span>
+                                    <span class="dim">（不同信道互不干扰，邻近信道抑制）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">参数</span>
+                                    <span class="hl">频段（2.4/5/6GHz）</span>
+                                    <span class="hl">信道号 / 带宽（20/40/80/160MHz）</span>
+                                    <span class="hl">信道状态（可用/占用/干扰，CCA 能量检测上报）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">建链</span>
+                                    <span class="null-box">无</span>
+                                    <span class="dim">（半静态：AP 选信道 / 规划时确定）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">通信</span>
+                                    <span class="hl">特定信道射频信号</span>
+                                    <span class="dim">（调谐收发到所选频段 + 信道）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">拆链</span>
+                                    <span class="null-box">无</span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="inner-row net-layer">
+                            <span class="tag">🌐 网络</span>
+                            <span class="desc cp-table">
+                                <span class="cp-row cp-head">
+                                    <span class="cp-cell cp-control">控制面</span>
+                                    <span class="cp-cell cp-forward">转发面</span>
+                                </span>
+                                <span class="cp-row cp-body">
+                                    <span class="cp-cell cp-control">
+                                        <span class="hl">信道选择 / 分配（AP 选信道）</span>
+                                        <span class="hl dyn">DFS（动态频率选择，避开雷达）</span>
+                                    </span>
+                                    <span class="cp-cell cp-forward">
+                                        <span class="hl">信道切换（调谐）</span>
+                                        <span class="hl">发射功率控制（TPC）</span>
+                                    </span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="inner-row link-layer">
+                            <span class="tag">📦 链路</span>
+                            <span class="desc"><span class="hl">信道寻址（频段 + 信道号）</span> <span class="hl">链路增强：发射功率控制</span> <span class="hl">相邻信道干扰抑制</span></span>
+                        </div>
+                        <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
+                            <span class="tag" style="color:#9a6700;">📡 复用</span>
+                            <span class="desc"><span class="hl">频分复用（FDM）</span> <span class="dim">—— 将无线电波共享频谱复用为多个信道（类比光波 WDM）：2.4GHz 1-13 / 5GHz 36-165，20-160MHz 带宽</span></span>
+                        </div>
+                        <div class="inner-row iface-layer down-iface-layer">
+                            <span class="tag">🧩 协议接口</span>
+                            <span class="desc">
+                                <span class="iface-item">
+                                    <span class="iface-key">交付</span>
+                                    <span class="hl">一组信道中的选定信道射频信号</span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="inner-row select-end-layer empty">
+                            <span class="tag">🎯 端路</span>
+                            <span class="desc"><span class="null-box">空</span> <span class="dim">（承载层无线电波为共享频谱，无需寻址建路）</span></span>
+                        </div>
+                    </div>
+                    <div class="layer-divider" id="divider-freq"></div>
+                </div>
+
+                <!-- 无线电波介质层（物理介质 · 递归终点） -->
+                <div class="layer layer-tall" id="layer-air" data-protocol="air" data-bearer="wlan" hidden>
+                    <div class="layer-name-bar">
+                        <span class="icon">🌫️</span>
+                        <span class="name">无线电波层</span>
+                        <span class="badge">共享介质 · 递归终点</span>
+                    </div>
+                    <div class="layer-body">
+                        <span class="collapsed-hint">— 悬停展开 —</span>
+                        <div class="inner-row iface-layer">
+                            <span class="tag">🧩 服务接口</span>
+                            <span class="desc">
+                                <span class="iface-item">
+                                    <span class="iface-key">拓扑</span>
+                                    <span class="hl">多址共享</span>
+                                    <span class="dim">—— 广播介质：一站点发送，覆盖范围内所有站点均可接收（天然多邻居）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">数据格式</span>
+                                    <span class="hl">射频信号（电磁波）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">服务承诺</span>
+                                    <span class="hl">透明传播</span>
+                                    <span class="dim">（自由空间传播；存在衰减、多径衰落、同频干扰）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">参数</span>
+                                    <span class="hl">频率 / 带宽特性</span>
+                                    <span class="hl">传播损耗 / 多径 / 衰落</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">建链</span>
+                                    <span class="hl">天线部署</span>
+                                    <span class="dim">（AP/基站布点、覆盖规划），建成即固定</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">通信</span>
+                                    <span class="hl">射频信号广播传播</span>
+                                    <span class="dim">（介质透明传播，不做加工）</span>
+                                </span>
+                                <span class="iface-item">
+                                    <span class="iface-key">拆链</span>
+                                    <span class="null-box">无</span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="inner-row net-layer">
+                            <span class="tag">🌐 网络</span>
+                            <span class="desc cp-table">
+                                <span class="cp-row cp-head">
+                                    <span class="cp-cell cp-control">控制面</span>
+                                    <span class="cp-cell cp-forward">转发面</span>
+                                </span>
+                                <span class="cp-row cp-body">
+                                    <span class="cp-cell cp-control">
+                                        <span class="hl">覆盖规划（AP 布点 / 蜂窝规划）</span>
+                                    </span>
+                                    <span class="cp-cell cp-forward">
+                                        <span class="null-box">空</span>
+                                        <span class="dim">（介质本身不转发）</span>
+                                    </span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="inner-row link-layer">
+                            <span class="tag">📦 链路</span>
+                            <span class="desc"><span class="hl">无线电波</span> <span class="dim">（共享电磁介质本身）</span></span>
+                        </div>
+                    </div>
+                    <div class="layer-divider" id="divider-air"></div>
                 </div>
 
             </div>
@@ -1973,10 +2564,70 @@
                 link_select: { targetIndex: 8, boundary: 'dividerSelectEnd', state: null },
                 select_end: { targetIndex: 8, boundary: 'dividerDown', state: null },
                 down_iface: { targetIndex: 8, boundary: 'bottom', state: null }
+            },
+            'wlan': {
+                transport_mux: { targetIndex: 5, boundary: 'top', state: 'glow' },
+                iface_network: { targetIndex: 5, boundary: 'dividerIface', state: 'glow' },
+                mux_network: { targetIndex: 5, boundary: 'dividerNet', state: 'glow' },
+                link_network: { targetIndex: 5, boundary: 'dividerMux', state: 'glow' },
+                link_select: { targetIndex: 5, boundary: 'dividerSelectEnd', state: 'glow' },
+                select_end: { targetIndex: 5, boundary: 'dividerDown', state: 'glow' },
+                down_iface: { targetIndex: 5, boundary: 'bottom', state: 'highlight' }
+            },
+            'rfmod': {
+                transport_mux: { targetIndex: 6, boundary: 'top', state: null },
+                iface_network: { targetIndex: 6, boundary: 'dividerIface', state: 'highlight' },
+                mux_network: { targetIndex: 6, boundary: 'dividerNet', state: 'highlight' },
+                link_network: { targetIndex: 6, boundary: 'dividerMux', state: 'highlight' },
+                link_select: { targetIndex: 6, boundary: 'dividerSelectEnd', state: 'highlight' },
+                select_end: { targetIndex: 6, boundary: 'dividerDown', state: 'highlight' },
+                down_iface: { targetIndex: 6, boundary: 'bottom', state: null }
+            },
+            'freq': {
+                transport_mux: { targetIndex: 7, boundary: 'top', state: null },
+                iface_network: { targetIndex: 7, boundary: 'dividerIface', state: 'highlight' },
+                mux_network: { targetIndex: 7, boundary: 'dividerNet', state: 'highlight' },
+                link_network: { targetIndex: 7, boundary: 'dividerMux', state: 'highlight' },
+                link_select: { targetIndex: 7, boundary: 'dividerSelectEnd', state: 'highlight' },
+                select_end: { targetIndex: 7, boundary: 'dividerDown', state: 'highlight' },
+                down_iface: { targetIndex: 7, boundary: 'bottom', state: null }
+            },
+            'air': {
+                transport_mux: { targetIndex: 8, boundary: 'top', state: null },
+                iface_network: { targetIndex: 8, boundary: 'dividerIface', state: 'highlight' },
+                mux_network: { targetIndex: 8, boundary: 'dividerNet', state: 'highlight' },
+                link_network: { targetIndex: 8, boundary: 'dividerMux', state: 'highlight' },
+                link_select: { targetIndex: 8, boundary: 'dividerSelectEnd', state: null },
+                select_end: { targetIndex: 8, boundary: 'dividerDown', state: null },
+                down_iface: { targetIndex: 8, boundary: 'bottom', state: null }
+            },
+            'cmod': {
+                transport_mux: { targetIndex: 6, boundary: 'top', state: null },
+                iface_network: { targetIndex: 6, boundary: 'dividerIface', state: 'highlight' },
+                mux_network: { targetIndex: 6, boundary: 'dividerNet', state: 'highlight' },
+                link_network: { targetIndex: 6, boundary: 'dividerMux', state: 'highlight' },
+                link_select: { targetIndex: 6, boundary: 'dividerSelectEnd', state: 'highlight' },
+                select_end: { targetIndex: 6, boundary: 'dividerDown', state: 'highlight' },
+                down_iface: { targetIndex: 6, boundary: 'bottom', state: null }
+            },
+            'coax': {
+                transport_mux: { targetIndex: 7, boundary: 'top', state: null },
+                iface_network: { targetIndex: 7, boundary: 'dividerIface', state: 'highlight' },
+                mux_network: { targetIndex: 7, boundary: 'dividerNet', state: 'highlight' },
+                link_network: { targetIndex: 7, boundary: 'dividerMux', state: 'highlight' },
+                link_select: { targetIndex: 7, boundary: 'dividerSelectEnd', state: null },
+                select_end: { targetIndex: 7, boundary: 'dividerDown', state: null },
+                down_iface: { targetIndex: 7, boundary: 'bottom', state: null }
             }
         };
 
-        const layerEls = document.querySelectorAll('.layer');
+        function visibleLayers() {
+            // 只统计可见层：被"承载模式"隐藏的尾部层不参与布局 / 键盘 / 测量
+            return Array.prototype.filter.call(document.querySelectorAll('#stack > .layer'), el => !el.hidden);
+        }
+        let layerEls = visibleLayers();
+        // 事件（悬停/过渡）需绑定到全部层（含被承载模式隐藏的层），切换后新显层才能响应
+        const allLayerEls = document.querySelectorAll('.layer');
         const hlines = {
             transport_mux: document.getElementById('hline-transport-mux'),
             iface_network: document.getElementById('hline-iface-network'),
@@ -2492,6 +3143,11 @@
 
         // 初始化/缩放时：测量所有协议层的分隔线偏移与展开高度（含编码调制层）
         function updateDividerOffsets() {
+            const stackEl = document.getElementById('stack');
+            // 测量期间容器级禁用过渡（含 !important）：临时 .active 展开量高会在
+            // “transition:none + 强制布局 + 恢复过渡”时留下蓝→灰的淡回（闪蓝），
+            // 这里把过渡禁用保持到下一帧（回退态已上屏）再解除，杜绝该闪现。
+            stackEl.classList.add('measuring');
             DIVIDER_OFFSETS = {};
             layerEls.forEach(l => {
                 DIVIDER_OFFSETS[l.dataset.protocol] = measureRowOffsets(l);
@@ -2509,6 +3165,8 @@
                 l.classList.remove('active');
                 l.style.transition = prevTrans;
             });
+            // 下一帧（回退态已经以无过渡的方式上屏）再恢复过渡
+            requestAnimationFrame(function() { stackEl.classList.remove('measuring'); });
         }
 
         function updateDividers(protocolKey) {
@@ -2559,7 +3217,7 @@
             }, delay);
         }
 
-        layerEls.forEach((layer) => {
+        allLayerEls.forEach((layer) => {
             layer.addEventListener('mouseenter', function(e) {
                 // 键盘接管期间，忽略由布局变化引起的"伪悬停"（鼠标未移动）
                 if (!mouseMoved) return;
@@ -2613,7 +3271,7 @@
         //  结束后（几何已稳定）再重算一次，确保最终完全对齐。
         // ============================================================
         let recalcScheduled = false;
-        layerEls.forEach((layer) => {
+        allLayerEls.forEach((layer) => {
             layer.addEventListener('transitionend', function(e) {
                 if (e.target !== this) return;
                 if (e.propertyName !== 'height') return;
@@ -2719,7 +3377,7 @@
         //  键盘支持：↑/↓ 选择协议层（等价于悬停），Enter/Space 切换
         //  "展开所有协议"，←/→ 切换标签页，Escape 清除选择并复位
         // ============================================================
-        const KB_LAYERS = Array.from(layerEls); // 保持 DOM 顺序 = 协议栈顺序
+        let KB_LAYERS = layerEls.slice(); // 保持 DOM 顺序 = 协议栈顺序
         let kbIndex = -1; // -1 表示当前无键盘选择
         let mouseMoved = true; // 鼠标是否已真正移动（键盘接管后需移动才恢复悬停）
 
@@ -2833,7 +3491,7 @@
 
         // 鼠标交互开始时清除键盘焦点，避免两者状态冲突；
         // 但键盘接管期间（鼠标未移动）忽略由布局变化引起的"伪悬停"
-        KB_LAYERS.forEach(layer => {
+        allLayerEls.forEach(layer => {
             layer.addEventListener('mouseenter', function() {
                 if (!mouseMoved) return;
                 KB_LAYERS.forEach(l => l.classList.remove('kb-focus'));
@@ -2945,6 +3603,190 @@
         }
 
         document.getElementById('exportBtn').addEventListener('click', exportPNG);
+
+        // ============================================================
+        //  承载模式切换：光纤 / 铜线 / 无线
+        //  三种模式共享上层（数据~IP），仅底部承载组不同：
+        //  光纤组 eth/physical/wave/fiber；
+        //  铜线组 eth/cmod/coax（复用同一以太网层，承载拓扑为共享总线 → CSMA/CD 运行）；
+        //  无线组 wlan/rfmod/freq/air。
+        //  切换 = 显隐对应组 → 刷新可见层集 → 重测 → 重绘标尺。
+        // ============================================================
+        function applyBearer(m) {
+            document.querySelectorAll('#stack > .layer').forEach(el => {
+                const b = el.dataset.bearer || '';
+                if (b) el.hidden = !b.split(/\s+/).includes(m);
+            });
+            // 以太网端路内容随承载模式切换（光纤=点对点/无需介质访问；铜线=共享总线/CSMA-CD 运行）
+            document.body.classList.toggle('bearer-copper', m === 'copper');
+            // 刷新可见层集（几何 / 键盘 / 测量只作用于可见层）
+            layerEls = visibleLayers();
+            KB_LAYERS = layerEls.slice();
+            kbIndex = -1;
+            document.querySelectorAll('.layer').forEach(l => l.classList.remove('kb-focus', 'active', 'inactive'));
+            // 按钮高亮
+            document.getElementById('modeBtnFiber').classList.toggle('active', m === 'fiber');
+            document.getElementById('modeBtnCopper').classList.toggle('active', m === 'copper');
+            document.getElementById('modeBtnWlan').classList.toggle('active', m === 'wlan');
+            // 重测并复位标尺
+            LAYOUT = captureLayout();
+            updateNameBarWidth();
+            updateDividerOffsets();
+            if (expandAll) {
+                applyExpandAll();
+            } else {
+                updateRuler(null);
+                updateDividers(null);
+            }
+        }
+        // ============================================================
+        //  承载切换动画（口径 A）：只让"角色变化"的层滑动
+        //    - 光纤↔铜线：以太网层（共用、仅端路文字随承载）原地不动，
+        //      只有底层承载尾整组左滑出 / 新承载尾从右侧滑入
+        //    - 任意↔无线：L2 换协议（eth→wlan），以太网层随旧组左滑出、
+        //      WLAN 组从右侧滑入
+        //    "展开所有协议"时降级为整栈淡入淡出（高度差异大，不宜位移）。
+        //    播放中锁定指针、排队后续切换请求。
+        // ============================================================
+        const SWAP_MS = 700;
+        let swapping = false;
+        let pendingMode = null;
+
+        function currentMode() {
+            if (document.getElementById('modeBtnCopper').classList.contains('active')) return 'copper';
+            if (document.getElementById('modeBtnWlan').classList.contains('active')) return 'wlan';
+            return 'fiber';
+        }
+
+        function switchBearer(m) {
+            if (swapping) { pendingMode = m; return; }
+            if (m === currentMode()) { applyBearer(m); return; }
+            // 尊重系统"减弱动效"设置：直接切换
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                applyBearer(m); return;
+            }
+            if (expandAll) { fadeSwitch(m); return; }
+            const stack = document.getElementById('stack');
+            const leaving = [], entering = [];
+            Array.prototype.forEach.call(stack.children, (el) => {
+                const b = el.dataset.bearer || '';
+                const willShow = b ? b.split(/\s+/).includes(m) : true;
+                const willHide = !willShow;
+                if (el.hidden === willHide) return; // 显隐状态不变，跳过
+                (willShow ? entering : leaving).push(el);
+            });
+            if (!leaving.length && !entering.length) { applyBearer(m); return; }
+            swapping = true;
+            stack.style.pointerEvents = 'none';
+            document.querySelector('.container').classList.add('animating');
+            // 切换方向：按按钮顺序（光纤→铜线→无线）前/后决定滑动方向。
+            // 前进（如 光纤→铜线）：旧组向左滑出、新组自右滑入；
+            // 回切（如 铜线→光纤）：旧组向右滑出、新组自左滑入。
+            const order = { fiber: 0, copper: 1, wlan: 2 };
+            const forward = (order[m] || 0) >= (order[currentMode()] || 0);
+            const outX = forward ? '-100%' : '100%';
+            const inX = forward ? '100%' : '-100%';
+            // 1) 先统一量取所有离场层的原位，再一次全部转绝对定位。
+            //    （不能边量边转：第一层脱离文档流后，后续几层的 y 会上移坍缩，
+            //      全部叠到同一位置 → 只有最上层可见。先量后转可保持各自原位，
+            //      同时把布局腾给入场层。）
+            const stackRect = stack.getBoundingClientRect();
+            leaving.forEach((el) => {
+                el.dataset.swapTop = String(el.getBoundingClientRect().top - stackRect.top);
+            });
+            leaving.forEach((el) => {
+                el.style.position = 'absolute';
+                el.style.top = el.dataset.swapTop + 'px';
+                el.style.left = '0';
+                el.style.right = '0';
+                el.style.margin = '0';
+            });
+            // 2) 入场层以"未进入"姿态就位（hidden 时预置样式再解开，避免闪现）
+            entering.forEach((el) => {
+                el.style.transition = 'none';
+                el.style.transform = 'translateX(' + inX + ')';
+                el.style.opacity = '0';
+                el.hidden = false;
+            });
+            // 3) 离场层复位为原位（清除可能残留的内联 transform）
+            leaving.forEach((el) => {
+                el.style.transition = 'none';
+                el.style.transform = 'translateX(0)';
+                el.style.opacity = '1';
+            });
+            void stack.offsetHeight; // 提交初始状态
+            const t = 'transform ' + SWAP_MS + 'ms cubic-bezier(.22,.61,.36,1), opacity ' + SWAP_MS + 'ms ease';
+            entering.forEach((el) => {
+                el.style.transition = t;
+                el.style.transform = 'translateX(0)';
+                el.style.opacity = '1';
+            });
+            leaving.forEach((el) => {
+                el.style.transition = t;
+                el.style.transform = 'translateX(' + outX + ')';
+                el.style.opacity = '0';
+            });
+            window.setTimeout(function() { finishSwitch(m, leaving, entering); }, SWAP_MS + 40);
+        }
+
+        function finishSwitch(m, leaving, entering) {
+            const stack = document.getElementById('stack');
+            document.querySelector('.container').classList.remove('animating');
+            leaving.forEach((el) => {
+                el.hidden = true;
+                el.style.position = '';
+                el.style.top = '';
+                el.style.left = '';
+                el.style.right = '';
+                el.style.margin = '';
+                el.style.transform = '';
+                el.style.opacity = '';
+                el.style.transition = '';
+            });
+            entering.forEach((el) => {
+                el.style.transform = '';
+                el.style.opacity = '';
+                el.style.transition = '';
+            });
+            stack.style.pointerEvents = '';
+            applyBearer(m); // 提交最终状态（hidden 已就位；重测布局并重绘标尺/按钮）
+            swapping = false;
+            if (pendingMode !== null && pendingMode !== m) {
+                const pm = pendingMode;
+                pendingMode = null;
+                switchBearer(pm);
+            }
+        }
+
+        // 展开所有协议时的承载切换：整栈快速淡出→切态→淡入
+        function fadeSwitch(m) {
+            swapping = true;
+            const stack = document.getElementById('stack');
+            stack.style.pointerEvents = 'none';
+            stack.style.transition = 'opacity 130ms ease';
+            stack.style.opacity = '0';
+            window.setTimeout(function() {
+                applyBearer(m);
+                void stack.offsetHeight; // 强制重排后再淡入
+                stack.style.transition = 'opacity 180ms ease';
+                stack.style.opacity = '1';
+                window.setTimeout(function() {
+                    stack.style.transition = '';
+                    stack.style.opacity = '';
+                    stack.style.pointerEvents = '';
+                    swapping = false;
+                    if (pendingMode !== null && pendingMode !== m) {
+                        const pm = pendingMode;
+                        pendingMode = null;
+                        switchBearer(pm);
+                    }
+                }, 200);
+            }, 140);
+        }
+
+        document.getElementById('modeBtnFiber').addEventListener('click', function() { switchBearer('fiber'); });
+        document.getElementById('modeBtnCopper').addEventListener('click', function() { switchBearer('copper'); });
+        document.getElementById('modeBtnWlan').addEventListener('click', function() { switchBearer('wlan'); });
 
         // ============================================================
         //  初始化：自动计算最左列宽度
