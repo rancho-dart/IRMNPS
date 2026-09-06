@@ -300,7 +300,7 @@
 
         .main-layout {
             display: flex;
-            gap: 40px;
+            gap: 0;
             align-items: stretch;
         }
 
@@ -837,6 +837,7 @@
         .right-panel {
             flex: 0 0 170px;
             min-width: 150px;
+            margin-left: 40px;
             background: transparent; /* 隐藏框内背景色 */
             display: flex;
             flex-direction: column;
@@ -977,6 +978,128 @@
         /* 无悬停（变暗）时色带几乎不可见 */
         .right-panel.dimmed .ruler-zone {
             opacity: 0.2;
+        }
+
+        /* ====== 中栏：跨层协调面 / 侧通道 ======
+           数据面递归之外的旁路纵轴：递归只在相邻层服务接口间逐层下传，
+           协调面则可越过任意中间层直连（ASON-UNI：以太网请求光波建 λ 光路，
+           跳过编码调制；NMS/SDN 配置可直达任意层）。 */
+        .side-channel {
+            flex: 0 0 178px;
+            position: relative;
+            align-self: stretch;
+            background: #ffffff;
+            border-left: 1px dashed #e6e9ef;
+            overflow: visible;
+        }
+        .side-channel[hidden] {
+            display: none;
+        }
+        .sc-title {
+            position: absolute;
+            top: 3px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: #8250df;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        .sc-axis {
+            position: absolute;
+            left: 16px;
+            top: 24px;
+            bottom: 24px;
+            width: 0;
+            border-left: 2px dashed #ddd1f1;
+            pointer-events: none;
+            transition: border-color 0.3s ease;
+        }
+        .side-channel.active .sc-axis {
+            border-color: #b18ae0;
+        }
+        /* 每个协议一个接入点：横向短线（左）+ 轴线圆点 */
+        .sc-port {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 0;
+            pointer-events: none;
+            z-index: 2;
+            transition: top 0.4s ease;
+        }
+        .sc-port::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 15px;
+            border-top: 1px solid #e5d9f4;
+            transform: translateY(-50%);
+            transition: border-color 0.25s ease;
+        }
+        .sc-port .sc-dot {
+            position: absolute;
+            left: 16px;
+            top: 0;
+            width: 6px;
+            height: 6px;
+            margin: -3px 0 0 -3px;
+            border-radius: 50%;
+            background: #cdb7ed;
+            transition: background 0.25s ease, box-shadow 0.25s ease;
+        }
+        .sc-port .sc-chip {
+            position: absolute;
+            left: 24px;
+            top: 0;
+            transform: translateY(-50%);
+            font-size: 9px;
+            line-height: 1.35;
+            color: #bcabdc;
+            white-space: nowrap;
+            transition: color 0.25s ease;
+        }
+        .sc-port.active::before {
+            border-color: #8250df;
+        }
+        .sc-port.active .sc-dot {
+            background: #8250df;
+            box-shadow: 0 0 0 3px rgba(130, 80, 223, 0.18);
+        }
+        .sc-port.active .sc-chip {
+            color: #8250df;
+            font-weight: 600;
+        }
+        /* ASON-UNI 跨层段：以太网↔光波（悬停二者之一点亮；轴线 x=16 居中） */
+        .sc-uni {
+            position: absolute;
+            left: 10px;
+            width: 12px;
+            background: rgba(130, 80, 223, 0.13);
+            border: 1px solid rgba(130, 80, 223, 0.55);
+            border-radius: 6px;
+            opacity: 0;
+            z-index: 1;
+            pointer-events: none;
+            transition: opacity 0.3s ease, top 0.4s ease, height 0.4s ease;
+        }
+        .sc-uni.on {
+            opacity: 1;
+        }
+        .sc-foot {
+            position: absolute;
+            bottom: 2px;
+            left: 4px;
+            right: 4px;
+            text-align: center;
+            font-size: 9px;
+            line-height: 1.4;
+            color: #a9b0bb;
+            pointer-events: none;
         }
 
         .hint {
@@ -1129,10 +1252,7 @@
                                     <span class="iface-key">拓扑</span>
                                     <span class="hl">端到端连接</span>
                                 </span>
-                                <span class="iface-item">
-                                    <span class="iface-key">数据格式</span>
-                                    <span class="hl">连续的字节流</span>
-                                </span>
+
                                 <span class="iface-item">
                                     <span class="iface-key">服务承诺</span>
                                     <span class="hl">安全</span>
@@ -1150,7 +1270,7 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
-                                    <span class="hl">明文数据</span>
+                                    <span class="hl">明文数据（连续的字节流）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
@@ -1223,11 +1343,7 @@
                                     <span class="iface-key">拓扑</span>
                                     <span class="hl">端到端连接</span>
                                 </span>
-                                <span class="iface-item">
-                                    <span class="iface-key">数据格式</span>
-                                    <span class="hl">连续的字节流</span>
-                                    <span class="dim">（全双工，无边界）</span>
-                                </span>
+
                                 <span class="iface-item">
                                     <span class="iface-key">服务承诺</span>
                                     <span class="hl">可靠</span>
@@ -1245,7 +1361,7 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
-                                    <span class="hl">字节流（任意大小，无边界）</span>
+                                    <span class="hl">连续的字节流（全双工，任意大小，无边界）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
@@ -1326,10 +1442,7 @@
                                     <span class="hl">全连通网络</span>
                                     <span class="dim">（统一寻址）</span>
                                 </span>
-                                <span class="iface-item">
-                                    <span class="iface-key">数据格式</span>
-                                    <span class="hl">数据包（数据报）</span>
-                                </span>
+
                                 <span class="iface-item">
                                     <span class="iface-key">服务承诺</span>
                                     <span class="hl">尽力而为</span>
@@ -1352,6 +1465,7 @@
                                     <span class="iface-key">通信</span>
                                     <span class="hl">下行：目标IP + 数据块</span>
                                     <span class="hl">上行：数据块</span>
+                                    <span class="dim">（数据块以 IP 数据报交付）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
@@ -1442,10 +1556,7 @@
                                     <span class="iface-key">拓扑</span>
                                     <span class="hl">全连通网络</span>
                                 </span>
-                                <span class="iface-item">
-                                    <span class="iface-key">数据格式</span>
-                                    <span class="hl">数据包（以太网帧，最大 1500 字节）</span>
-                                </span>
+
                                 <span class="iface-item">
                                     <span class="iface-key">服务承诺</span>
                                     <span class="hl">尽力而为</span>
@@ -1466,6 +1577,7 @@
                                     <span class="iface-key">通信</span>
                                     <span class="hl">下行：目标MAC + 数据</span>
                                     <span class="hl">上行：数据 + 源MAC</span>
+                                    <span class="dim">（数据封装为以太网帧，最大 1500 字节）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
@@ -1555,10 +1667,6 @@
                                     <span class="hl">端到端连接</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">数据格式</span>
-                                    <span class="hl">连续的比特流</span>
-                                </span>
-                                <span class="iface-item">
                                     <span class="iface-key">服务承诺</span>
                                     <span class="hl">透明</span>
                                     <span class="dim">（透明比特流传输，信号保真）</span>
@@ -1646,23 +1754,19 @@
                                 <span class="iface-item">
                                     <span class="iface-key">拓扑</span>
                                     <span class="hl">全连通网络（光交换）</span>
-                                    <span class="dim">（本层为多光节点 ROADM 交换网络：任意两端可经预置配置或 ASON 信令建成端到端 λ 光路——与 IP 同类“任选对端、上层择点成通道”，惟 λ 为波长专用电路而非统计复用）</span>
+                                    <span class="dim">（本层为多光节点 ROADM 交换网络：任意两端可经预置配置或 ASON 信令建成端到端 λ 光路）</span>
                                 </span>
-                                <span class="iface-item">
-                                    <span class="iface-key">数据格式</span>
-                                    <span class="hl">光信号（连续的比特流）</span>
-                                </span>
+
                                 <span class="iface-item">
                                     <span class="iface-key">服务承诺</span>
-                                    <span class="hl">透明转发</span>
-                                    <span class="dim">（波长级透明转发）</span>
+                                    <span class="hl">特定波长透明转发</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">参数</span>
                                     <span class="desc">
                                         <span class="hl">发送波长通道（λᵢ，静态，下行）</span>
                                         <span class="hl">接收波长通道（λⱼ，静态，上行）</span>
-                                        <span class="dim">（λᵢ ≠ λⱼ：同一波长不能同时用于收发）</span>
+                                        <span class="dim">（双纤制：收发各走一根纤，可复用同一组波长；单纤双向 BiDi：同一根纤上 λᵢ≠λⱼ）</span>
                                     </span>
                                     <span class="desc">
                                         <span class="hl">波长通道状态（可用 / 占用 / 故障）</span>
@@ -1671,8 +1775,14 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
-                                    <span class="iface-branch"><span class="hl">预置（默认）</span><span class="dim">（波长通道在建设/规划时经 ROADM / 光交叉连接配置，固定存在，运行时不需上层调用）</span></span>
-                                    <span class="iface-branch line"><span class="hl dyn">ASON 按需</span><span class="dim">（交换连接：上层可经 GMPLS/ASON 信令实时请求建立/拆除光路，而非仅预置）</span></span>
+                                    <span class="iface-branch">
+                                        <span class="null-box">无</span>
+                                        <span class="dim">（波长通道在建设/规划时经 ROADM / 光交叉连接配置，固定存在，运行时不需上层调用）</span>
+                                    </span>
+                                    <span class="iface-branch line">
+                                        <span class="hl dyn">ASON 按需建链</span>
+                                        <span class="dim">（交换连接：上层经 GMPLS/ASON 信令建立光路）</span>
+                                    </span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
@@ -1681,8 +1791,14 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
-                                    <span class="null-box">无</span>
-                                    <span class="dim">（预置光路固定存在不拆；ASON 按需光路在通信结束后由信令释放）</span>
+                                    <span class="iface-branch">
+                                        <span class="null-box">无</span>
+                                        <span class="dim">（光路固定存在，运行时不需拆链）</span>
+                                    </span>
+                                    <span class="iface-branch line">
+                                        <span class="hl dyn">ASON 按需释放</span>
+                                        <span class="dim">（通信结束后由上层经 GMPLS/ASON 信令释放光路）</span>
+                                    </span>
                                 </span>
                             </span>
                         </div>
@@ -1708,15 +1824,16 @@
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 单链路</span>
-                            <span class="desc"><span class="hl">光功率均衡（每波长通道）</span> <span class="hl">OSNR优化（每波长通道）</span> <span class="dim">（单链路口径：每条 λ 各管各的功率与信噪比）</span></span>
+                            <span class="desc"><span class="hl">光功率均衡</span> <span class="hl">OSNR优化</span> <span class="dim">（单链路口径：每条 λ 各管各的功率与信噪比）</span></span>
                         </div>
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
-                            <span class="desc"><span class="hl">WDM波分复用</span> <span class="dim">（将裸光纤复用为多个波长通道 λ₁…λₙ，本端发送 λᵢ、接收 λⱼ，同一波长不能同时用于收发，全双工占用两波长）</span></span>
+                            <span class="desc"><span class="hl">WDM波分复用</span> 
+                        </span>
                         </div>
                         <div class="inner-row aggr-layer">
                             <span class="tag">🔀 聚合链路</span>
-                            <span class="desc"><span class="hl">光放大器（不带整形，如EDFA）</span> <span class="hl">色散补偿</span> <span class="dim">（聚合链路口径：作用于整段光纤上的 WDM 聚合信号——对全部波长通道整体放大/补偿）</span></span>
+                            <span class="desc"><span class="hl">光放大器（不带整形，如EDFA）</span> <span class="hl">色散补偿</span> <span class="dim">（聚合链路口径：作用于光纤上的全部波长通道）</span></span>
                         </div>
                         <div class="inner-row select-end-layer">
                             <span class="tag">🎯 端路</span>
@@ -1724,11 +1841,11 @@
                                 <span class="iface-item">
                                     <span class="iface-key">规划</span>
                                     <span class="null-box">无</span>
-                                    <span class="dim">（承载层光纤已提供端到端透明通道，无需寻址建路）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
                                     <span class="null-box">无</span>
+                                    <span class="dim">（光纤层通过跳纤预置了端到端通道）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
@@ -1759,16 +1876,11 @@
                                 <span class="iface-item">
                                     <span class="iface-key">拓扑</span>
                                     <span class="hl">全连通网络（配线固化）</span>
-                                    <span class="dim">（本层为光缆配线网：转发＝ODF 跳纤——人工、近固化，通常固定方向、必要时可重配改向）</span>
                                 </span>
-                                <span class="iface-item">
-                                    <span class="iface-key">数据格式</span>
-                                    <span class="hl">光信号（连续的比特流）</span>
-                                </span>
+
                                 <span class="iface-item">
                                     <span class="iface-key">服务承诺</span>
                                     <span class="hl">介质透明</span>
-                                    <span class="dim">（物理介质透明传输，低损耗）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">参数</span>
@@ -1791,7 +1903,7 @@
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
                                     <span class="null-box">无</span>
-                                    <span class="dim">（同建链：已预置，运行时不需上层调用）</span>
+                                    <span class="dim">（同建链）</span>
                                 </span>
                             </span>
                         </div>
@@ -1839,10 +1951,6 @@
                                     <span class="iface-key">拓扑</span>
                                     <span class="hl">多址共享（总线，半双工）</span>
                                     <span class="dim">—— 一条同轴总线由多站点共享；有线可边发边听 → 能自检冲突（驱动上层以太网端路启用 CSMA/CD）</span>
-                                </span>
-                                <span class="iface-item">
-                                    <span class="iface-key">数据格式</span>
-                                    <span class="hl">连续的比特流</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">服务承诺</span>
@@ -1930,10 +2038,7 @@
                                     <span class="hl">多址共享（总线，广播）</span>
                                     <span class="dim">—— 一站点发送全总线可见，各站凭目标 MAC 直接接收；有线介质可边发边听 → 冲突可检测（对照无线：收不到自己 → 用 CSMA/CA）</span>
                                 </span>
-                                <span class="iface-item">
-                                    <span class="iface-key">数据格式</span>
-                                    <span class="hl">电信号（连续的比特流）</span>
-                                </span>
+
                                 <span class="iface-item">
                                     <span class="iface-key">服务承诺</span>
                                     <span class="hl">透明传播</span>
@@ -1953,7 +2058,7 @@
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
                                     <span class="hl">基带信号广播传播</span>
-                                    <span class="dim">（介质透明传播，不做加工）</span>
+                                    <span class="dim">（电信号（连续的比特流），介质透明广播传播，不做加工）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
@@ -2005,11 +2110,7 @@
                                     <span class="hl">全连通网络（BSS）</span>
                                     <span class="dim">—— 星型：STA 经 AP 关联后同 BSS 内互相可达，对上层表现为一个无线 LAN</span>
                                 </span>
-                                <span class="iface-item">
-                                    <span class="iface-key">数据格式</span>
-                                    <span class="hl">数据包（802.11 帧）</span>
-                                    <span class="dim">（帧体为 LLC/SNAP 封装的 IP 载荷）</span>
-                                </span>
+
                                 <span class="iface-item">
                                     <span class="iface-key">服务承诺</span>
                                     <span class="hl">尽力而为</span>
@@ -2030,7 +2131,7 @@
                                     <span class="iface-key">通信</span>
                                     <span class="hl">下行：目标MAC + 数据</span>
                                     <span class="hl">上行：数据 + 源MAC</span>
-                                    <span class="dim">（每帧发送前由端路层做 CSMA/CA 介质访问）</span>
+                                    <span class="dim">（数据封装为 802.11 帧；每帧发送前由端路层做 CSMA/CA 介质访问）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
@@ -2119,10 +2220,6 @@
                                     <span class="iface-key">拓扑</span>
                                     <span class="hl">多址共享</span>
                                     <span class="dim">—— 一个射频信道由同一 BSS 内多站点共享（一站点发，信道内皆可感知）</span>
-                                </span>
-                                <span class="iface-item">
-                                    <span class="iface-key">数据格式</span>
-                                    <span class="hl">连续的比特流</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">服务承诺</span>
@@ -2227,10 +2324,7 @@
                                     <span class="iface-key">拓扑</span>
                                     <span class="hl">多信道（每信道为共享无线通道）</span>
                                 </span>
-                                <span class="iface-item">
-                                    <span class="iface-key">数据格式</span>
-                                    <span class="hl">射频载波信号（连续的比特流）</span>
-                                </span>
+
                                 <span class="iface-item">
                                     <span class="iface-key">服务承诺</span>
                                     <span class="hl">信道隔离</span>
@@ -2332,10 +2426,7 @@
                                     <span class="hl">多址共享</span>
                                     <span class="dim">—— 广播介质：一站点发送，覆盖范围内所有站点均可接收（天然多邻居）</span>
                                 </span>
-                                <span class="iface-item">
-                                    <span class="iface-key">数据格式</span>
-                                    <span class="hl">射频信号（电磁波）</span>
-                                </span>
+
                                 <span class="iface-item">
                                     <span class="iface-key">服务承诺</span>
                                     <span class="hl">透明传播</span>
@@ -2389,6 +2480,14 @@
                 </div>
 
             </div>
+        </div>
+
+        <!-- ====== 中栏：跨层协调面 / 侧通道（数据面递归之外的旁路纵轴） ====== -->
+        <div class="side-channel" id="sideChannel">
+            <div class="sc-title">跨层协调面</div>
+            <div class="sc-axis"></div>
+            <div class="sc-uni" id="scUni"></div>
+            <div class="sc-foot">NMS / SDN · 直连任意层<br>ASON-UNI · 收发器配置</div>
         </div>
 
         <!-- ====== 右侧：标尺（无标题栏） ====== -->
@@ -2476,13 +2575,13 @@
             </thead>
             <tbody>
                 <tr><td>载荷层（外部）</td><td>本协议向上交付 / 接收的数据本体；上层协议的数据作为载荷在本层传递。<b>本协议对上层协议完全不了解</b>——上层只是不透明的纯数据载荷，本层无需知道上层是谁。<b>外部层次</b>：指向紧邻的上层协议，不属于本协议的内部功能。</td></tr>
-                <tr><td>服务接口层</td><td>向上层提供的接口契约（<b>拓扑</b> / <b>数据格式</b> / <b>服务承诺</b> / <b>参数</b> / 建链 / 通信 / 拆链），上层经它调用本层服务。<b>拓扑</b>——端到端连接或全连通网络两种类型；<b>数据格式</b>——数据包、连续字节流或连续比特流；<b>服务承诺</b>——如 TLS 承诺安全、TCP 承诺可靠、IP 承诺尽力而为；<b>参数</b>——<b>双向</b>：既有上层传递给下层的下行参数（如调用时提供的目标地址、端口），也有上层从下层读取的上行参数（如 MTU、链路状态等上报量）。类似软件库对外暴露的函数签名——<b>本层定义参数</b>，调用它的上层既能<b>提供参数值</b>、也能<b>读取状态值</b>；接口是单边定义的，由下层定义、由上层（调用者）消费。</td></tr>
+                <tr><td>服务接口层</td><td>向上层提供的接口契约（<b>拓扑</b> / <b>服务承诺</b> / <b>参数</b> / 建链 / 通信 / 拆链），上层经它调用本层服务。<b>拓扑</b>——端到端连接或全连通网络两种类型；<b>服务承诺</b>——如 TLS 承诺安全、TCP 承诺可靠、IP 承诺尽力而为；<b>通信</b>——本层数据交换的调用签名：每次传输的数据形态（数据包 / 连续字节流 / 连续比特流 / 光信号等）与方向、携带量（如 IP 每报携带目标IP）都在该项给出；<b>参数</b>——<b>双向</b>：既有上层传递给下层的下行参数（如调用时提供的目标地址、端口），也有上层从下层读取的上行参数（如 MTU、链路状态等上报量）。类似软件库对外暴露的函数签名——<b>本层定义参数</b>，调用它的上层既能<b>提供参数值</b>、也能<b>读取状态值</b>；接口是单边定义的，由下层定义、由上层（调用者）消费。</td></tr>
                 <tr><td>网络层</td><td>转发与寻址决策：控制面（路由 / 转发规则）与转发面（查表、转发、封装解封装）。</td></tr>
                 <tr><td>单链路层</td><td>复用层上方：本协议在同层对端之间<b>一条解复用后的单条逻辑链路 / 会话</b>上的语义——连接状态、差错检测、校验、重传、流控等（逐条单链路各自管理，如 TCP 每连接、802.11 每站点链路）。</td></tr>
                 <tr><td>复用层</td><td>位于单链路层与聚合链路层之间：向上提交单链路、向下提交聚合后的多链路，把下层多条承载通道复用 / 聚合为一条；单链路层管“解复用后的一条”，聚合链路层管“复用后的一条”。</td></tr>
                 <tr><td>聚合链路层</td><td>复用层下方：把本层全部单链路复用聚合后形成的那<b>一条聚合链路</b>的点到点收口——整链整体校验 / 传输信封 / 对整条聚合信号起作用的增强（如 FCS 覆盖 802.1Q 聚合帧、整段 WDM 的 EDFA / 色散补偿）。本层向下交付的<b>本层数据单元</b>（对端同层端点之间交换的报文 / 记录 / 段 / 数据报 / 帧等）亦在此收口，由端路层调用下层时随路交付。下层协议正是把这条聚合链路当作它的一条单链路来承载，故聚合链路的可靠与增强也常落在承载侧。</td></tr>
                 <tr><td>端路层</td><td><b>本协议与下层协议咬合（互锁）的层次</b>——调用下层协议的服务接口，在<b>下层承载网络</b>上建立端到端通道；本层在此扮演<b>调用者</b>（如同齿轮嵌入下层协议的服务接口插座）：下层服务接口定义了参数，端路层负责提供参数值并调用。<b>端路层的意义</b>：在双栈主机上（同时运行 IPv4 与 IPv6 两个 IP 栈），上层协议（如 TCP）必须经端路层选择承载的 IP 栈——"向下选择哪个下层承载"正是端路层存在的意义。通道生命周期分四阶段：<b>规划</b>——指定下层承载寻址参数（如 IP 选好下一跳后指定其目标IP、以太网指定目标MAC）即可视为端到端通道确立；<b>初始化</b>——调用下层服务接口前的地址解析 / 参数准备（如 IP 在以太网上先经 ARP 解析出下一跳的目标 MAC）；<b>正常通讯</b>——每次交付时向底层提供承载寻址参数（如 IP 每包指定下一跳目标IP、以太网每包指定目标MAC）；<b>拆除通道</b>——通讯结束时经下层服务接口释放通道（如关闭连接、删除通道状态）。若下层承载本身已是端到端，本层不再另行建路，仅负责发起建链。注意：本协议自身的连接建立 / 握手（如 TCP 三次握手）属于协议自身连接管理，不在本层。</td></tr>
-                <tr><td>承载层（外部）</td><td>本协议以下层整体作为承载链路；在递归模型中，下层即本层的承载。<b>本协议不关心下层的内部机制，但必须了解其服务接口</b>（拓扑 / 数据格式 / 服务承诺 / 参数 / 建链 / 通信 / 拆链），才能经端路层调用它。<b>外部层次</b>：指向紧邻的下层协议，不属于本协议的内部功能。</td></tr>
+                <tr><td>承载层（外部）</td><td>本协议以下层整体作为承载链路；在递归模型中，下层即本层的承载。<b>本协议不关心下层的内部机制，但必须了解其服务接口</b>（拓扑 / 服务承诺 / 参数 / 建链 / 通信 / 拆链），才能经端路层调用它。<b>外部层次</b>：指向紧邻的下层协议，不属于本协议的内部功能。</td></tr>
             </tbody>
         </table>
     </div>
@@ -2752,6 +2851,8 @@
         const rulerLine = document.getElementById('rulerLine');
         const rulerPanel = document.getElementById('rulerPanel');
         const rulerBody = document.getElementById('rulerBody');
+        const sideChannel = document.getElementById('sideChannel');
+        const scUni = document.getElementById('scUni');
 
         // ---------- "展开所有协议"开关状态 ----------
         const expandAllToggle = document.getElementById('expandAllToggle');
@@ -3259,8 +3360,82 @@
                 requestAnimationFrame(() => {
                     updateRuler(protocolKey);
                     updateDividers(protocolKey);
+                    updateSideChannel(protocolKey);
                 });
             });
+        }
+
+        // ============================================================
+        //  中栏侧通道（跨层协调面 / 管理面）
+        //  概念：数据面递归之外的旁路纵轴。递归只在相邻层的服务接口间
+        //  逐层下传；协调面则可越过任意中间层直连。图中每个协议层右侧
+        //  都有一条接入短线接到该纵轴（管理面可直达任意层）；其中三个
+        //  实例：以太网＝NMS/UNI 客户（ASON-UNI 建链请求源）、编码调制层
+        //  ＝收发器配置目标、光波层＝ASON 执行。悬停以太网/光波时点亮
+        //  二者之间的 ASON-UNI 跨层段（显式跳过中间的编码调制层）。
+        //  仅光纤承载显示（光波 / ASON-UNI 只存在于光纤组）。
+        // ============================================================
+        const SC_ROLES = { eth: 'NMS/UNI 客户', physical: '收发器配置', wave: 'ASON 执行' };
+        const scPorts = new Map();
+
+        function ensureScPort(proto) {
+            let el = scPorts.get(proto);
+            if (el) return el;
+            el = document.createElement('div');
+            el.className = 'sc-port';
+            el.dataset.protocol = proto;
+            const dot = document.createElement('span');
+            dot.className = 'sc-dot';
+            el.appendChild(dot);
+            if (SC_ROLES[proto]) {
+                const chip = document.createElement('span');
+                chip.className = 'sc-chip';
+                chip.textContent = SC_ROLES[proto];
+                el.appendChild(chip);
+            }
+            sideChannel.appendChild(el);
+            scPorts.set(proto, el);
+            return el;
+        }
+
+        function updateSideChannel(protocolKey) {
+            const show = (currentMode() === 'fiber');
+            if (!show) { sideChannel.hidden = true; return; }
+            sideChannel.hidden = false;
+
+            const boundaries = getLayerBoundaries();
+            if (!boundaries.length) return;
+            const px = sideChannel.getBoundingClientRect().height;
+
+            // 每个可见协议一个接入点：贴在对应层垂直中点
+            const idx = {};
+            layerEls.forEach((l, i) => {
+                const b = boundaries[i];
+                if (!b) return;
+                const proto = l.dataset.protocol;
+                const port = ensureScPort(proto);
+                const mid = (b.top + b.bottom) / 2;
+                port.style.top = (mid * px) + 'px';
+                port.classList.toggle('active', protocolKey === proto);
+                idx[proto] = i;
+            });
+
+            // ASON-UNI 跨层段：以太网↔光波（跨越中间的编码调制层）
+            const iEth = idx.eth, iWave = idx.wave;
+            if (iEth != null && iWave != null && boundaries[iEth] && boundaries[iWave]) {
+                const y1 = (boundaries[iEth].top + boundaries[iEth].bottom) / 2;
+                const y2 = (boundaries[iWave].top + boundaries[iWave].bottom) / 2;
+                scUni.style.top = (Math.min(y1, y2) * px) + 'px';
+                scUni.style.height = (Math.max(0, Math.abs(y2 - y1)) * px) + 'px';
+            }
+            const uniOn = (protocolKey === 'eth' || protocolKey === 'wave');
+            scUni.classList.toggle('on', uniOn);
+            const ethPort = scPorts.get('eth');
+            if (ethPort) {
+                const c = ethPort.querySelector('.sc-chip');
+                if (c) c.textContent = uniOn ? 'ASON-UNI 建链请求' : 'NMS/UNI 客户';
+            }
+            sideChannel.classList.toggle('active', !!protocolKey);
         }
 
         // ============================================================
@@ -3710,6 +3885,7 @@
             } else {
                 updateRuler(null);
                 updateDividers(null);
+                updateSideChannel(null);
             }
         }
         // ============================================================
@@ -3875,6 +4051,7 @@
         // 页面加载后立即应用标尺的中性布局，让标签与分界线
         // 一开始就位于默认位置，而不是在首次悬停前堆叠在标尺顶部。
         updateRuler(null);
+        updateSideChannel(null);
 
     })();
 </script>
