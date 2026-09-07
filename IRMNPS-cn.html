@@ -132,6 +132,11 @@
         #layer-eth .end-mode.fiber { display: inline; }
         body.bearer-copper #layer-eth .end-mode.fiber { display: none; }
         body.bearer-copper #layer-eth .end-mode.copper { display: inline; }
+        /* eth 端路 建链/拆链 的 ASON 分支：独占一行并与键后内容列对齐（键宽22 + 间隔8） */
+        #layer-eth .select-end-layer .desc .iface-item > .end-mode.fiber.brk {
+            flex: 1 1 100%;
+            margin-left: 30px;
+        }
         .tab-panel {
             display: none;
         }
@@ -1615,8 +1620,9 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">参数</span>
-                                    <span class="hl">下行：目标MAC（由上层 IP 提供——下一跳 / 对端的以太网地址）</span>
-                                    <span class="hl">Type字段（0x0800=IPv4 / 0x0806=ARP / 0x86DD=IPv6，下行由上层指定，上行据此分发给对应上层）</span>
+                                    <span class="hl">下行：目标MAC</span>
+                                    <span class="hl">Type字段（0x0800=IPv4 / 0x0806=ARP / 0x86DD=IPv6）</span>
+                                    <span class="dim">（下行由上层指定，上行据此分发给对应上层）</span>
                                     <span class="hl">本机MAC地址（由以太网层管理）</span>
                                     <span class="hl">MTU（由以太网层提供）</span>
                                 </span>
@@ -1627,9 +1633,9 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
-                                    <span class="hl">下行：数据</span>
-                                    <span class="hl">上行：数据 + 源MAC</span>
-                                    <span class="dim">（数据封装为以太网帧，最大 1500 字节；目标MAC 见“参数·下行”）</span>
+                                    <span class="hl">下行：数据块 + 目标MAC</span>
+                                    <span class="hl">上行：数据块</span>
+                                    <span class="dim">（数据块将被封装为以太网帧，最大 1500 字节）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
@@ -1667,11 +1673,16 @@
                         </div>
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
-                            <span class="desc"><span class="hl">802.1Q Tag 复用（VID）</span></span>
+                            <span class="desc">
+                                <span class="hl">802.1Q Tag 复用（VID）</span>
+                            </span>
                         </div>
                         <div class="inner-row aggr-layer">
                             <span class="tag">🔀 聚合链路</span>
-                            <span class="desc"><span class="hl">前导/SFD/FCS/IFG 封装</span> <span class="dim">（载波传输信封；FCS 覆盖含 802.1Q 标签的聚合帧，整体校验在聚合链路侧）</span></span>
+                            <span class="desc">
+                                <span class="hl">前导/SFD/FCS/IFG 封装</span> 
+                                <span class="dim">（载波传输信封；FCS 覆盖含 802.1Q 标签的聚合帧，整体校验在聚合链路侧）</span>
+                            </span>
                         </div>
 
                         <div class="inner-row select-end-layer">
@@ -1684,7 +1695,15 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
-                                    <span class="null-box">无</span>
+                                    <span class="dim end-mode copper">（共享半双工总线为预置介质，接入即就绪，无建链）</span>
+                                    <span class="end-mode fiber">
+                                        <span class="hl">预置（默认）</span>
+                                        <span class="dim">（点对点链路已静态配置即就绪——固定 λ / 端口互连，运行时不需建链）</span>
+                                    </span>
+                                    <span class="end-mode fiber brk">
+                                        <span class="hl">ASON 按需</span>
+                                        <span class="dim">（链路未预置时，经 ASON-UNI 请求光波层建立 λ 光路后即可用）</span>
+                                    </span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
@@ -1694,7 +1713,15 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
-                                    <span class="null-box">无</span>
+                                    <span class="dim end-mode copper">（预置总线固定存在，无拆链）</span>
+                                    <span class="end-mode fiber">
+                                        <span class="hl">预置（默认）</span>
+                                        <span class="dim">（固定 λ 互连的链路长期存在，不需拆链）</span>
+                                    </span>
+                                    <span class="end-mode fiber brk">
+                                        <span class="hl">ASON 按需</span>
+                                        <span class="dim">（链路不再需要时，经 ASON-UNI 请求释放其 λ 光路——光路释放后该以太网链路随之撤销）</span>
+                                    </span>
                                 </span>
                             </span>
                         </div>
@@ -1720,8 +1747,7 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">服务承诺</span>
-                                    <span class="hl">透明</span>
-                                    <span class="dim">（透明比特流传输，信号保真）</span>
+                                    <span class="hl">透明比特流传输</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">参数</span>
@@ -1758,11 +1784,13 @@
                         </div>
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
-                            <span class="desc"><span class="null-box">空</span> <span class="dim">（单波长点对点比特流，无本层复用；WDM 多波长复用归光波层）</span></span>
+                            <span class="desc"><span class="null-box">空</span> 
+                        </span>
                         </div>
                         <div class="inner-row aggr-layer">
                             <span class="tag">🔀 聚合链路</span>
-                            <span class="desc"><span class="null-box">空</span> <span class="dim">（编码调制本身即上层以太网“聚合链路”的承载与增强者：FEC/再生/放大作用于整条聚合流；本层单波长无自身聚合，其单波长通道由光波层 WDM 提供）</span></span>
+                            <span class="desc"><span class="null-box">空</span> 
+                        </span>
                         </div>
 
                         <div class="inner-row select-end-layer">
@@ -1771,11 +1799,12 @@
                                 <span class="iface-item">
                                     <span class="iface-key">规划</span>
                                     <span class="null-box">无</span>
-                                    <span class="dim">（承载层光波已提供端到端波长通道，本层无需寻址建路）</span>
+                                    <span class="dim">（本层为单 λ 点对点收发器，无自身寻址；对下方恒视为端到端 λ 通道——预置或 ASON 建立皆然）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
                                     <span class="null-box">无</span>
+                                    <span class="dim">（本层不“建链”：ASON 建立 λ 光路只表现为带外下发接口参数——发送/接收 λ 通道等，本层照收照配；建链生命周期属光波层）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
@@ -1784,6 +1813,7 @@
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
                                     <span class="null-box">无</span>
+                                    <span class="dim">（无自身拆链：ASON 释放光路即带外撤销相应接口参数，本层不感知生命周期）</span>
                                 </span>
                             </span>
                         </div>
@@ -2183,7 +2213,7 @@
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
                                     <span class="hl">下行：数据</span>
-                                    <span class="hl">上行：数据 + 源MAC</span>
+                                    <span class="hl">上行：数据</span>
                                     <span class="dim">（数据封装为 802.11 帧；每帧发送前由端路层做 CSMA/CA 介质访问；目标MAC 见“参数·下行”）</span>
                                 </span>
                                 <span class="iface-item">
@@ -4157,12 +4187,11 @@
             document.fonts.ready.then(updateNameBarWidth);
         }
 
-        // 初始为无悬停状态：不自动高亮任何协议，
-        // 右侧标尺保持 dimmed 暗色调，等待用户悬停。
-        // 页面加载后立即应用标尺的中性布局，让标签与分界线
-        // 一开始就位于默认位置，而不是在首次悬停前堆叠在标尺顶部。
-        updateRuler(null);
-        updateSideChannel(null);
+        // 默认“展开所有协议”：加载后所有非静态协议展开，
+        // 标尺/侧通道以中性布局就位，等待用户悬停跟随。
+        expandAllToggle.checked = true;
+        expandAll = true;
+        applyExpandAll();
 
     })();
 </script>
