@@ -1444,11 +1444,11 @@
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
                             <span class="desc"><span class="hl">端口复用（源端口 × 目标端口）</span> <span class="dim">—— 创建 2¹⁶ × 2¹⁶ 的会话空间</span></span>
-                            <span class="desc"><span class="dim">（IPv4/IPv6 地址空间不属于 TCP 复用层，由端路层选择承载的 IP 网络而定）</span></span>
                         </div>
                         <div class="inner-row aggr-layer">
                             <span class="tag">🔀 聚合链路</span>
-                            <span class="desc"><span class="hl">端口复用聚合：对端 IP 通路上的全部 TCP 连接 → 同一条端到端承载</span> <span class="dim">（多条会话经端口复用收口为这一条聚合通路；TCP 对该聚合无整链增强——可靠由每条连接（单链路）自保，整链差错/性能增强归下层 IP/承载）</span></span>
+                            <span class="desc"><span class="hl">端口复用聚合：对端 IP 通路上的全部 TCP 连接 → 同一条端到端承载</span> 
+                        </span>
                         </div>
 
                         <div class="inner-row select-end-layer">
@@ -1467,8 +1467,8 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
-                                    <span class="dim">承载寻址参数为目标IP，随每个TCP段交付</span>
-                                    <span class="hl">交付：TCP段（按MSS分段 + TCP头）</span>
+                                    <span class="hl">交付：TCP段（按MSS分段 + TCP头）+目标IP</span>
+                                    <span class="dim">（目标IP 在 connect 时写入连接状态；此后每发一个 TCP 段，由 TCP 自动从状态取出随段交给 IP）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
@@ -1507,7 +1507,7 @@
                                     <span class="iface-key">参数</span>
                                     <span class="hl">下行：目标IP（由上层 TCP/UDP 随每个数据报提供）</span>
                                     <span class="hl">协议号字段（6=TCP / 17=UDP / 1=ICMP，下行由上层指定）</span>
-                                    <span class="dim">（供收端把报文上抛给对应上层；由上层经其端路规划提供，如 TCP 指定协议号 6）</span>
+                                    <span class="dim">（即 IP 复用层的分用键——把 TCP/UDP/ICMP 等多路上层复用进同一 IP 承载，收端据此上抛；值由上层经其端路规划提供，如 TCP 指定 6）</span>
                                     
                                     <span class="hl">本机IP地址（由 IP 层管理）</span>
                                     <span class="hl">MTU（自下层读取）</span>
@@ -1558,15 +1558,19 @@
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 单链路</span>
-                            <span class="desc"><span class="hl">分片重组</span> <span class="hl">头部校验</span></span>
+                            <span class="desc"><span class="null-box">空</span> <span class="dim">（单链路＝同一对 IP 间按协议号区分的一条流）</span></span>
                         </div>
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
-                            <span class="desc"><span class="null-box">空</span> <span class="dim">（IP 无可细分链路、影响自身转发的复用字段：协议号不影响转发，仅收端上抛分发→属服务接口参数，由上层端路提供）</span></span>
+                            <span class="desc"><span class="hl">协议号复用（6=TCP / 17=UDP / 1=ICMP）</span> 
+                        </span>
                         </div>
                         <div class="inner-row aggr-layer">
                             <span class="tag">🔀 聚合链路</span>
-                            <span class="desc"><span class="null-box">空</span> <span class="dim">（IP 无复用聚合：全部数据报逐跳经下层链路承载，整链差错/性能保护由承载（以太网 FCS、PHY FEC 等）承担，IP 自身无聚合链路协议）</span></span>
+                            <span class="desc">
+                                <span class="hl">分片重组</span>
+                                <span class="hl">头部校验</span>
+                            </span>
                         </div>
 
                         <div class="inner-row select-end-layer">
@@ -1633,9 +1637,9 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
-                                    <span class="hl">下行：数据块 + 目标MAC</span>
+                                    <span class="hl">下行：数据块</span>
                                     <span class="hl">上行：数据块</span>
-                                    <span class="dim">（数据块将被封装为以太网帧，最大 1500 字节）</span>
+                                    <span class="dim">（数据块将被封装为以太网帧，最大 1500 字节；目标MAC 见“参数·下行”）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
@@ -1702,7 +1706,7 @@
                                     </span>
                                     <span class="end-mode fiber brk">
                                         <span class="hl">ASON 按需</span>
-                                        <span class="dim">（链路未预置时，经 ASON-UNI 请求光波层建立 λ 光路后即可用）</span>
+                                        <span class="dim">（链路未预置时，经 ASON-UNI 请求光波层建立 λ 光路后即可用——此请求非经编码调制接口，系跨层侧通道直达光波）</span>
                                     </span>
                                 </span>
                                 <span class="iface-item">
@@ -1720,7 +1724,7 @@
                                     </span>
                                     <span class="end-mode fiber brk">
                                         <span class="hl">ASON 按需</span>
-                                        <span class="dim">（链路不再需要时，经 ASON-UNI 请求释放其 λ 光路——光路释放后该以太网链路随之撤销）</span>
+                                        <span class="dim">（链路不再需要时，经 ASON-UNI 请求释放其 λ 光路（非经编码调制接口，跨层直达光波）——光路释放后该以太网链路随之撤销）</span>
                                     </span>
                                 </span>
                             </span>
@@ -2207,8 +2211,8 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
-                                    <span class="hl">关联（Association）</span>
-                                    <span class="dim">—— 扫描 → 认证（开放/WPA）→ 关联，建立到 AP 的逻辑连接</span>
+                                    <span class="null-box">无</span>
+                                    <span class="dim">（到 AP 的关联/认证由 WLAN 本层在接入时完成——扫描 → 认证（开放/WPA）→ 关联；对上层呈现为就绪的无线 LAN，不需上层调用建链）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
@@ -2218,8 +2222,8 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
-                                    <span class="hl">解除关联</span>
-                                    <span class="dim">（Disassociation / Deauthentication）</span>
+                                    <span class="null-box">无</span>
+                                    <span class="dim">（解除关联 / 去认证由 WLAN 管理面在断连 / 漫游时触发，非上层调用）</span>
                                 </span>
                             </span>
                         </div>
@@ -2269,7 +2273,7 @@
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
                                     <span class="null-box">无</span>
-                                    <span class="dim">（关联已在服务接口完成）</span>
+                                    <span class="dim">（关联/认证由本层接入时完成——就绪后即可承载，非上层调用）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
