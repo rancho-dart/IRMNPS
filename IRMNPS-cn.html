@@ -127,15 +127,14 @@
         .stack.measuring .layer * {
             transition: none !important;
         }
-        /* 以太网榫头层内容随承载模式切换（同一以太网层：光纤=点对点/无需介质访问；铜线=共享总线/CSMA/CD 运行） */
+        /* 以太网榫头层内容随承载模式切换（同一以太网层：光纤=点对点/无争用、无需介质访问仲裁；铜线=共享总线/CSMA/CD 运行） */
         #layer-eth .end-mode { display: none; }
         #layer-eth .end-mode.fiber { display: inline; }
         body.bearer-copper #layer-eth .end-mode.fiber { display: none; }
         body.bearer-copper #layer-eth .end-mode.copper { display: inline; }
-        /* eth 榫头 建链/拆链 的 ASON 分支：独占一行并与键后内容列对齐（键宽22 + 间隔8） */
+        /* eth 榫头 建链/拆链 的 ASON 分支：独占一行（左对齐由 iface-item 的 padding-left 统一提供） */
         #layer-eth .select-end-layer .desc .iface-item > .end-mode.fiber.brk {
             flex: 1 1 100%;
-            margin-left: 30px;
         }
         .tab-panel {
             display: none;
@@ -468,7 +467,8 @@
             min-width: 0;
             gap: 2px 8px;
         }
-        /* 榫头层每一阶段为一行：键标签（阶段名）置左、内容芯片/说明其后（键宽度随内容自适应） */
+        /* 榫头层每一阶段为一行：键标签（阶段名）置左、内容芯片/说明其后
+           键绝对定位、行内容左侧留出等宽缩进——使折行后的内容与首行内容左对齐（而非与阶段名对齐） */
         .inner-row.select-end-layer .desc .iface-item {
             display: flex;
             align-items: flex-start;
@@ -476,8 +476,13 @@
             gap: 4px 8px;
             flex: 0 0 100%;
             min-width: 0;
+            position: relative;
+            padding-left: 30px; /* = 阶段名宽 22px + 间隔 8px */
         }
         .inner-row.select-end-layer .desc .iface-key {
+            position: absolute;
+            left: 0;
+            top: 0;
             font-size: 11px;
             font-weight: 600;
             color: #0e8a8a;
@@ -528,9 +533,11 @@
             position: relative;
             padding-left: 60px;
         }
-        /* 卯眼项内“标签 + 注释”成组：两者合并为一个 flex 项，注释折行时贴着
-           自己的标签下方续行，不会作为独立项被甩到下一行而与标签脱节 */
-        .inner-row.iface-layer .desc .iface-item .iface-branch {
+        /* 卯眼/榫头项内“chip + 注释”成组：两者合并为一个 flex 项，注释折行时贴着
+           自己的 chip 下方续行，不会作为独立项被甩到下一行而与 chip 脱节。
+           （成组由脚本在运行时自动完成，卯眼与榫头两侧同规则） */
+        .inner-row.iface-layer .desc .iface-item .iface-branch,
+        .inner-row.select-end-layer .desc .iface-item .iface-branch {
             display: inline-flex;
             flex-wrap: wrap;
             align-items: baseline;
@@ -538,7 +545,8 @@
             min-width: 0;
         }
         /* 需要独占一行开头的分支（如“ASON 按需”备选） */
-        .inner-row.iface-layer .desc .iface-item .iface-branch.line {
+        .inner-row.iface-layer .desc .iface-item .iface-branch.line,
+        .inner-row.select-end-layer .desc .iface-item .iface-branch.line {
             flex: 1 1 100%;
         }
         .inner-row.iface-layer .desc .iface-key {
@@ -1247,22 +1255,25 @@
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">规划</span>
-                                    <span class="hl">URL 定目标（给出对端主机与端口）</span>
-                                    <span class="hl">DNS 把主机解析为候选目标IP（A/AAAA）</span>
+                                    <span class="hl">参数：对端主机与端口（URL 定）</span>
+                                    <span class="hl">协议：DNS → 参数：候选目标IP（A/AAAA）</span>
                                     <span class="dim"> （目标在 HTTP 层即定下，随后以 IP:端口 随卯眼调用逐级下传）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
-                                    <span class="dim">调用 TLS 卯眼建链函数</span>
+                                    <span class="hl">参数：目标IP:端口（随建链调用传入）</span>
+                                    <span class="hl">参数：应用协议候选（ALPN：h2 / http/1.1，随建链调用传入）</span>
+                                    <span class="hl">调用 TLS 卯眼建链函数</span>
+                                    <span class="hl">参数：协商所得应用协议（自下层读取；决定 HTTP/2 还是 HTTP/1.1 的报文格式）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
-                                    <span class="dim">复用已建立的TLS连接</span>
                                     <span class="hl">交付：HTTP请求报文</span>
+                                    <span class="dim">（复用已建立的 TLS 连接）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
-                                    <span class="dim">关闭 TLS 连接</span>
+                                    <span class="hl">关闭 TLS 连接</span>
                                 </span>
                             </span>
                         </div>
@@ -1284,22 +1295,23 @@
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">服务承诺</span>
-                                    <span class="hl">安全</span>
-                                    <span class="dim">（机密性 / 完整性 / 身份认证）</span>
+                                    <span class="hl">安全（机密性 / 完整性 / 身份认证）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">参数</span>
-                                    <span class="hl">下行：目标IP:端口（由上层 HTTP 经 DNS 解析后提供）</span>
-                                    <span class="dim">（TLS 据此选定并复用其承载的 TCP 连接；主机名由上层另供以作 SNI / 证书校验——属身份参数而非寻址。TLS 记录本身无分用字段，连接身份即承载的 TCP 连接）</span>
+                                    <span class="iface-key">规划</span>
+                                    <span class="null-box">无</span>
+                                    <span class="dim">（本层不开放可选档位；对外身份即其承载的 TCP 连接——TLS 记录本身无分用字段）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
+                                    <span class="hl">参数：目标IP:端口（由上层 HTTP 经 DNS 解析后提供——据此选定并复用承载的 TCP 连接）</span>
+                                    <span class="hl">参数：应用协议候选（ALPN 列表，由上层随建链传入）</span>
                                     <span class="hl">TLS 握手</span>
-                                    <span class="dim">（ClientHello / ServerHello / 证书交换 / 密钥协商）</span>
+                                    <span class="dim">（ClientHello / ServerHello / 证书交换 / 密钥协商；ALPN 即在握手中选定——服务端自候选列表挑定一种并回送，即上层回读的“协商所得应用协议”；主机名另供作 SNI / 证书校验——身份参数，非寻址）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
-                                    <span class="hl">明文数据（连续的字节流）</span>
+                                    <span class="hl">交付：明文数据（连续的字节流）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
@@ -1335,20 +1347,23 @@
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">规划</span>
-                                    <span class="dim">目标IP:端口已由上层 HTTP 解析（URL→DNS）后给定——TLS 仅在其上建立安全通道，不新增目标；主机名另供 SNI / 证书校验；五元组另三元由 TCP 分配</span>
+                                    <span class="hl">参数：目标IP:端口（由上层给定）</span>
+                                    <span class="hl">参数：主机名（由上层另供，作 SNI / 证书校验——身份参数，非寻址）</span>
+                                    <span class="dim">（TLS 仅在其上建立安全通道，不新增目标；五元组另三元由 TCP 分配）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
-                                    <span class="dim">调用承载 TCP 卯眼建链函数</span>
+                                    <span class="hl">参数：目标IP、目标端口（随建链调用传入；源端两元由下层自定）</span>
+                                    <span class="hl">调用承载 TCP 卯眼建链函数</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
-                                    <span class="dim">在已建立的TCP连接中收发数据</span>
                                     <span class="hl">交付：TLS 记录（加密密文）</span>
+                                    <span class="dim">（在已建立的 TCP 连接中收发数据）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
-                                    <span class="dim">关闭 TCP 连接</span>
+                                    <span class="hl">关闭 TCP 连接</span>
                                 </span>
                             </span>
                         </div>
@@ -1370,21 +1385,22 @@
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">服务承诺</span>
-                                    <span class="hl">可靠</span>
-                                    <span class="dim">（有序，不丢不重）</span>
+                                    <span class="hl">可靠（有序，不丢、不重、不误）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">参数</span>
-                                    <span class="hl">五元组（目标IP、目标端口、源IP、源端口、协议号）</span>
+                                    <span class="iface-key">规划</span>
+                                    <span class="null-box">无</span>
+                                    <span class="dim">（本层不向上层提供规划参数；分段依据 MSS 系本层自行“从下层读取 MTU”后折算——见榫头层·规划）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
                                     <span class="hl">connect(目标IP, 目标端口)</span>
+                                    <span class="hl">参数：五元组（在此确定——目标两元由上层给，源IP / 源端口 / 协议号由本层自定）</span>
                                     <span class="dim">—— 三次握手，建立连接</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
-                                    <span class="hl">连续的字节流（全双工，任意大小，无边界）</span>
+                                    <span class="hl">交付：连续的字节流（全双工，任意大小，无边界）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
@@ -1424,10 +1440,12 @@
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">规划</span>
-                                    <span class="hl">地址族择一</span>
-                                    <span class="dim">从上层已 DNS 解析的 A/AAAA 结果选承载的 IPv4 / IPv6 实例——双栈即“向下选择承载”</span>
-                                    <span class="hl">协议号 = 6</span>
-                                    <span class="dim">（TCP）</span>
+                                    <span class="hl">参数：地址族（自上层候选 A/AAAA 中择一）</span>
+                                    <span class="dim">（双栈即“向下选择承载”）</span>
+                                    <span class="hl">参数：协议号 = 6（TCP）</span>
+                                    <span class="hl">参数：MTU（自下层读取）</span>
+                                    <span class="dim">（→ MSS = MTU − IP头 − TCP头，作为分段依据）</span>
+                                    <span class="hl">参数：本机IP（自下层读取；确定五元组源端）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
@@ -1435,8 +1453,8 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
-                                    <span class="hl">交付：TCP段（按MSS分段 + TCP头）+目标IP</span>
-                                    <span class="dim">（目标IP 在 connect 时保存）</span>
+                                    <span class="hl">交付：TCP段（按MSS分段 + TCP头）</span>
+                                    <span class="hl">参数：目标IP（每段随交；connect 时已保存）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
@@ -1463,15 +1481,11 @@
                                 <span class="iface-item">
                                     <span class="iface-key">服务承诺</span>
                                     <span class="hl">尽力而为</span>
-                                    <span class="dim">（尽力而为投递）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">参数</span>
-                                    <span class="hl">下行：目标IP（随每个数据报提供）</span>
-                                    <span class="hl">下行：协议号字段（6=TCP / 17=UDP / 1=ICMP）</span>
-                                    <span class="dim">（收端据此上抛给不同的上层）</span>
-                                    <span class="hl">本机IP地址</span>
-                                    <span class="hl">MTU（自下层读取）</span>
+                                    <span class="iface-key">规划</span>
+                                    <span class="hl">参数：本机IP地址（向上提供）</span>
+                                    <span class="hl">参数：MTU（向上提供）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
@@ -1480,8 +1494,10 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
-                                    <span class="hl">下行：数据块+目标IP</span>
-                                    <span class="hl">上行：数据块</span>
+                                    <span class="hl">交付：数据块</span>
+                                    <span class="hl">参数：目标IP（每个数据报随报提供）</span>
+                                    <span class="hl">参数：协议号（6=TCP / 17=UDP / 1=ICMP，随报提供——值由上层在其规划阶段定下）</span>
+                                    <span class="dim">（收端据协议号上抛给不同上层）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
@@ -1537,8 +1553,9 @@
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">规划</span>
-                                    <span class="hl">ARP</span>
-                                    <span class="dim">确定目标MAC（目标IP在此已被“消费”为路由依据，再翻译成以太网命名空间的寻址参数）</span>
+                                    <span class="hl">协议：ARP → 参数：目标MAC（下一跳）</span>
+                                    <span class="hl">参数：MTU（自下层读取）</span>
+                                    <span class="hl">参数：本机MAC（自下层读取；ARP 报文的发送方硬件地址、应答 who-has 本机IP 时用）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
@@ -1546,7 +1563,9 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
-                                    <span class="hl">交付：IP数据报+目标MAC</span>
+                                    <span class="hl">交付：IP数据报</span>
+                                    <span class="hl">参数：目标MAC（下一跳）</span>
+                                    <span class="hl">参数：Type（0x0800=IPv4）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
@@ -1573,31 +1592,25 @@
                                 <span class="iface-item">
                                     <span class="iface-key">服务承诺</span>
                                     <span class="hl">尽力而为</span>
-                                    <span class="dim">（尽力而为交付）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">参数</span>
-                                    <span class="hl">下行：目标MAC</span>
-                                    <span class="hl">Type字段（0x0800=IPv4 / 0x0806=ARP / 0x86DD=IPv6）</span>
-                                    <span class="dim">（下行由上层指定，上行据此分发给对应上层）</span>
-                                    <span class="hl">本机MAC地址（由以太网层管理）</span>
-                                    <span class="hl">MTU（由以太网层提供）</span>
+                                    <span class="iface-key">规划</span>
+                                    <span class="hl">参数：本机MAC地址（接口固化，向上提供）</span>
+                                    <span class="hl">参数：MTU（1500 字节，本层规范定义，向上提供）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
                                     <span class="null-box">无</span>
-                                    <span class="dim">（无连接，不需握手）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
-                                    <span class="hl">下行：数据块+目标MAC</span>
-                                    <span class="hl">上行：数据块</span>
-                                    <span class="dim">（数据块将被封装为以太网帧，最大 1500 字节；目标MAC 见“参数·下行”）</span>
+                                    <span class="hl">交付：数据块</span>
+                                    <span class="hl">参数：目标MAC＋Type（0x0800=IPv4 / 0x0806=ARP / 0x86DD=IPv6，随帧提供）</span>
+                                    <span class="dim">（根据Type字段分发给对应上层）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
                                     <span class="null-box">无</span>
-                                    <span class="dim">（无连接，不需握手）</span>
                                 </span>
                             </span>
                         </div>
@@ -1647,8 +1660,10 @@
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">规划</span>
-                                    <span class="dim end-mode fiber">承载拓扑：点对点全双工 → 无需介质访问（CSMA/CD 不运行）</span>
-                                    <span class="dim end-mode copper">承载拓扑：共享半双工总线 → 启用 CSMA/CD</span>
+                                    <span class="hl end-mode fiber">参数：介质访问方式（据承载判定：点对点全双工 → 无需介质访问仲裁；CSMA/CD 不运行）</span>
+                                    <span class="hl end-mode copper">参数：介质访问方式（据承载判定：共享半双工总线 → CSMA/CD）</span>
+                                    <span class="hl end-mode copper">参数：速率 / 双工（与下层协商；10BASE2 固定 10 Mbps 半双工）</span>
+                                    <span class="hl end-mode fiber">参数：速率 / 双工（与下层协商）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
@@ -1703,11 +1718,9 @@
                                     <span class="hl">透明比特流传输</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">参数</span>
-                                    <span class="hl">速率（双向，10/100/1000/10000M）</span>
-                                    <span class="hl">双工模式（双向，全双工/半双工）</span>
-                                    <span class="hl">冲突状态（单向上报，发生冲突/正常）</span>
-                                    <span class="hl">链路状态（单向上报，链路可用/故障）</span>
+                                    <span class="iface-key">规划</span>
+                                    <span class="hl">参数：速率（双向，10/100/1000/10000M）</span>
+                                    <span class="hl">参数：双工模式（双向，全双工/半双工）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
@@ -1716,7 +1729,9 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
-                                    <span class="hl">双向比特流</span>
+                                    <span class="hl">交付：双向比特流</span>
+                                    <span class="hl">参数：链路状态（单向上报，链路可用/故障）</span>
+                                    <span class="hl">参数：冲突状态（单向上报，发生冲突/正常）</span>
                                     <span class="dim">（下行：数字比特流映射为物理信号交付下层；上行：物理信号还原为数字比特流交付上层）</span>
                                 </span>
                                 <span class="iface-item">
@@ -1751,8 +1766,8 @@
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">规划</span>
-                                    <span class="null-box">无</span>
-                                    <span class="dim">（本层为单 λ 点对点收发器，无自身寻址；对下方恒视为端到端 λ 通道——预置或 ASON 建立皆然）</span>
+                                    <span class="hl">参数：λᵢ / λⱼ 收发通道（静态约定）</span>
+                                    <span class="dim">（本层为单 λ 点对点收发器，无自身寻址；对下方恒视为端到端 λ 通道——预置或 ASON 建立皆然；两层之间不直接交换信息，建设时各自配置）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
@@ -1791,16 +1806,10 @@
                                     <span class="hl">特定波长透明转发</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">参数</span>
-                                    <span class="desc">
-                                        <span class="hl">发送波长通道（λᵢ，静态，下行）</span>
-                                        <span class="hl">接收波长通道（λⱼ，静态，上行）</span>
-                                        <span class="dim">（双纤制：收发各走一根纤，可复用同一组波长；单纤双向 BiDi：同一根纤上 λᵢ≠λⱼ）</span>
-                                    </span>
-                                    <span class="desc">
-                                        <span class="hl">波长通道状态（可用 / 占用 / 故障）</span>
-                                        <span class="dim">（经控制/管理面发送）</span>
-                                    </span>
+                                    <span class="iface-key">规划</span>
+                                    <span class="hl">参数：发送波长通道（λᵢ，静态约定，下行）</span>
+                                    <span class="hl">参数：接收波长通道（λⱼ，静态约定，上行）</span>
+                                    <span class="dim">（双纤制：收发各走一根纤，可复用同一组波长；单纤双向 BiDi：同一根纤上 λᵢ≠λⱼ）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
@@ -1815,7 +1824,8 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
-                                    <span class="hl">特定波长光信号</span>
+                                    <span class="hl">交付：特定波长光信号</span>
+                                    <span class="hl">参数：波长通道状态（可用 / 占用 / 故障，经控制/管理面单向上报）</span>
                                     <span class="dim">（下行：将 λᵢ 光信号做波长级转发；上行：将到达的 λⱼ 信号交付回上层对应波长通道）</span>
                                 </span>
                                 <span class="iface-item">
@@ -1869,7 +1879,9 @@
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">规划</span>
-                                    <span class="null-box">无</span>
+                                    <span class="hl">参数：光纤类型 / 物理接口类型 / 通道方向（静态约定）</span>
+                                    <span class="hl">参数：光纤长度 / 衰减 / 色散（静态约定；定光功率预算与色散容限）</span>
+                                    <span class="dim">（两层之间不直接交换信息，建设时各自配置）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
@@ -1904,15 +1916,15 @@
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">服务承诺</span>
-                                    <span class="hl">介质透明</span>
+                                    <span class="hl">透明光通道</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">参数</span>
-                                    <span class="hl">光纤类型（单模 / 多模）</span>
-                                    <span class="hl">物理接口类型（LC / SC / MPO 等）</span>
-                                    <span class="hl">通道方向（静态，上行 / 下行 / 单纤双向 BiDi）</span>
-                                    <span class="hl">光纤长度 / 衰减 / 色散等物理特性</span>
-                                    <span class="dim">（光纤为不加电的无源硬件，参数皆客观属性）</span>
+                                    <span class="iface-key">规划</span>
+                                    <span class="hl">参数：光纤类型（单模 / 多模）</span>
+                                    <span class="hl">参数：物理接口类型（LC / SC / MPO 等）</span>
+                                    <span class="hl">参数：通道方向（静态，上行 / 下行 / 单纤双向 BiDi）</span>
+                                    <span class="hl">参数：光纤长度 / 衰减 / 色散等物理特性</span>
+                                    <span class="dim">（静态约定：建设时配置，两层之间不直接交换信息——光纤为不加电的无源硬件，参数皆客观属性）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
@@ -1921,8 +1933,7 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
-                                    <span class="hl">光信号</span>
-                                    <span class="dim"></span>
+                                    <span class="hl">交付：光信号</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
@@ -1973,14 +1984,12 @@
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">服务承诺</span>
-                                    <span class="hl">透明</span>
-                                    <span class="dim">（透明比特流传输；冲突处理由上层以太网 CSMA/CD 承担）</span>
+                                    <span class="hl">透明比特流传输</span>
+                                    <span class="dim">（冲突处理由上层以太网 CSMA/CD 承担）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">参数</span>
-                                    <span class="hl">速率（10 Mbps 基带）</span>
-                                    <span class="hl">编码方式（曼彻斯特编码）</span>
-                                    <span class="hl">冲突状态（单向上报，检测到冲突/正常——供上层 CSMA/CD 判定）</span>
+                                    <span class="iface-key">规划</span>
+                                    <span class="hl">参数：速率（双向协商；10BASE2 固定 10 Mbps 基带）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
@@ -1989,7 +1998,8 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
-                                    <span class="hl">半双工比特流</span>
+                                    <span class="hl">交付：半双工比特流</span>
+                                    <span class="hl">参数：冲突状态（单向上报，检测到冲突/正常——供上层 CSMA/CD 判定）</span>
                                     <span class="dim">（下行：比特流经曼彻斯特编码送上总线并边发边听；上行：总线信号解码还原为比特流）</span>
                                 </span>
                                 <span class="iface-item">
@@ -2019,7 +2029,8 @@
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">规划</span>
-                                    <span class="null-box">无</span>
+                                    <span class="hl">参数：同轴类型 / 特性阻抗 50Ω（静态约定）</span>
+                                    <span class="dim">（两层之间不直接交换信息，建设时各自配置）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
@@ -2058,10 +2069,10 @@
                                     <span class="dim">（总线介质；衰减与站点数受限，需终端电阻匹配）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">参数</span>
-                                    <span class="hl">同轴类型（细缆 RG-58 / 粗缆 RG-8）</span>
-                                    <span class="hl">特性阻抗 50Ω / 终端电阻</span>
-                                    <span class="hl">总线长度与节点上限（10BASE2 ≈185m/30 节点；10BASE5 ≈500m/100 节点）</span>
+                                    <span class="iface-key">规划</span>
+                                    <span class="hl">参数：同轴类型（细缆 RG-58 / 粗缆 RG-8）</span>
+                                    <span class="hl">参数：特性阻抗 50Ω / 终端电阻</span>
+                                    <span class="dim">（静态约定：建设时配置，两层之间不直接交换信息）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
@@ -2070,7 +2081,7 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
-                                    <span class="hl">基带信号广播传播</span>
+                                    <span class="hl">交付：基带信号广播传播</span>
                                     <span class="dim">（电信号（连续的比特流），介质透明广播传播，不做加工）</span>
                                 </span>
                                 <span class="iface-item">
@@ -2124,11 +2135,10 @@
                                     <span class="dim">（共享无线信道、易受干扰；MAC 层 ARQ 尽力重传弥补）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">参数</span>
-                                    <span class="hl">下行：目标MAC（由上层 IP 提供——经 AP 转发所指向的收端地址）</span>
-                                    <span class="hl">Type 字段（经 LLC/SNAP 承载 EtherType，下行由上层指定，上行据此分发）</span>
-                                    <span class="hl">本机 MAC / BSSID（RA/TA 语义，由 WLAN 管理）</span>
-                                    <span class="hl">链路状态（单向上报：已关联/漫游中/断连、RSSI）</span>
+                                    <span class="iface-key">规划</span>
+                                    <span class="hl">参数：本机 MAC（向上提供，供上层 ARP 读取）</span>
+                                    <span class="hl">参数：MTU（1500 字节，向上提供；802.11 帧上限 2304）</span>
+                                    <span class="hl">BSSID（本层自用，RA/TA 语义）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
@@ -2137,9 +2147,11 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
-                                    <span class="hl">下行：数据</span>
-                                    <span class="hl">上行：数据</span>
-                                    <span class="dim">（数据封装为 802.11 帧；每帧发送前由榫头层做 CSMA/CA 介质访问；目标MAC 见“参数·下行”）</span>
+                                    <span class="hl">交付：数据</span>
+                                    <span class="hl">参数：目标MAC（由上层 IP 提供——经 AP 转发所指向的收端地址）</span>
+                                    <span class="hl">参数：Type（经 LLC/SNAP 承载 EtherType；下行由上层指定，上行据此分发）</span>
+                                    <span class="hl">参数：链路状态（单向上报：已关联/漫游中/断连、RSSI）</span>
+                                    <span class="dim">（数据封装为 802.11 帧；每帧发送前由榫头层做 CSMA/CA 介质访问）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
@@ -2189,7 +2201,9 @@
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">规划</span>
-                                    <span class="dim">依承载拓扑判定：无线信道为多址共享（半双工、收不到自己）→ 需 CSMA/CA（而非 CSMA/CD）</span>
+                                    <span class="hl">参数：介质访问方式（据承载判定：多址共享、收不到自己 → CSMA/CA）</span>
+                                    <span class="hl">参数：速率（MCS）/ 带宽 / 功率（与下层自适应协商）</span>
+                                    <span class="dim">（对照有线：可边发边听 → CSMA/CD）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
@@ -2198,9 +2212,9 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
+                                    <span class="hl">交付：802.11 帧</span>
                                     <span class="hl">CSMA/CA 介质访问</span>
                                     <span class="dim">CCA 载波侦听 → 信道空闲且退避计数到 0 即发送 → 等 ACK；无 ACK 则指数退避重发；隐藏节点用 RTS/CTS 预约（DCF/EDCA）</span>
-                                    <span class="hl">交付：802.11 帧</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
@@ -2226,16 +2240,16 @@
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">服务承诺</span>
-                                    <span class="hl">透明</span>
-                                    <span class="dim">（透明比特流传输；CCA 可感知信道占用）</span>
+                                    <span class="hl">透明比特流传输</span>
+                                    <span class="dim">（共享射频信道；CCA 可感知信道占用）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">参数</span>
-                                    <span class="hl">调制格式（OFDM：BPSK/QPSK/16-256QAM）</span>
-                                    <span class="hl">信道编码速率（FEC）</span>
-                                    <span class="hl">带宽（20/40/80MHz）</span>
-                                    <span class="hl">发射功率</span>
-                                    <span class="hl">链路状态（单向上报：RSSI/信噪比、CCA 忙/闲）</span>
+                                    <span class="iface-key">规划</span>
+                                    <span class="hl">参数：调制格式（OFDM：BPSK/QPSK/16-256QAM）</span>
+                                    <span class="hl">参数：信道编码速率（FEC）</span>
+                                    <span class="hl">参数：带宽（20/40/80MHz）</span>
+                                    <span class="hl">参数：发射功率</span>
+                                    <span class="dim">（以上为档位，由上层自适应选定：MCS 速率自适应 / 带宽切换 / TPC 功控——双向可调）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
@@ -2244,7 +2258,8 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
-                                    <span class="hl">双向比特流 ↔ 射频信号</span>
+                                    <span class="hl">交付：双向比特流 ↔ 射频信号</span>
+                                    <span class="hl">参数：链路状态（单向上报：RSSI/信噪比、CCA 忙/闲）</span>
                                     <span class="dim">（下行：数字比特流经编码/调制映射为选定信道上的射频信号；上行反之）</span>
                                 </span>
                                 <span class="iface-item">
@@ -2289,8 +2304,8 @@
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">规划</span>
-                                    <span class="null-box">无</span>
-                                    <span class="dim">（承载层频段复用已选定信道，无需寻址建路）</span>
+                                    <span class="hl">参数：信道 / 频段 / 带宽（按下层已选定）</span>
+                                    <span class="dim">（无需寻址建路）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
@@ -2329,19 +2344,19 @@
                                     <span class="dim">（不同信道互不干扰，邻近信道抑制）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">参数</span>
-                                    <span class="hl">频段（2.4/5/6GHz）</span>
-                                    <span class="hl">信道号 / 带宽（20/40/80/160MHz）</span>
-                                    <span class="hl">信道状态（可用/占用/干扰，CCA 能量检测上报）</span>
+                                    <span class="iface-key">规划</span>
+                                    <span class="hl">参数：频段（2.4/5/6GHz）</span>
+                                    <span class="hl">参数：信道号 / 带宽（20/40/80/160MHz；带宽档位可随上层切换，信道为半静态——由 AP 选定）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
                                     <span class="null-box">无</span>
-                                    <span class="dim">（半静态：AP 选信道 / 规划时确定）</span>
+                                    <span class="dim">（无上层调用；信道选定与重选由 AP 侧完成——ACS 自动选信道 / 信道切换 / 漫游触发，STA 跟随调谐；非上层逐次协商）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
-                                    <span class="hl">特定信道射频信号</span>
+                                    <span class="hl">交付：特定信道射频信号</span>
+                                    <span class="hl">参数：信道状态（可用/占用/干扰，CCA 能量检测单向上报）</span>
                                     <span class="dim">（调谐收发到所选频段 + 信道）</span>
                                 </span>
                                 <span class="iface-item">
@@ -2386,8 +2401,8 @@
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">规划</span>
-                                    <span class="null-box">无</span>
-                                    <span class="dim">（承载层无线电波为共享频谱，无需寻址建路）</span>
+                                    <span class="hl">参数：调制与功率（按下层频率 / 带宽特性与传播损耗确定；静态约定）</span>
+                                    <span class="dim">（承载层无线电波为共享频谱，无需寻址建路；两层之间不直接交换信息，建设时各自配置）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
@@ -2425,9 +2440,10 @@
                                     <span class="dim">（自由空间传播；存在衰减、多径衰落、同频干扰）</span>
                                 </span>
                                 <span class="iface-item">
-                                    <span class="iface-key">参数</span>
-                                    <span class="hl">频率 / 带宽特性</span>
-                                    <span class="hl">传播损耗 / 多径 / 衰落</span>
+                                    <span class="iface-key">规划</span>
+                                    <span class="hl">参数：频率 / 带宽特性</span>
+                                    <span class="hl">参数：传播损耗 / 多径 / 衰落</span>
+                                    <span class="dim">（静态约定：建设时配置，两层之间不直接交换信息）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
@@ -2436,7 +2452,7 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
-                                    <span class="hl">射频信号广播传播</span>
+                                    <span class="hl">交付：射频信号广播传播</span>
                                     <span class="dim">（介质透明传播，不做加工）</span>
                                 </span>
                                 <span class="iface-item">
@@ -2571,13 +2587,13 @@
             </thead>
             <tbody>
                 <tr><td>载荷层（外部）</td><td>本协议向上交付 / 接收的数据本体；上层协议的数据作为载荷在本层传递。<b>本协议对上层协议完全不了解</b>——上层只是不透明的纯数据载荷，本层无需知道上层是谁。<b>外部层次</b>：指向紧邻的上层协议，不属于本协议的内部功能。</td></tr>
-                <tr><td>卯眼层</td><td>向上层提供的接口契约（<b>服务承诺</b> / <b>参数</b> / 建链 / 通信 / 拆链），上层经它调用本层服务。<b>服务承诺</b>——如 TLS 承诺安全、TCP 承诺可靠、IP 承诺尽力而为；<b>通信</b>——本层数据交换的调用签名：每次传输的数据形态（数据包 / 连续字节流 / 连续比特流 / 光信号等）、方向与携带量（交付的数据单元：HTTP 报文 / TLS 记录 / TCP 段 / IP 数据报 / 以太网帧）都在该项给出，<b>不含目标地址</b>；<b>参数</b>——<b>双向</b>：既有上层调用本层时传递的<b>下行参数</b>（目标地址 / 端口 / 分用标识——目标主机:端口、目标IP、目标MAC、Type、协议号等），也有上层从下层读取的<b>上行参数</b>（如 MTU、链路状态等上报量）。类似软件库对外暴露的函数签名——<b>本层定义参数</b>，调用它的上层既能<b>提供参数值</b>、也能<b>读取状态值</b>；接口是单边定义的，由下层定义、由上层（调用者）消费。<b>本层向上呈现为一个全连通网络</b>（上层可任选对端）；对端由上层榫头层在建链时选定，并在此固化出一条端到端承载链路——故卯眼层只承诺这条链路的<b>服务品质</b>，不承诺拓扑。</td></tr>
+                <tr><td>卯眼层</td><td>向上层提供的接口契约，与榫头层<b>逐阶段对应</b>：<b>服务承诺</b> / <b>规划</b> / 建链 / 通信 / 拆链，上层经它调用本层服务。<b>服务承诺</b>——契约品质，如 TLS 承诺安全、TCP 承诺可靠、IP 承诺尽力而为；<b>规划</b>——<b>规划期约定</b>：本层的能力与属性（如 MTU、速率/双工档位、可用波长、信道、编码调制格式、光纤类型、本机IP/MAC/BSSID）——卯眼只<b>提供</b>，由上层在其“榫头层·规划”阶段<b>从下层读取</b>（如 MTU）或<b>协商</b>选定；若两层之间无法直接交换信息（被动介质），则为<b>静态约定</b>，榫卯两头各自在规划写明；<b>建链 / 通信 / 拆链</b>——各阶段<b>随调用提供的参数</b>（图中一律以 <b>参数：</b> 标注，如 connect 的五元组、每报的目标IP/协议号、每帧的目标MAC/Type）与<b>上行读取</b>的运行时观测（链路状态、RSSI、CCA、冲突、信道占用）；<b>通信</b>另给出本层数据交换的调用签名：数据形态（数据包 / 连续字节流 / 连续比特流 / 光信号等）、方向与携带量（交付的数据单元：HTTP 报文 / TLS 记录 / TCP 段 / IP 数据报 / 以太网帧），<b>不含目标地址</b>（目标地址属实参）。<b>参数不单列</b>——它客观上就是这几次调用的实参，故并入对应阶段。类似软件库对外暴露的函数签名：<b>本层定义参数</b>，调用它的上层既能<b>提供参数值</b>、也能<b>读取状态值</b>；接口单边定义，由下层定义、由上层（调用者）消费。<b>本层向上呈现为一个全连通网络</b>（上层可任选对端）；对端由上层榫头层在建链时选定，并在此固化出一条端到端承载链路——故卯眼层只承诺这条链路的<b>服务品质</b>，不承诺拓扑。</td></tr>
                 <tr><td>网络层</td><td>转发与寻址决策：控制面（路由 / 转发规则）与转发面（查表、转发）。</td></tr>
                 <tr><td>单链路层</td><td>复用层上方：本协议在同层对端之间<b>一条解复用后的单条逻辑链路 / 会话</b>上的语义——连接状态、差错检测、校验、重传、流控等（逐条单链路各自管理，如 TCP 每连接、802.11 每站点链路）。</td></tr>
                 <tr><td>复用层</td><td>位于单链路层与聚合链路层之间：向上提交单链路、向下提交聚合后的多链路，把下层多条承载通道复用 / 聚合为一条；单链路层管“解复用后的一条”，聚合链路层管“复用后的一条”。</td></tr>
                 <tr><td>聚合链路层</td><td>复用层下方：把本层全部单链路复用聚合后形成的那<b>一条聚合链路</b>的点到点收口——整链整体校验 / 传输信封 / 对整条聚合信号起作用的增强（如 FCS 覆盖 802.1Q 聚合帧、整段 WDM 的 EDFA / 色散补偿）。本层向下交付的<b>本层数据单元</b>（对端同层端点之间交换的报文 / 记录 / 段 / 数据报 / 帧等）亦在此收口，由榫头层调用下层时随路交付。下层协议正是把这条聚合链路当作它的一条单链路来承载，故聚合链路的可靠与增强也常落在承载侧。</td></tr>
                 <tr><td>榫头层</td><td><b>本协议与下层协议咬合（互锁）的层次</b>——调用下层协议的卯眼，在<b>下层承载网络</b>上建立端到端通道；本层在此扮演<b>调用者</b>（如同榫头插入下层的卯眼）：下层卯眼定义了参数，榫头层负责提供参数值并调用。<b>榫头层的意义</b>：在双栈主机上（同时运行 IPv4 与 IPv6 两个 IP 栈），上层协议（如 TCP）必须经榫头层选择承载的 IP 栈——"向下选择哪个下层承载"正是榫头层存在的意义。通道生命周期分四阶段：<b>规划</b>——指定下层承载寻址参数（如 IP 选好下一跳后指定其目标IP、以太网指定目标MAC）即可视为端到端通道确立；<b>初始化</b>——调用下层卯眼前的地址解析 / 参数准备（如 IP 在以太网上先经 ARP 解析出下一跳的目标 MAC）；<b>正常通讯</b>——每次交付时向底层提供承载寻址参数（如 IP 每包指定下一跳目标IP、以太网每包指定目标MAC）；<b>拆除通道</b>——通讯结束时经下层卯眼释放通道（如关闭连接、删除通道状态）。若下层承载本身已是端到端，本层不再另行建路，仅负责发起建链。注意：本协议自身的连接建立 / 握手（如 TCP 三次握手）属于协议自身连接管理，不在本层。</td></tr>
-                <tr><td>承载层（外部）</td><td>本协议以下层整体作为承载链路；在递归模型中，下层即本层的承载。<b>本协议不关心下层的内部机制，但必须了解其卯眼</b>（服务承诺 / 参数 / 建链 / 通信 / 拆链），才能经榫头层调用它。<b>外部层次</b>：指向紧邻的下层协议，不属于本协议的内部功能。</td></tr>
+                <tr><td>承载层（外部）</td><td>本协议以下层整体作为承载链路；在递归模型中，下层即本层的承载。<b>本协议不关心下层的内部机制，但必须了解其卯眼</b>（服务承诺 / 规划 / 建链 / 通信 / 拆链），才能经榫头层调用它。<b>外部层次</b>：指向紧邻的下层协议，不属于本协议的内部功能。</td></tr>
             </tbody>
         </table>
     </div>
@@ -2611,7 +2627,7 @@
                 <tr><td>QoS 调度</td><td>承诺的量化分级（时延 / 吞吐 / 抖动）</td><td>按 QoS 约束选路</td><td>队列调度（WFQ/DRR）、整形、限速</td><td>汇聚带宽分配</td><td>—</td><td>—</td></tr>
                 <tr><td>故障保护</td><td>承诺高可用 / 低中断</td><td>重路由、快速重收敛（FRR）</td><td>差错检测、重传、链路保护（1+1/1:N）</td><td>多链路冗余（聚合）</td><td>整体校验 / 传输信封（FCS 覆盖聚合帧）；整链 FEC、放大由承载 PHY 承担</td><td>承载层保护倒换</td></tr>
                 <tr><td>安全隔离</td><td>承诺机密性 / 完整性 / 隔离</td><td>隧道封装（VPN）</td><td>加密、认证、完整性校验</td><td>VLAN（802.1Q）标记隔离</td><td>—</td><td>—</td></tr>
-                <tr><td>会话管理</td><td>建链 / 通信 / 拆链（会话生命周期入口）</td><td>—</td><td>连接状态管理（SYN/EST/FIN，逐连接）</td><td>—</td><td>—</td><td>榫头层规划 / 建链 / 通信 / 拆链四阶段</td></tr>
+                <tr><td>会话管理</td><td>规划 / 建链 / 通信 / 拆链（与榫头层逐阶段对应）</td><td>—</td><td>连接状态管理（SYN/EST/FIN，逐连接）</td><td>—</td><td>—</td><td>榫头层规划 / 建链 / 通信 / 拆链四阶段</td></tr>
             </tbody>
         </table>
         <p>上表说明两点：其一，模型<b>并非不能描述这些行为</b>——每一项都能在八层单元中找到明确落点；其二，它们之所以“不能独立成一个图层”，恰恰因为它们是<b>横切关切</b>——强行为其单独设层（如同 OSI 把每个功能摊进固定层）反而会破坏模型的同构性，并陷入“某行为究竟属于哪一层”的无休止争论。模型的选择是：<b>以八层结构为骨架，让横切关切按所在层位归位、跨层协同</b>。</p>
@@ -2631,6 +2647,24 @@
 
 <script>
     (function() {
+
+        // 卯眼/榫头项内：chip（.hl）紧跟注释（.dim）时自动成组为一个 .iface-branch，
+        // 使注释折行时贴着自己的 chip 续行，不会被甩到下一行而脱节。
+        // 在脚本最前执行，确保早于任何布局测量（标尺 / 分隔线）。
+        document.querySelectorAll(
+            '.inner-row.iface-layer .desc > .iface-item, .inner-row.select-end-layer .desc > .iface-item'
+        ).forEach(item => {
+            [...item.children].forEach(el => {
+                if (!el.classList.contains('hl') || el.parentElement !== item) return;
+                const note = el.nextElementSibling;
+                if (!note || !note.classList.contains('dim') || !note.textContent.trim()) return;
+                const wrap = document.createElement('span');
+                wrap.className = 'iface-branch';
+                item.insertBefore(wrap, el);
+                wrap.appendChild(el);
+                wrap.appendChild(note);
+            });
+        });
 
         // 协议索引: 0=数据层(静态), 1=HTTP层, 2=TLS层, 3=TCP, 4=IP, 5=以太网, 6=编码调制层, 7=光波层, 8=光纤层
 
@@ -3916,7 +3950,7 @@
                 const b = el.dataset.bearer || '';
                 if (b) el.hidden = !b.split(/\s+/).includes(m);
             });
-            // 以太网榫头内容随承载模式切换（光纤=点对点/无需介质访问；铜线=共享总线/CSMA-CD 运行）
+            // 以太网榫头内容随承载模式切换（光纤=点对点/无争用、无需介质访问仲裁；铜线=共享总线/CSMA-CD 运行）
             document.body.classList.toggle('bearer-copper', m === 'copper');
             // 刷新可见层集（几何 / 键盘 / 测量只作用于可见层）
             layerEls = visibleLayers();
