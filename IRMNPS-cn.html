@@ -54,7 +54,7 @@
             margin-bottom: 25px; /* 开关与协议栈的间距 */
         }
 
-        /* ---------- 标签页：协议栈 / 协议说明 ---------- */
+        /* ---------- 标签页：协议栈 / 模型说明 ---------- */
         .tab-bar {
             display: flex;
             justify-content: center;
@@ -256,7 +256,7 @@
             font-size: 12px;
         }
 
-        /* ---------- 协议说明：单协议各层次 / 递归结构 ---------- */
+        /* ---------- 模型说明：单协议各层次 / 递归结构 ---------- */
         .notes-block {
             margin-top: 20px;
             padding-top: 16px;
@@ -300,6 +300,30 @@
             font-weight: 600;
             white-space: nowrap;
             width: 90px;
+        }
+        /* 表格内长文单元格（卯眼层 / 榫头层）：导语 + 分条列出，便于扫读 */
+        .layer-table td .cell-lead {
+            display: block;
+            margin: 0 0 4px;
+        }
+        .layer-table td .cell-list {
+            margin: 0;
+            padding-left: 15px;
+        }
+        .layer-table td .cell-list > li {
+            margin: 4px 0;
+        }
+        .layer-table td .cell-list > li::marker {
+            color: #8c959f;
+        }
+        /* 分条内再分条（如卯眼层·建链的四类） */
+        .layer-table td .cell-sublist {
+            margin: 3px 0;
+            padding-left: 14px;
+            list-style: circle;
+        }
+        .layer-table td .cell-sublist > li {
+            margin: 2px 0;
         }
 
         .main-layout {
@@ -430,6 +454,11 @@
             min-height: 48px;
             padding: 4px 12px;
         }
+        /* 网络层内若无 2×2 表格（只有一行说明或“空”），高度按单行收紧；
+           含表格者仍需 48px。旧浏览器不支持 :has() 时该条被忽略，退回 48px，不会破版。 */
+        .layer-tall .inner-row.net-layer:not(:has(.cp-table)) {
+            min-height: 32px;
+        }
         .layer-tall .inner-row.link-layer {
             height: auto;
             min-height: 32px;
@@ -549,7 +578,8 @@
            自己的 chip 下方续行，不会作为独立项被甩到下一行而与 chip 脱节。
            （成组由脚本在运行时自动完成，卯眼与榫头两侧同规则） */
         .inner-row.iface-layer .desc .iface-item .iface-branch,
-        .inner-row.select-end-layer .desc .iface-item .iface-branch {
+        .inner-row.select-end-layer .desc .iface-item .iface-branch,
+        .inner-row.mux-layer .desc .iface-branch {
             display: inline-flex;
             flex-wrap: wrap;
             align-items: baseline;
@@ -1172,13 +1202,13 @@
 <div class="container">
     <h1>🧩 网络协议栈的同构递归模型<span style="font-size:12px; font-weight:400; color:#8c959f; letter-spacing:1px; margin-left:6px; vertical-align:middle;">v2.0</span></h1>
 
-    <!-- 标签页：协议栈 / 协议说明 -->
+    <!-- 标签页：模型说明 / 协议栈 -->
     <div class="tab-bar">
-        <button class="tab-btn active" data-tab="stack">协议栈</button>
-        <button class="tab-btn" data-tab="notes">协议说明</button>
+        <button class="tab-btn active" data-tab="notes">模型说明</button>
+        <button class="tab-btn" data-tab="stack">协议栈</button>
     </div>
 
-    <div class="tab-panel active" id="tab-stack">
+    <div class="tab-panel" id="tab-stack">
     <div class="title-bar">
         <label class="switch" for="expandAllToggle">
             <input type="checkbox" id="expandAllToggle">
@@ -1491,12 +1521,11 @@
                                 <span class="iface-item">
                                     <span class="iface-key">规划</span>
                                     <span class="hl">参数：本机IP地址（向上提供）</span>
-                                    <span class="hl">参数：MTU（向上提供）</span>
+                                    <span class="hl">参数：MTU（向上提供；口径＝含本层报头的链路 MTU，上层据此再减自身报头）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
-                                    <span class="null-box">无</span>
-                                    <span class="dim">（无连接）</span>
+                                    <span class="hl">无连接</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
@@ -1507,8 +1536,7 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
-                                    <span class="null-box">无</span>
-                                    <span class="dim">（无连接）</span>
+                                    <span class="hl">无连接</span>
                                 </span>
                             </span>
                         </div>
@@ -1526,12 +1554,15 @@
                                         <span class="hl dyn">BGP</span>
                                         <span class="hl dyn">IS-IS</span>
                                         <span class="hl dyn">RIP</span>
+                                        <span class="hl">ICMP 重定向（提示最优下一跳，修正对端出口）</span>
+                                        <span class="hl">ICMP 回显（诊断探测：ping / traceroute——不改转发规则；探测结果驱动控制面修正）</span>
                                         <span class="dim">（对内信令）</span>
                                     </span>
                                     <span class="cp-cell cp-forward">
-                                        <span class="hl">路由查表选目标端口（出口/下一跳）</span>
+                                        <span class="hl">路由查表选目标地址（出口 / 下一跳）</span>
                                         <span class="hl">搬包</span>
                                         <span class="hl">TTL处理（每跳减1，超时丢弃）</span>
+                                        <span class="hl">ICMP 差错回送（TTL 超时 / 目的不可达）</span>
                                         <span class="dim">（对外服务）</span>
                                     </span>
                                 </span>
@@ -1565,7 +1596,7 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
-                                    <span class="null-box">无</span>
+                                    <span class="hl">无需调用（下层已就绪：以太网无连接 / WLAN 本层自治）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
@@ -1575,7 +1606,7 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
-                                    <span class="null-box">无</span>
+                                    <span class="hl">无需调用（以太网无连接 / WLAN 本层自治）</span>
                                 </span>
                             </span>
                         </div>
@@ -1606,7 +1637,7 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
-                                    <span class="null-box">无</span>
+                                    <span class="hl">无连接</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
@@ -1616,7 +1647,7 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
-                                    <span class="null-box">无</span>
+                                    <span class="hl">无连接</span>
                                 </span>
                             </span>
                         </div>
@@ -1730,7 +1761,7 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
-                                    <span class="null-box">无</span>
+                                    <span class="hl">预置</span>
                                     <span class="dim">（静态配置，运行时不变）</span>
                                 </span>
                                 <span class="iface-item">
@@ -1741,8 +1772,7 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
-                                    <span class="null-box">无</span>
-                                    <span class="dim">（静态配置，运行时不变）</span>
+                                    <span class="hl">不拆（预置）</span>
                                 </span>
                             </span>
                         </div>
@@ -1821,11 +1851,11 @@
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
                                     <span class="iface-branch">
-                                        <span class="null-box">无</span>
+                                        <span class="hl">预置</span>
                                         <span class="dim">（波长通道在建设/规划时经 ROADM / 光交叉连接配置，固定存在，运行时不需上层调用）</span>
                                     </span>
                                     <span class="iface-branch line">
-                                        <span class="hl dyn">ASON 按需建链</span>
+                                        <span class="hl dyn">按需带外建链（ASON-UNI）</span>
                                         <span class="dim">（交换连接：上层经 GMPLS/ASON 信令建立光路）</span>
                                     </span>
                                 </span>
@@ -1838,11 +1868,11 @@
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
                                     <span class="iface-branch">
-                                        <span class="null-box">无</span>
+                                        <span class="hl">不拆（预置）</span>
                                         <span class="dim">（光路固定存在，运行时不需拆链）</span>
                                     </span>
                                     <span class="iface-branch line">
-                                        <span class="hl dyn">ASON 按需释放</span>
+                                        <span class="hl dyn">按需带外释放（ASON-UNI）</span>
                                         <span class="dim">（通信结束后由上层经 GMPLS/ASON 信令释放光路）</span>
                                     </span>
                                 </span>
@@ -1935,7 +1965,7 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
-                                    <span class="null-box">无</span>
+                                    <span class="hl">预置</span>
                                     <span class="dim">（已预置：光纤铺设、熔接、ODF跳纤在建设时完成，运行时不需上层调用）</span>
                                 </span>
                                 <span class="iface-item">
@@ -1944,8 +1974,7 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
-                                    <span class="null-box">无</span>
-                                    <span class="dim">（同建链）</span>
+                                    <span class="hl">不拆（预置）</span>
                                 </span>
                             </span>
                         </div>
@@ -2000,7 +2029,7 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
-                                    <span class="null-box">无</span>
+                                    <span class="hl">预置</span>
                                     <span class="dim">（静态：接入总线即就绪）</span>
                                 </span>
                                 <span class="iface-item">
@@ -2011,7 +2040,7 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
-                                    <span class="null-box">无</span>
+                                    <span class="hl">不拆（预置）</span>
                                 </span>
                             </span>
                         </div>
@@ -2083,7 +2112,7 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
-                                    <span class="null-box">无</span>
+                                    <span class="hl">预置</span>
                                     <span class="dim">（已预置：施工时铺设、T 型头接入、终端电阻，运行时不需上层调用）</span>
                                 </span>
                                 <span class="iface-item">
@@ -2093,7 +2122,7 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
-                                    <span class="null-box">无</span>
+                                    <span class="hl">不拆（预置）</span>
                                 </span>
                             </span>
                         </div>
@@ -2132,25 +2161,24 @@
                                 <span class="iface-item">
                                     <span class="iface-key">规划</span>
                                     <span class="hl">参数：本机 MAC（向上提供，供上层 ARP 读取）</span>
-                                    <span class="hl">参数：MTU（1500 字节，向上提供；802.11 帧上限 2304）</span>
-                                    <span class="hl">参数：BSSID（本层自用，RA/TA 语义）</span>
+                                    <span class="hl">参数：MTU（1500 字节——与以太网桥接口径一致，向上提供；802.11 MSDU 上限 2304）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
-                                    <span class="null-box">无</span>
+                                    <span class="hl">本层自治</span>
                                     <span class="dim">（到 AP 的关联/认证由 WLAN 本层在接入时完成——扫描 → 认证（开放/WPA）→ 关联；对上层呈现为就绪的无线 LAN，不需上层调用建链）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
                                     <span class="hl">交付：数据</span>
                                     <span class="dim">（数据封装为 802.11 帧；每帧发送前由榫头层做 CSMA/CA 介质访问）</span>
-                                    <span class="hl">参数：目标MAC（由上层 IP 提供——经 AP 转发所指向的收端地址）</span>
-                                    <span class="hl">参数：Type（经 LLC/SNAP 承载 EtherType；下行由上层指定，上行据此分发）</span>
+                                    <span class="hl">参数：目标MAC（由上层 IP 提供——经 AP 转发所指向的收端地址；空口 RA 为 AP，DA 即此地址）</span>
+                                    <span class="hl">参数：Type（经 LLC/SNAP 承载 EtherType：0x0800=IPv4 / 0x0806=ARP；下行由上层指定，上行据此分发）</span>
                                     <span class="hl">参数：链路状态（单向上报：已关联/漫游中/断连、RSSI）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
-                                    <span class="null-box">无</span>
+                                    <span class="hl">本层自治</span>
                                     <span class="dim">（解除关联 / 去认证由 WLAN 管理面在断连 / 漫游时触发，非上层调用）</span>
                                 </span>
                             </span>
@@ -2165,12 +2193,11 @@
                                 <span class="cp-row cp-body">
                                     <span class="cp-cell cp-control">
                                         <span class="hl">接入控制（关联表管理）</span>
-                                        <span class="hl dyn">漫游管理（BSS 间切换）</span>
-                                        <span class="hl">信道 / 功率管理（802.11h/k）</span>
-                                        <span class="dim">（对内信令）</span>
+                                        <span class="hl dyn">漫游管理（BSS 间切换；802.11k 测量 / 邻居报告为决策输入）</span>
+                                        <span class="dim">（对内信令；信道与功率的实际管理见下层频段复用层——信道选择 / DFS / 调谐 / TPC）</span>
                                     </span>
                                     <span class="cp-cell cp-forward">
-                                        <span class="hl">按 RA/TA 转发（STA↔AP↔目标）</span>
+                                        <span class="hl">按 DA/SA 桥接转发（STA↔AP↔DS；空口 RA/TA 为逐跳链路地址、逐跳改写，DA 贯穿至收端；BSSID = AP 的 MAC）</span>
                                         <span class="hl">BSS 内组播 / 广播</span>
                                         <span class="hl">桥接到分布系统（DS）</span>
                                         <span class="dim">（对外服务）</span>
@@ -2180,15 +2207,15 @@
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 单链路</span>
-                            <span class="desc"><span class="hl">帧校验（FCS，检测帧损坏）</span> <span class="hl">ARQ 确认重传（单播 ACK，失败重发）</span> <span class="hl">RTS/CTS（隐藏节点预约）</span> <span class="hl">分片（抗干扰）</span></span>
+                            <span class="desc"><span class="hl">帧校验（FCS，检测帧损坏）</span> <span class="hl">ARQ 确认重传（单播 ACK，失败重发）</span> <span class="hl">RTS/CTS（隐藏节点预约）</span> <span class="hl">分片（抗干扰）</span> <span class="hl">省电（PSM / U-APSD）</span></span>
                         </div>
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
-                            <span class="desc"><span class="hl">BSS/SSID 复用（一信道多 BSS）</span> <span class="dim">—— 类比以太网 802.1Q：一个无线信道上经 SSID 区分多个逻辑 WLAN；亦承载 802.1Q（无线→有线 trunk）</span></span>
+                            <span class="desc"><span class="hl">BSS 复用（一信道多 BSS；SSID 表网络、BSSID 表 AP）</span> <span class="dim">—— 类比以太网 802.1Q：一个无线信道上经 BSSID 区分多个逻辑 WLAN；亦承载 802.1Q（无线→有线 trunk）</span></span>
                         </div>
                         <div class="inner-row aggr-layer">
                             <span class="tag">🔀 聚合链路</span>
-                            <span class="desc"><span class="null-box">空</span> <span class="dim">（聚合＝同一无线信道上的全部 BSS；整信道编码/交织/FEC 与调制在射频编码调制层，WLAN 自身无聚合链路协议）</span></span>
+                            <span class="desc"><span class="hl">A-MSDU / A-MPDU 帧聚合（多个数据单元合成一次传输）</span> <span class="hl">Block ACK（一次确认多个 MPDU）</span> <span class="dim">（整条聚合链路的传输信封——对照以太网在此处的“前导 / SFD / FCS / IFG 封装”；802.11 的帧聚合与块确认即本层收口）</span></span>
                         </div>
 
                         <div class="inner-row select-end-layer">
@@ -2196,14 +2223,14 @@
                             <span class="desc">
                                 <span class="iface-item">
                                     <span class="iface-key">规划</span>
-                                    <span class="hl">参数：介质访问方式（据承载判定：多址共享、收不到自己 → CSMA/CA）</span>
+                                    <span class="hl">参数：介质访问方式（本层判定：据承载的静态特性——多址共享、发射时无法同时侦听 / 检测冲突 → CSMA/CA）</span>
                                     <span class="hl">参数：速率（MCS）/ 带宽 / 功率（与下层自适应协商）</span>
                                     <span class="dim">（对照有线：可边发边听 → CSMA/CD）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
-                                    <span class="null-box">无</span>
-                                    <span class="dim">（关联/认证由本层接入时完成——就绪后即可承载，非上层调用）</span>
+                                    <span class="hl">无需调用（下层本层自治）</span>
+                                    <span class="dim">（下层射频调制就绪即用；关联/认证由 WLAN 接入时完成，非上层调用）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
@@ -2213,7 +2240,7 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
-                                    <span class="null-box">无</span>
+                                    <span class="hl">无需调用（下层不拆）</span>
                                 </span>
                             </span>
                         </div>
@@ -2242,13 +2269,13 @@
                                     <span class="iface-key">规划</span>
                                     <span class="hl">参数：调制格式（OFDM：BPSK/QPSK/16-256QAM）</span>
                                     <span class="hl">参数：信道编码速率（FEC）</span>
-                                    <span class="hl">参数：带宽（20/40/80MHz）</span>
+                                    <span class="hl">参数：信道带宽（20/40/80/160MHz——自下层频段复用层取得，向上提供）</span>
                                     <span class="hl">参数：发射功率</span>
                                     <span class="dim">（以上为档位，由上层自适应选定：MCS 速率自适应 / 带宽切换 / TPC 功控——双向可调）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
-                                    <span class="null-box">无</span>
+                                    <span class="hl">本层自治</span>
                                     <span class="dim">（静态配置 / 速率自适应）</span>
                                 </span>
                                 <span class="iface-item">
@@ -2259,28 +2286,13 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
-                                    <span class="null-box">无</span>
+                                    <span class="hl">不拆（预置）</span>
                                 </span>
                             </span>
                         </div>
                         <div class="inner-row net-layer">
                             <span class="tag">🌐 网络</span>
-                            <span class="desc cp-table">
-                                <span class="cp-row cp-head">
-                                    <span class="cp-cell cp-control">控制面</span>
-                                    <span class="cp-cell cp-forward">转发面</span>
-                                </span>
-                                <span class="cp-row cp-body">
-                                    <span class="cp-cell cp-control">
-                                        <span class="null-box">空</span>
-                                        <span class="dim">（不涉及转发路径决策）</span>
-                                    </span>
-                                    <span class="cp-cell cp-forward">
-                                        <span class="hl">信号再生 / 放大（中继器）</span>
-                                        <span class="hl">MIMO 空间流合并</span>
-                                    </span>
-                                </span>
-                            </span>
+                            <span class="desc"><span class="null-box">空</span> <span class="dim">（单信道射频调制无转发与寻址职能——子载波与空间流的复用 / 合并见复用层）</span></span>
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 单链路</span>
@@ -2288,7 +2300,7 @@
                         </div>
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
-                            <span class="desc"><span class="hl">OFDM 子载波 / MIMO 空间流复用</span> <span class="dim">—— 单信道内并行多路正交子载波与多空间流（同一时刻承载更多比特）</span></span>
+                            <span class="desc"><span class="hl">OFDM 子载波复用（频域并行）</span> <span class="dim">（信道带宽切成多条正交窄带子信道——频域并行，抗多径、可逐子信道自适应与调度）</span> <span class="hl">MIMO 空间流复用（空域并行）</span> <span class="dim">（同一频段同时并行多路空间流——空域并行，容量随流数倍增）</span></span>
                         </div>
                         <div class="inner-row aggr-layer">
                             <span class="tag">🔀 聚合链路</span>
@@ -2304,7 +2316,7 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
-                                    <span class="null-box">无</span>
+                                    <span class="hl">无需调用（下层本层自治）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
@@ -2313,7 +2325,7 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
-                                    <span class="null-box">无</span>
+                                    <span class="hl">无需调用（下层本层自治）</span>
                                 </span>
                             </span>
                         </div>
@@ -2336,7 +2348,7 @@
                                 <span class="iface-item">
                                     <span class="iface-key">服务承诺</span>
                                     <span class="hl">信道隔离</span>
-                                    <span class="dim">（不同信道互不干扰，邻近信道抑制；各信道各自辐射、在空口叠加共存——介质即合路器，故本层只须划分与隔离，不似光波层须合波入纤）</span>
+                                    <span class="dim">（不同信道互不干扰，邻近信道抑制；由发端限带 + 收端选频实现——空口只让各路信号线性叠加共存，不做划分与隔离；对照：光链须由光波层合波入纤）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">规划</span>
@@ -2345,43 +2357,28 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
-                                    <span class="null-box">无</span>
+                                    <span class="hl">本层自治</span>
                                     <span class="dim">（无上层调用；信道选定与重选由 AP 侧完成——ACS 自动选信道 / 信道切换 / 漫游触发，STA 跟随调谐；非上层逐次协商）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
                                     <span class="hl">交付：特定信道射频信号</span>
                                     <span class="dim">（调谐收发到所选频段 + 信道）</span>
-                                    <span class="hl">参数：信道状态（可用/占用/干扰，CCA 能量检测单向上报）</span>
+                                    <span class="hl">参数：信道可用性（本层判定：雷达 / DFS 检测、邻信道干扰——可用 / 占用 / 禁选，单向上报）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
-                                    <span class="null-box">无</span>
+                                    <span class="hl">本层自治</span>
                                 </span>
                             </span>
                         </div>
                         <div class="inner-row net-layer">
                             <span class="tag">🌐 网络</span>
-                            <span class="desc cp-table">
-                                <span class="cp-row cp-head">
-                                    <span class="cp-cell cp-control">控制面</span>
-                                    <span class="cp-cell cp-forward">转发面</span>
-                                </span>
-                                <span class="cp-row cp-body">
-                                    <span class="cp-cell cp-control">
-                                        <span class="hl">信道选择 / 分配（AP 选信道）</span>
-                                        <span class="hl dyn">DFS（动态频率选择，避开雷达）</span>
-                                    </span>
-                                    <span class="cp-cell cp-forward">
-                                        <span class="hl">信道切换（调谐）</span>
-                                        <span class="hl">发射功率控制（TPC）</span>
-                                    </span>
-                                </span>
-                            </span>
+                            <span class="desc"><span class="null-box">空</span> <span class="dim">（本层只划分与隔离信道，无转发 / 寻址职能；信道策略见卯眼·规划与建链——AP 选信道 / DFS，调谐与功控的执行在下层编码调制层）</span></span>
                         </div>
                         <div class="inner-row link-layer">
                             <span class="tag">📦 单链路</span>
-                            <span class="desc"><span class="hl">信道寻址（频段 + 信道号）</span> <span class="hl">链路增强：发射功率控制</span> <span class="hl">相邻信道干扰抑制</span></span>
+                            <span class="desc"><span class="hl">信道调谐（频段 + 信道号 → 射频前端设定）</span> <span class="hl">相邻信道干扰抑制（频谱掩码 / 滤波）</span></span>
                         </div>
                         <div class="inner-row mux-layer" style="border-left-color:#9a6700;">
                             <span class="tag" style="color:#9a6700;">📡 复用</span>
@@ -2397,11 +2394,12 @@
                                 <span class="iface-item">
                                     <span class="iface-key">规划</span>
                                     <span class="hl">参数：调制与功率（按下层频率 / 带宽特性与传播损耗确定；静态约定）</span>
+                                    <span class="hl">参数：介质形态（共享空口——多址共享、发射时无法同时侦听 / 检测冲突，静态约定）</span>
                                     <span class="dim">（承载层无线电波为共享频谱，无需寻址建路；两层之间不直接交换信息，建设时各自配置）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
-                                    <span class="null-box">无</span>
+                                    <span class="hl">预置（天线部署在建设期完成）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">通信</span>
@@ -2410,7 +2408,7 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
-                                    <span class="null-box">无</span>
+                                    <span class="hl">不拆（预置）</span>
                                 </span>
                             </span>
                         </div>
@@ -2437,9 +2435,10 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">规划</span>
+                                    <span class="hl">参数：介质形态（共享空口——多址共享；发射时无法同时侦听 / 检测冲突）</span>
                                     <span class="hl">参数：频率 / 带宽特性</span>
                                     <span class="hl">参数：传播损耗 / 多径 / 衰落</span>
-                                    <span class="dim">（静态约定：建设时配置，两层之间不直接交换信息）</span>
+                                    <span class="dim">（静态：由现场勘察 / 路损模型给定，两层不直接交换信息）</span>
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">建链</span>
@@ -2453,26 +2452,14 @@
                                 </span>
                                 <span class="iface-item">
                                     <span class="iface-key">拆链</span>
-                                    <span class="null-box">无</span>
+                                    <span class="hl">不拆（建成即固定）</span>
                                 </span>
                             </span>
                         </div>
                         <div class="inner-row net-layer">
                             <span class="tag">🌐 网络</span>
-                            <span class="desc cp-table">
-                                <span class="cp-row cp-head">
-                                    <span class="cp-cell cp-control">控制面</span>
-                                    <span class="cp-cell cp-forward">转发面</span>
-                                </span>
-                                <span class="cp-row cp-body">
-                                    <span class="cp-cell cp-control">
-                                        <span class="hl">覆盖规划（AP 布点 / 蜂窝规划）</span>
-                                    </span>
-                                    <span class="cp-cell cp-forward">
-                                        <span class="null-box">空</span>
-                                        <span class="dim">（介质本身不转发）</span>
-                                    </span>
-                                </span>
+                            <span class="desc">
+                                <span class="null-box">空</span> 
                             </span>
                         </div>
                         <div class="inner-row link-layer">
@@ -2568,12 +2555,11 @@
     </div>
     </div>
 
-    <div class="tab-panel" id="tab-notes">
+    <div class="tab-panel active" id="tab-notes">
     <!-- 单协议的各层次 -->
     <div class="notes-block">
         <h2>单协议的各层次</h2>
-        <p><b>上下层如榫卯</b>：下层以<b>卯眼（服务接口）</b>开出“槽形”（定义要哪些参数、怎么调），上层以<b>榫头（端路）</b>插入咬合（提供参数值并调用）——同构八层如一套同形拼块，层层卡接、无钉无胶。</p>
-        <p>每个中间层协议内部都由相同的八层构成（自顶向下）。严格地说，只有 <strong>6 层属于本协议自身的内部层次</strong>（卯眼层、网络层、单链路层、复用层、聚合链路层、榫头层）；<strong>载荷层与承载层是外部层次</strong>——它们指向相邻的上层 / 下层协议，是递归的接口。</p>
+        <p>每个中间层协议内部都由相同的八层构成（自顶向下）。严格地说，只有 <strong>6 层属于本协议自身的内部层次</strong>（卯眼层、网络层、单链路层、复用层、聚合链路层、榫头层）——它们是<b>同一协议自身的功能分解</b>，共同对外只露出两个面：顶上是<b>一个卯眼层</b>（对上层协议）、底下是<b>一个榫头层</b>（对下层协议）；<strong>载荷层与承载层是外部层次</strong>——它们指向相邻的上层 / 下层协议，是递归的接口。这八层是<b>结构槽位</b>（角色 / 位置），<b>而非机制清单</b>——模型的边界在于：它描述的是“任意中间层协议的<b>递归转发 / 承载结构</b>”，而非枚举现代网络中的全部机制。</p>
         <table class="layer-table">
             <thead>
                 <tr>
@@ -2583,15 +2569,38 @@
             </thead>
             <tbody>
                 <tr><td>载荷层（外部）</td><td>本协议向上交付 / 接收的数据本体；上层协议的数据作为载荷在本层传递。<b>本协议对上层协议完全不了解</b>——上层只是不透明的纯数据载荷，本层无需知道上层是谁。<b>外部层次</b>：指向紧邻的上层协议，不属于本协议的内部功能。</td></tr>
-                <tr><td>卯眼层</td><td>向上层提供的接口契约，与榫头层<b>逐阶段对应</b>：<b>服务承诺</b> / <b>规划</b> / 建链 / 通信 / 拆链，上层经它调用本层服务。<b>服务承诺</b>——契约品质，如 TLS 承诺安全、TCP 承诺可靠、IP 承诺尽力而为；<b>规划</b>——<b>规划期约定</b>：本层的能力与属性（如 MTU、速率/双工档位、可用波长、信道、编码调制格式、光纤类型、本机IP/MAC/BSSID）——卯眼只<b>提供</b>，由上层在其“榫头层·规划”阶段<b>从下层读取</b>（如 MTU）或<b>协商</b>选定；若两层之间无法直接交换信息（被动介质），则为<b>静态约定</b>，榫卯两头各自在规划写明；<b>建链 / 通信 / 拆链</b>——各阶段<b>随调用提供的参数</b>（图中一律以 <b>参数：</b> 标注，如 connect 的五元组、每报的目标IP/协议号、每帧的目标MAC/Type）与<b>上行读取</b>的运行时观测（链路状态、RSSI、CCA、冲突、信道占用）；<b>通信</b>另给出本层数据交换的调用签名：数据形态（数据包 / 连续字节流 / 连续比特流 / 光信号等）、方向与携带量（交付的数据单元：HTTP 报文 / TLS 记录 / TCP 段 / IP 数据报 / 以太网帧），<b>不含目标地址</b>（目标地址属实参）。<b>参数不单列</b>——它客观上就是这几次调用的实参，故并入对应阶段。类似软件库对外暴露的函数签名：<b>本层定义参数</b>，调用它的上层既能<b>提供参数值</b>、也能<b>读取状态值</b>；接口单边定义，由下层定义、由上层（调用者）消费。<b>本层向上呈现为一个全连通网络</b>（上层可任选对端）；对端由上层榫头层在建链时选定，并在此固化出一条端到端承载链路——故卯眼层只承诺这条链路的<b>服务品质</b>，不承诺拓扑。</td></tr>
+                <tr><td>卯眼层</td><td><span class="cell-lead">向上层提供的接口契约，与榫头层<b>逐阶段对应</b>——上层经它调用本层服务。</span><ul class="cell-list">
+                    <li><b>服务承诺</b>——契约品质：TLS 承诺安全、TCP 承诺可靠、IP 承诺尽力而为。</li>
+                    <li><b>规划</b>——<b>建链前的准备</b>：本层公示自己的能力与属性（MTU、速率/双工档位、可用波长、信道、编码调制格式、光纤类型、本机IP/MAC）；上层据此<b>读取</b>（如 MTU）、与之<b>协商</b>（速率/双工、MCS/带宽/功率、信道），或两层间无法直接交换信息（被动介质）时各自<b>静态约定</b>配置（光纤类型 / 阻抗 / 传播损耗 / λ 通道）。参数对齐齐备，才谈得上建链。</li>
+                    <li><b>建链</b>——本层通道的建立分四类：<ul class="cell-sublist"><li><b>无连接</b>——TCP、IP：协议本身无连接</li><li><b>预置</b>——以太网、编码调制、同轴、光纤，及光波的默认分支：建设期固定</li><li><b>本层自治</b>——WLAN 关联认证、射频调制自适应、频段复用信道选定：本层自己干完</li><li><b>按需带外</b>——光波 ASON-UNI 信令</li></ul>四者对上层效果一致：<b>不需上层调用建链</b>——故卯眼·建链 处只标类别、不写「无」；<b>拆链</b>同理（无连接 / 不拆（预置）/ 本层自治 / 按需带外释放）。</li>
+                    <li><b>通信</b>——交付本层数据单元，并给出本层数据交换的调用签名：数据形态（数据包 / 连续字节流 / 连续比特流 / 光信号等）、方向与携带量（HTTP 报文 / TLS 记录 / TCP 段 / IP 数据报 / 以太网帧）；<b>不含目标地址</b>（目标地址属实参）。</li>
+                    <li><b>各阶段参数</b>——建链 / 通信 / 拆链随调用提供的实参（图中一律以 <b>参数：</b> 标注，如 connect 的五元组、每报的目标IP/协议号、每帧的目标MAC/Type）与<b>上行读取</b>的运行时观测（链路状态、RSSI、CCA、冲突、信道占用）。<b>参数不单列</b>——它客观上就是这几次调用的实参，故并入对应阶段。</li>
+                    <li><b>接口性质</b>——类似软件库对外暴露的函数签名：<b>本层定义参数</b>，调用它的上层既能<b>提供参数值</b>、也能<b>读取状态值</b>；接口单边定义，由下层定义、由上层（调用者）消费。</li>
+                    <li><b>不承诺拓扑</b>——本层向上呈现为一个<b>全连通网络</b>（上层可任选对端）；对端由上层榫头层在建链时选定，并在此固化出一条端到端承载链路——故卯眼层只承诺这条链路的<b>服务品质</b>。</li>
+                </ul></td></tr>
                 <tr><td>网络层</td><td>转发与寻址决策：控制面（路由 / 转发规则）与转发面（查表、转发）。</td></tr>
                 <tr><td>单链路层</td><td>复用层上方：本协议在同层对端之间<b>一条解复用后的单条逻辑链路 / 会话</b>上的语义——连接状态、差错检测、校验、重传、流控等（逐条单链路各自管理，如 TCP 每连接、802.11 每站点链路）。</td></tr>
                 <tr><td>复用层</td><td>位于单链路层与聚合链路层之间：向上提交单链路、向下提交聚合后的多链路，把下层多条承载通道复用 / 聚合为一条；单链路层管“解复用后的一条”，聚合链路层管“复用后的一条”。</td></tr>
                 <tr><td>聚合链路层</td><td>复用层下方：把本层全部单链路复用聚合后形成的那<b>一条聚合链路</b>的点到点收口——整链整体校验 / 传输信封 / 对整条聚合信号起作用的增强（如 FCS 覆盖 802.1Q 聚合帧、整段 WDM 的 EDFA / 色散补偿）。本层向下交付的<b>本层数据单元</b>（对端同层端点之间交换的报文 / 记录 / 段 / 数据报 / 帧等）亦在此收口，由榫头层调用下层时随路交付。下层协议正是把这条聚合链路当作它的一条单链路来承载，故聚合链路的可靠与增强也常落在承载侧。</td></tr>
-                <tr><td>榫头层</td><td><b>本协议与下层协议咬合（互锁）的层次</b>——调用下层协议的卯眼，在<b>下层承载网络</b>上建立端到端通道；本层在此扮演<b>调用者</b>（如同榫头插入下层的卯眼）：下层卯眼定义了参数，榫头层负责提供参数值并调用。<b>榫头层的意义</b>：在双栈主机上（同时运行 IPv4 与 IPv6 两个 IP 栈），上层协议（如 TCP）必须经榫头层选择承载的 IP 栈——"向下选择哪个下层承载"正是榫头层存在的意义。通道生命周期分四阶段：<b>规划</b>——指定下层承载寻址参数（如 IP 选好下一跳后指定其目标IP、以太网指定目标MAC）即可视为端到端通道确立；<b>初始化</b>——调用下层卯眼前的地址解析 / 参数准备（如 IP 在以太网上先经 ARP 解析出下一跳的目标 MAC）；<b>正常通讯</b>——每次交付时向底层提供承载寻址参数（如 IP 每包指定下一跳目标IP、以太网每包指定目标MAC）；<b>拆除通道</b>——通讯结束时经下层卯眼释放通道（如关闭连接、删除通道状态）。若下层承载本身已是端到端，本层不再另行建路，仅负责发起建链。注意：本协议自身的连接建立 / 握手（如 TCP 三次握手）属于协议自身连接管理，不在本层。</td></tr>
+                <tr><td>榫头层</td><td><span class="cell-lead"><b>本协议与下层协议咬合（互锁）的层次</b>——调用下层协议的卯眼，在<b>下层承载网络</b>上建立端到端通道；本层扮演<b>调用者</b>（如同榫头插入下层的卯眼）：下层卯眼定义参数，榫头层负责提供参数值并调用。</span><ul class="cell-list">
+                    <li><b>榫头层的意义</b>——在双栈主机上（同时运行 IPv4 与 IPv6 两个 IP 栈），上层协议（如 TCP）必须经榫头层选择承载的 IP 栈——“向下选择哪个下层承载”正是榫头层存在的意义。</li>
+                    <li><b>规划</b>——<b>建链前的准备</b>：备齐本侧参数并对齐口径——自下层读取本层属性（MTU、本机IP、本机MAC）、与下层协商档位（速率/双工、MCS/带宽/功率）、解析出承载寻址参数（ARP → 下一跳目标MAC、DNS → 目标IP、选定地址族）。<b>这些正是随后建链 / 通信要交付的实参</b>。</li>
+                    <li><b>建链</b>——调用下层卯眼前的地址解析 / 参数准备（如 IP 在以太网上先经 ARP 解析出下一跳的目标 MAC）；若下层承载本身已是端到端，本层不再另行建路，仅负责发起建链。</li>
+                    <li><b>通信</b>——每次交付时向底层提供承载寻址参数（如 IP 每包指定下一跳目标IP、以太网每包指定目标MAC）。</li>
+                    <li><b>拆链</b>——通讯结束时经下层卯眼释放通道（如关闭连接、删除通道状态）。</li>
+                    <li><b>与协议自身握手的区别</b>——本协议自身的连接建立 / 握手（如 TCP 三次握手）属协议自身连接管理，<b>不在本层</b>。</li>
+                </ul></td></tr>
                 <tr><td>承载层（外部）</td><td>本协议以下层整体作为承载链路；在递归模型中，下层即本层的承载。<b>本协议不关心下层的内部机制，但必须了解其卯眼</b>（服务承诺 / 规划 / 建链 / 通信 / 拆链），才能经榫头层调用它。<b>外部层次</b>：指向紧邻的下层协议，不属于本协议的内部功能。</td></tr>
             </tbody>
         </table>
+    </div>
+
+    <!-- 协议间的咬合 -->
+    <div class="notes-block">
+        <h2>协议间的咬合</h2>
+        <p><b>协议之间如榫卯</b>：本协议的<b>榫头层</b>插入下层协议的<b>卯眼层</b>咬合——下层以<b>卯眼（服务接口）</b>开出“槽形”（定义要哪些参数、怎么调），上层以<b>榫头（端路）</b>提供参数值并调用；反过来，本协议的卯眼层正是上层协议榫头层插入之处。<b>此处“上下”指协议之间的上下</b>（相邻两个协议的咬合），<b>不是本协议内部各层的层序</b>。同构八层如一套同形拼块，逐个协议层层卡接、无钉无胶。</p>
+        <p><b>两个咬合面各对应一个外部层次</b>：向下插入下层卯眼，即把<b>下层协议整体当作本协议的承载层</b>；向上被上层协议榫头插入，即把<b>上层协议整体当作本协议的载荷层</b>——这正是“载荷层 / 承载层是外部层次”的含义。</p>
+        <p><b>先对表，后建链</b>：两头的咬合不是“上来就连”——<b>规划</b>阶段先把参数对齐：上层读取下层的能力与属性、双方在档位域内协商选定、被动介质则各自静态约定，并解析出承载寻址参数；<b>齐备后才谈得上建链</b>——建链与通信所交付的实参（五元组、目标MAC、Type、MCS / 功率……）全部产自规划期。运行期的自适应（速率自适应、信道重选）只是在该阶段议定的<b>档位域与口径之内</b>取值，不再重新对表。</p>
     </div>
 
     <!-- 递归结构 -->
@@ -2602,10 +2611,11 @@
         <p><strong>递归终点</strong> —— 向上终止于数据层（不再封装，数据即载荷本身）；向下终止于介质层光纤的<b>单链路</b>——那根未跳纤改向、经熔接/机械接续成型的点对点纤芯（介质层以上各层，含光纤层的配线网，都已是可任选对端的全连通网络）。</p>
     </div>
 
-    <!-- 横切关切与跨层策略 -->
+    <!-- 横切关切如何归位 -->
     <div class="notes-block">
-        <h2>横切关切与跨层策略</h2>
-        <p>八层单元是<b>结构槽位</b>（角色 / 位置），而非机制清单。模型的边界在于：它描述的是“任意中间层协议的<b>递归转发 / 承载结构</b>”，而非枚举现代网络中的全部机制。现代网络中的许多行为——拥塞控制、QoS 调度、故障保护、安全隔离、会话管理——是<b>横切关切（cross-cutting concerns）</b>：它们跨越多个图层，不天然对应某一个固定图层。每一类横切关切都在八层单元中有明确落点，由相应图层协同实现：</p>
+        <h2>横切关切如何归位</h2>
+        <p>现代网络中的许多行为——拥塞控制、QoS 调度、故障保护、安全隔离……——是<b>横切关切（cross-cutting concerns）</b>：它们跨越多个图层，不天然对应某一个固定图层。<b>模型的选择是：以八层结构为骨架，让横切关切按所在层位归位、多层协同</b>——不为其单独设层（如同 OSI 把每个功能摊进固定层），以免破坏模型的同构性，并陷入“某行为究竟属于哪一层”的无休止争论。</p>
+        <p>下表为<b>示例映射（非穷举）</b>——每一项都能在八层单元中找到明确落点：</p>
         <table class="layer-table">
             <thead>
                 <tr>
@@ -2623,10 +2633,8 @@
                 <tr><td>QoS 调度</td><td>承诺的量化分级（时延 / 吞吐 / 抖动）</td><td>按 QoS 约束选路</td><td>队列调度（WFQ/DRR）、整形、限速</td><td>汇聚带宽分配</td><td>—</td><td>—</td></tr>
                 <tr><td>故障保护</td><td>承诺高可用 / 低中断</td><td>重路由、快速重收敛（FRR）</td><td>差错检测、重传、链路保护（1+1/1:N）</td><td>多链路冗余（聚合）</td><td>整体校验 / 传输信封（FCS 覆盖聚合帧）；整链 FEC、放大由承载 PHY 承担</td><td>承载层保护倒换</td></tr>
                 <tr><td>安全隔离</td><td>承诺机密性 / 完整性 / 隔离</td><td>隧道封装（VPN）</td><td>加密、认证、完整性校验</td><td>VLAN（802.1Q）标记隔离</td><td>—</td><td>—</td></tr>
-                <tr><td>会话管理</td><td>规划 / 建链 / 通信 / 拆链（与榫头层逐阶段对应）</td><td>—</td><td>连接状态管理（SYN / EST / FIN / RST，逐连接）</td><td>—</td><td>—</td><td>榫头层规划 / 建链 / 通信 / 拆链四阶段</td></tr>
             </tbody>
         </table>
-        <p>上表说明两点：其一，模型<b>并非不能描述这些行为</b>——每一项都能在八层单元中找到明确落点；其二，它们之所以“不能独立成一个图层”，恰恰因为它们是<b>横切关切</b>——强行为其单独设层（如同 OSI 把每个功能摊进固定层）反而会破坏模型的同构性，并陷入“某行为究竟属于哪一层”的无休止争论。模型的选择是：<b>以八层结构为骨架，让横切关切按所在层位归位、跨层协同</b>。</p>
     </div>
 
     <!-- 参数传递 vs 控制/管理面（跨层协调） -->
@@ -2648,7 +2656,7 @@
         // 使注释折行时贴着自己的 chip 续行，不会被甩到下一行而脱节。
         // 在脚本最前执行，确保早于任何布局测量（标尺 / 分隔线）。
         document.querySelectorAll(
-            '.inner-row.iface-layer .desc > .iface-item, .inner-row.select-end-layer .desc > .iface-item'
+            '.inner-row.iface-layer .desc > .iface-item, .inner-row.select-end-layer .desc > .iface-item, .inner-row.mux-layer .desc'
         ).forEach(item => {
             [...item.children].forEach(el => {
                 if (!el.classList.contains('hl') || el.parentElement !== item) return;
@@ -3699,15 +3707,36 @@
         });
 
         // ============================================================
-        //  标签页切换：协议栈 / 协议说明
+        //  标签页切换：协议栈 / 模型说明
         // ============================================================
         const tabBtns = document.querySelectorAll('.tab-btn');
         const tabPanels = document.querySelectorAll('.tab-panel');
+
+        // 默认标签页为「模型说明」；协议栈面板此时 display:none，
+        // 其几何量（层高 / 分隔线偏移 / 最左列宽）全测为 0，
+        // 故切回协议栈时须重新采集一次。
+        function showTab(name) {
+            tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+            tabPanels.forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
+            if (name === 'stack') refreshStackLayout();
+        }
+
+        function refreshStackLayout() {
+            // 面板刚变可见，此时读取几何才是有效值
+            LAYOUT = captureLayout();
+            updateNameBarWidth();
+            updateDividerOffsets();
+            if (expandAll) {
+                applyExpandAll();
+            } else {
+                updateRuler(null);
+                updateDividers(null);
+                updateSideChannel(null);
+            }
+        }
+
         tabBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                tabBtns.forEach(b => b.classList.toggle('active', b === this));
-                tabPanels.forEach(p => p.classList.toggle('active', p.id === 'tab-' + this.dataset.tab));
-            });
+            btn.addEventListener('click', function() { showTab(this.dataset.tab); });
         });
 
         // ============================================================
@@ -3756,8 +3785,12 @@
         }
 
         // 当前"展示中"的协议层索引（键盘选择优先，其次为悬停/激活层）
+        // 注意：展开所有协议时每层都带 .active（悬停也不会改），此时并无"当前层"——
+        // 若仍取第一个 .active 会让首次 ↓ 落到 TLS 层（跳过最顶的数据层）；
+        // 故该模式下视作未选中，由 ↓ 自顶层、↑ 自底层开始。
         function currentShownIndex() {
             if (kbIndex >= 0) return kbIndex;
+            if (expandAll) return -1;
             const active = document.querySelector('.layer.active');
             if (active) {
                 const idx = KB_LAYERS.indexOf(active);
@@ -3773,9 +3806,19 @@
                 exportPNG();
                 return;
             }
-            // 焦点位于可交互控件上时不劫持（保留原生 Tab/Enter 行为）
+            // 焦点位于可交互控件上时不劫持（保留原生 Tab/Enter 行为）。
+            // 例外：页面自身的按钮（标签页 / 承载模式 / 导出）被点击后焦点会留在按钮上，
+            // 若一并放行，↑↓ 选择协议层 / Esc 复位会失效（如点过"协议栈"标签页后）——
+            // 故在这几个控件上仍接管「方向键 + Esc」（按钮上这几个键本无原生行为）；
+            // Enter/Space 依旧保留原生行为（激活按钮）。
             const tag = (e.target && e.target.tagName) || '';
-            if (tag === 'INPUT' || tag === 'BUTTON' || tag === 'A' || tag === 'TEXTAREA' || tag === 'SELECT') {
+            const isPageCtrl = !!(e.target && e.target.closest &&
+                e.target.closest('.tab-btn, .mode-btn, .export-btn, .switch input'));
+            const isNavKey = e.key === 'ArrowUp' || e.key === 'ArrowDown' ||
+                             e.key === 'ArrowLeft' || e.key === 'ArrowRight' ||
+                             e.key === 'Escape';
+            if (!(isPageCtrl && isNavKey) &&
+                (tag === 'INPUT' || tag === 'BUTTON' || tag === 'A' || tag === 'TEXTAREA' || tag === 'SELECT')) {
                 return;
             }
 
@@ -3794,13 +3837,11 @@
                     break;
                 case 'ArrowRight':
                     e.preventDefault();
-                    tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === 'notes'));
-                    tabPanels.forEach(p => p.classList.toggle('active', p.id === 'tab-notes'));
+                    showTab('stack');
                     break;
                 case 'ArrowLeft':
                     e.preventDefault();
-                    tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === 'stack'));
-                    tabPanels.forEach(p => p.classList.toggle('active', p.id === 'tab-stack'));
+                    showTab('notes');
                     break;
                 case 'Enter':
                 case ' ':
@@ -4128,18 +4169,23 @@
 
         // ============================================================
         //  初始化：自动计算最左列宽度
+        //  注意：默认标签页是「模型说明」，协议栈面板此时不可见，
+        //  几何量全为 0 —— 故只在协议栈可见时采集，否则留待
+        //  切回协议栈时由 showTab('stack') → refreshStackLayout() 采集。
         // ============================================================
-        updateNameBarWidth();
-        updateDividerOffsets();
-        if (document.fonts && document.fonts.ready) {
-            document.fonts.ready.then(updateNameBarWidth);
-        }
-
         // 默认“展开所有协议”：加载后所有非静态协议展开，
         // 标尺/侧通道以中性布局就位，等待用户悬停跟随。
         expandAllToggle.checked = true;
         expandAll = true;
         applyExpandAll();
+
+        const stackTabVisible = () => document.getElementById('tab-stack').classList.contains('active');
+        if (stackTabVisible()) {
+            refreshStackLayout();
+        }
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(() => { if (stackTabVisible()) updateNameBarWidth(); });
+        }
 
     })();
 </script>
