@@ -136,6 +136,16 @@
         #layer-eth .select-end-layer .desc .iface-item > .end-mode.fiber.brk {
             flex: 1 1 100%;
         }
+        /* IP 层承载调用层内容随隧道模式切换：
+           常态 = 交下层链路（ARP → 目标 MAC）；隧道模式 = 交 ESP 隧道（外层目标 IP）。
+           同一个 IP 块在隧道模式里出现两次（内层 / 外层）：规则只作用于内层 #layer-ip，
+           外层 #layer-ip-outer 始终按真实链路（ARP）显示。 */
+        #layer-ip .end-mode,
+        #layer-ip-outer .end-mode { display: none; }
+        #layer-ip .end-mode.normal,
+        #layer-ip-outer .end-mode.normal { display: inline; }
+        body.bearer-tunnel #layer-ip .end-mode.normal { display: none; }
+        body.bearer-tunnel #layer-ip .end-mode.tunnel { display: inline; }
         .tab-panel {
             display: none;
         }
@@ -1161,6 +1171,7 @@
             <button class="mode-btn active" id="modeBtnFiber" title="光纤承载：802.3 以太网 → 编码调制(光) → 光波(WDM) → 光纤">🔌 光纤</button>
             <button class="mode-btn" id="modeBtnCopper" title="铜线总线承载：802.3 以太网（共享总线 → CSMA/CD 运行）→ 编码调制(铜/基带) → 同轴总线(细缆/粗缆)">🟠 铜线</button>
             <button class="mode-btn" id="modeBtnWlan" title="无线承载：802.11 WLAN → 射频编码调制 → 频段复用 → 无线电波">📶 无线</button>
+            <button class="mode-btn" id="modeBtnTunnel" title="隧道承载：内层 IP → IPsec/ESP → 外层 IP → 802.3 以太网 → …（同一个 IP 块出现两次：隧道即递归）">🛡 隧道</button>
         </span>
         <button class="export-btn" id="exportBtn" title="导出当前呈现状态为 PNG 图片（快捷键 Ctrl+E）">🖼 导出 PNG</button>
     </div>
@@ -1355,6 +1366,7 @@
         <p><strong>双向递归</strong> —— 向下递归形成承载链（每一层把下层当作承载链路，本层的聚合链路恰是下层的一条单链路），向上递归形成传输链（每一层把上层当作载荷）。从任一层协议视角看，整个栈可折叠为「载荷 → 本协议 → 承载」的三层结构；把本协议展开，内部又是同样的八层，如此层层递归。</p>
         <p><strong>递归终点</strong> —— 向上终止于<b>应用层</b>（不再封装：应用数据即载荷本身，且应用只有"调用"这一面，没有自己的一套内部层）；向下终止于介质层光纤的<b>单链路</b>——那根未跳纤改向、经熔接/机械接续成型的点对点纤芯（介质层以上各层，含光纤层的配线网，都已是可任选对端的全连通网络）。</p>
         <p><strong>视角说明（全知视角）</strong> —— 本图是<b>全知视角</b>：所有协议的内部结构一并摊开，连最顶端的应用层也如实画出。这与"下层视上层为<b>裸数据</b>"并不冲突——后者描述的是该层<b>自身的行为边界</b>（不解析、不依赖上层内容），而不是图示上"看不到"上层：<b>盲视是协议属性，透视是图示属性</b>。同理，应用层作为递归终点只有"载荷 + 承载调用"两面：它调用 HTTP 的服务接口，却没有自己的一套网络层 / 单链路层 / 复用层 / 聚合链路层——递归到此为止。</p>
+        <p><strong>隧道即递归</strong> —— 切到 <b>🛡 隧道</b> 承载模式，同一个 IP 块会在栈里出现两次：<b>内层 IP</b>（载荷）→ <b>IPsec/ESP</b>（隧道封装）→ <b>外层 IP</b>（承载）→ 以太网。内层 IP 的承载调用只寻址到"隧道端点"，ARP 由外层 IP 完成；ESP 的加密落在<b>它自己造的那一跳</b>上（本层单链路层），而"传输模式"那种只给别人的端到端链路加品质的做法，才落 IP 服务接口层的服务承诺。</p>
     </div>
 
     <!-- 横切关切如何归位 -->
@@ -1712,27 +1724,93 @@
                 ['send', `
                     <span class="iface-item">
                         <span class="iface-key">规划</span>
-                        <span class="hl">协议：ARP → 参数：目标MAC</span>
+                        <span class="end-mode normal"><span class="hl">协议：ARP → 参数：目标MAC</span></span>
                         <span class="hl">参数：MTU（自下层读取）</span>
-                        <span class="hl">参数：本机MAC（自下层读取；ARP 报文的发送方硬件地址、应答 who-has 本机IP 时用）</span>
+                        <span class="end-mode normal"><span class="hl">参数：本机MAC（自下层读取；ARP 报文的发送方硬件地址、应答 who-has 本机IP 时用）</span></span>
+                        <span class="end-mode tunnel"><span class="hl">参数：隧道端点（外层目标 IP，由本层路由择定）</span></span>
+                        <span class="end-mode tunnel"><span class="dim">（本层的承载是 ESP 隧道：寻址只到隧道端点，ARP 由外层 IP 完成）</span></span>
                     </span>
                     <span class="iface-item">
                         <span class="iface-key">建链</span>
-                        <span class="hl">无需调用（下层已就绪：以太网无连接 / WLAN 本层自治）</span>
+                        <span class="end-mode normal"><span class="hl">无需调用（下层已就绪：以太网无连接 / WLAN 本层自治）</span></span>
+                        <span class="end-mode tunnel"><span class="hl">无需调用（ESP 隧道即承载；SA 由 IKEv2 带外建立）</span></span>
                     </span>
                     <span class="iface-item">
                         <span class="iface-key">通信</span>
                         <span class="hl">交付：IP数据报</span>
-                        <span class="hl">参数：目标MAC</span>
-                        <span class="hl">参数：Type（0x0800=IPv4）</span>
+                        <span class="end-mode normal"><span class="hl">参数：目标MAC</span></span>
+                        <span class="end-mode normal"><span class="hl">参数：Type（0x0800=IPv4）</span></span>
+                        <span class="end-mode tunnel"><span class="hl">参数：外层目标 IP（隧道端点，随包交 ESP 加封）</span></span>
                     </span>
                     <span class="iface-item">
                         <span class="iface-key">拆链</span>
-                        <span class="hl">无需调用（以太网无连接 / WLAN 本层自治）</span>
+                        <span class="end-mode normal"><span class="hl">无需调用（以太网无连接 / WLAN 本层自治）</span></span>
+                        <span class="end-mode tunnel"><span class="hl">无需调用（SA 生命周期归 ESP）</span></span>
                     </span>
                     `],
             ]},
-            { id:'eth', icon:'🔌', name:'以太网层', badge:'IEEE 802.3', bearer:'fiber copper', rows:[
+            { id:'esp', icon:'🛡️', name:'IPsec / ESP层', badge:'隧道封装', bearer:'tunnel', rows:[
+                ['iface', `
+                    <span class="iface-item">
+                        <span class="iface-key">服务承诺</span>
+                        <span class="hl">机密性 / 完整性 / 源认证（一跳隧道）</span>
+                        <span class="dim">（给这条隧道<b>自己造的链路</b>加品质——加密归本层，不归被包裹的内层协议）</span>
+                    </span>
+                    <span class="iface-item">
+                        <span class="iface-key">规划</span>
+                        <span class="hl">参数：隧道端点（外层 IP 对端）</span>
+                        <span class="hl">参数：MTU / 填充开销（自下层读取后扣减）</span>
+                    </span>
+                    <span class="iface-item">
+                        <span class="iface-key">建链</span>
+                        <span class="hl">按需带外（IKEv2 协商 SA）</span>
+                        <span class="dim">（SPI / 密钥 / 算法由带外信令约定；手工配置即预置）</span>
+                    </span>
+                    <span class="iface-item">
+                        <span class="iface-key">通信</span>
+                        <span class="hl">交付：受保护的内层 IP 报文</span>
+                    </span>
+                    <span class="iface-item">
+                        <span class="iface-key">拆链</span>
+                        <span class="hl">按需带外（SA 删除 / 到期）</span>
+                    </span>
+                    `],
+                ['net', 'min32', `<span class="null-box">空</span> <span class="dim">（ESP 头只有 SPI、没有地址，不参与转发；选路归外层 IP。上方是<b>内层 IP</b>——同一个协议块出现两次，正是"隧道 = 递归"）</span>`],
+                ['link', `
+                    <span class="hl">SA（SPI + 序列号 / 防重放）</span>
+                    <span class="hl">加密（ESP 载荷）</span>
+                    <span class="hl">完整性校验（ICV）</span>
+                    <span class="hl">身份认证</span>
+                    <span class="dim">（加密落在<b>它自己造的这一跳</b> → 归本层单链路层；"IPsec 传输模式"才是给别人的端到端链路加品质 → 落 IP 服务接口层的服务承诺）</span>
+                    `],
+                ['mux', `<span class="hl">SPI 分用</span> <span class="dim">（同一对隧道端点之间的多条 SA 各走各的——如按内层流量或 QoS 分流）</span>`],
+                ['aggr', `
+                    <span class="hl">ESP 封装与填充（整条隧道收口）</span>
+                    <span class="dim">（加 ESP 头尾、填充对齐、ICV 覆盖整包；外层 IP 只看见"协议号 50"的一坨裸数据）</span>
+                    `],
+                ['send', `
+                    <span class="iface-item">
+                        <span class="iface-key">规划</span>
+                        <span class="hl">参数：外层目标 IP（隧道端点）</span>
+                        <span class="hl">参数：MTU（自下层读取，再扣 ESP 开销）</span>
+                    </span>
+                    <span class="iface-item">
+                        <span class="iface-key">建链</span>
+                        <span class="hl">无需调用（外层 IP 无连接）</span>
+                    </span>
+                    <span class="iface-item">
+                        <span class="iface-key">通信</span>
+                        <span class="hl">交付：ESP 报文（协议号 50）</span>
+                        <span class="hl">参数：外层目标 IP（随报提供）</span>
+                    </span>
+                    <span class="iface-item">
+                        <span class="iface-key">拆链</span>
+                        <span class="hl">无需调用（外层 IP 无连接）</span>
+                    </span>
+                    `],
+            ]},
+            { id:'ip-outer', icon:'🌍', name:'IP层（外层）', badge:'互联网协议', bearer:'tunnel', cloneRowsOf:'ip' },
+            { id:'eth', icon:'🔌', name:'以太网层', badge:'IEEE 802.3', bearer:'fiber copper tunnel', rows:[
                 ['iface', `
                     <span class="iface-item">
                         <span class="iface-key">服务承诺</span>
@@ -1832,7 +1910,7 @@
                     </span>
                     `],
             ]},
-            { id:'physical', icon:'⚡', name:'编码调制层', badge:'编码·调制', bearer:'fiber', physical:true, rows:[
+            { id:'physical', icon:'⚡', name:'编码调制层', badge:'编码·调制', bearer:'fiber tunnel', physical:true, rows:[
                 ['iface', `
                     <span class="iface-item">
                         <span class="iface-key">服务承诺</span>
@@ -1890,7 +1968,7 @@
                     </span>
                     `],
             ]},
-            { id:'wave', icon:'🌈', name:'光波层', badge:'波长级转发', bearer:'fiber', rows:[
+            { id:'wave', icon:'🌈', name:'光波层', badge:'波长级转发', bearer:'fiber tunnel', rows:[
                 ['iface', `
                     <span class="iface-item">
                         <span class="iface-key">服务承诺</span>
@@ -1974,7 +2052,7 @@
                     </span>
                     `],
             ]},
-            { id:'fiber', icon:'🧵', name:'光纤层', badge:'物理介质 · 递归终点', bearer:'fiber', rows:[
+            { id:'fiber', icon:'🧵', name:'光纤层', badge:'物理介质 · 递归终点', bearer:'fiber tunnel', rows:[
                 ['iface', `
                     <span class="iface-item">
                         <span class="iface-key">服务承诺</span>
@@ -2339,7 +2417,12 @@
                 if (L.physical) cls.push('layer-physical');
                 if (!L.static) cls.push('layer-tall');
                 let body = '<span class="collapsed-hint">' + (L.hint || '— 悬停展开 —') + '</span>';
-                body += (L.rows || []).map(function (r) {
+                // cloneRowsOf：复用另一个协议块的行内容（如隧道模式的外层 IP 复用 IP 层内容，
+                // 内容随模式切换由 CSS 按容器 id 区分，故两份 DOM 内容一致）
+                const rowSrc = L.cloneRowsOf
+                    ? (LAYER_DATA.find(x => x.id === L.cloneRowsOf) || {})
+                    : L;
+                body += (rowSrc.rows || []).map(function (r) {
                     const kind = r[0];
                     const opt = r.length > 2 ? r[1] : '';
                     const inner = r.length > 2 ? r[2] : r[1];
@@ -2405,139 +2488,158 @@
             // 应用没有网络层 / 单链路层 / 复用层 / 聚合链路层，也不提供"服务接口层"（它只有调用面）。
             // → 载荷层分界对准 载荷行↔承载调用行 的分隔线（dividerPayload），其余内部层分界不显示。
             'user': {
-                transport_mux: { targetIndex: 0, boundary: 'dividerPayload', state: null },
-                iface_network: { targetIndex: 0, boundary: 'dividerPayload', state: null },
-                mux_network: { targetIndex: 0, boundary: 'dividerPayload', state: null },
-                link_network: { targetIndex: 0, boundary: 'dividerPayload', state: null },
-                link_select: { targetIndex: 0, boundary: 'dividerPayload', state: null },
-                select_end: { targetIndex: 0, boundary: 'dividerPayload', state: null },
-                down_iface: { targetIndex: 0, boundary: 'bottom', state: null }
+                transport_mux: { boundary: 'dividerPayload', state: null },
+                iface_network: { boundary: 'dividerPayload', state: null },
+                mux_network: { boundary: 'dividerPayload', state: null },
+                link_network: { boundary: 'dividerPayload', state: null },
+                link_select: { boundary: 'dividerPayload', state: null },
+                select_end: { boundary: 'dividerPayload', state: null },
+                down_iface: { boundary: 'bottom', state: null }
             },
             'app': {
-                transport_mux: { targetIndex: 1, boundary: 'top', state: null },
-                iface_network: { targetIndex: 1, boundary: 'dividerIface', state: null },
-                mux_network: { targetIndex: 1, boundary: 'dividerNet', state: null },
-                link_network: { targetIndex: 1, boundary: 'dividerMux', state: 'highlight' },
-                link_select: { targetIndex: 1, boundary: 'dividerSelectEnd', state: 'highlight' },
-                select_end: { targetIndex: 1, boundary: 'dividerDown', state: 'highlight' },
-                down_iface: { targetIndex: 1, boundary: 'bottom', state: 'highlight' }
+                transport_mux: { boundary: 'top', state: null },
+                iface_network: { boundary: 'dividerIface', state: null },
+                mux_network: { boundary: 'dividerNet', state: null },
+                link_network: { boundary: 'dividerMux', state: 'highlight' },
+                link_select: { boundary: 'dividerSelectEnd', state: 'highlight' },
+                select_end: { boundary: 'dividerDown', state: 'highlight' },
+                down_iface: { boundary: 'bottom', state: 'highlight' }
             },
             'tls': {
-                transport_mux: { targetIndex: 2, boundary: 'top', state: null },
-                iface_network: { targetIndex: 2, boundary: 'dividerIface', state: null },
-                mux_network: { targetIndex: 2, boundary: 'dividerNet', state: null },
-                link_network: { targetIndex: 2, boundary: 'dividerMux', state: 'highlight' },
-                link_select: { targetIndex: 2, boundary: 'dividerSelectEnd', state: 'highlight' },
-                select_end: { targetIndex: 2, boundary: 'dividerDown', state: 'highlight' },
-                down_iface: { targetIndex: 2, boundary: 'bottom', state: 'highlight' }
+                transport_mux: { boundary: 'top', state: null },
+                iface_network: { boundary: 'dividerIface', state: null },
+                mux_network: { boundary: 'dividerNet', state: null },
+                link_network: { boundary: 'dividerMux', state: 'highlight' },
+                link_select: { boundary: 'dividerSelectEnd', state: 'highlight' },
+                select_end: { boundary: 'dividerDown', state: 'highlight' },
+                down_iface: { boundary: 'bottom', state: 'highlight' }
             },
             'tcp': {
-                transport_mux: { targetIndex: 3, boundary: 'top', state: null },
-                iface_network: { targetIndex: 3, boundary: 'dividerIface', state: 'glow' },
-                mux_network: { targetIndex: 3, boundary: 'dividerNet', state: 'glow' },
-                link_network: { targetIndex: 3, boundary: 'dividerMux', state: 'glow' },
-                link_select: { targetIndex: 3, boundary: 'dividerSelectEnd', state: 'glow' },
-                select_end: { targetIndex: 3, boundary: 'dividerDown', state: 'glow' },
-                down_iface: { targetIndex: 3, boundary: 'bottom', state: 'highlight' }
+                transport_mux: { boundary: 'top', state: null },
+                iface_network: { boundary: 'dividerIface', state: 'glow' },
+                mux_network: { boundary: 'dividerNet', state: 'glow' },
+                link_network: { boundary: 'dividerMux', state: 'glow' },
+                link_select: { boundary: 'dividerSelectEnd', state: 'glow' },
+                select_end: { boundary: 'dividerDown', state: 'glow' },
+                down_iface: { boundary: 'bottom', state: 'highlight' }
             },
             'ip': {
-                transport_mux: { targetIndex: 4, boundary: 'top', state: 'glow' },
-                iface_network: { targetIndex: 4, boundary: 'dividerIface', state: 'glow' },
-                mux_network: { targetIndex: 4, boundary: 'dividerNet', state: 'glow' },
-                link_network: { targetIndex: 4, boundary: 'dividerMux', state: 'glow' },
-                link_select: { targetIndex: 4, boundary: 'dividerSelectEnd', state: 'glow' },
-                select_end: { targetIndex: 4, boundary: 'dividerDown', state: 'glow' },
-                down_iface: { targetIndex: 4, boundary: 'bottom', state: 'highlight' }
+                transport_mux: { boundary: 'top', state: 'glow' },
+                iface_network: { boundary: 'dividerIface', state: 'glow' },
+                mux_network: { boundary: 'dividerNet', state: 'glow' },
+                link_network: { boundary: 'dividerMux', state: 'glow' },
+                link_select: { boundary: 'dividerSelectEnd', state: 'glow' },
+                select_end: { boundary: 'dividerDown', state: 'glow' },
+                down_iface: { boundary: 'bottom', state: 'highlight' }
+            },
+            // 隧道模式新增的两块：几何结构同 IP 层
+            'esp': {
+                transport_mux: { boundary: 'top', state: 'glow' },
+                iface_network: { boundary: 'dividerIface', state: 'glow' },
+                mux_network: { boundary: 'dividerNet', state: 'glow' },
+                link_network: { boundary: 'dividerMux', state: 'glow' },
+                link_select: { boundary: 'dividerSelectEnd', state: 'glow' },
+                select_end: { boundary: 'dividerDown', state: 'glow' },
+                down_iface: { boundary: 'bottom', state: 'highlight' }
+            },
+            'ip-outer': {
+                transport_mux: { boundary: 'top', state: 'glow' },
+                iface_network: { boundary: 'dividerIface', state: 'glow' },
+                mux_network: { boundary: 'dividerNet', state: 'glow' },
+                link_network: { boundary: 'dividerMux', state: 'glow' },
+                link_select: { boundary: 'dividerSelectEnd', state: 'glow' },
+                select_end: { boundary: 'dividerDown', state: 'glow' },
+                down_iface: { boundary: 'bottom', state: 'highlight' }
             },
             'eth': {
-                transport_mux: { targetIndex: 5, boundary: 'top', state: 'glow' },
-                iface_network: { targetIndex: 5, boundary: 'dividerIface', state: 'glow' },
-                mux_network: { targetIndex: 5, boundary: 'dividerNet', state: 'glow' },
-                link_network: { targetIndex: 5, boundary: 'dividerMux', state: 'glow' },
-                link_select: { targetIndex: 5, boundary: 'dividerSelectEnd', state: 'glow' },
-                select_end: { targetIndex: 5, boundary: 'dividerDown', state: 'glow' },
-                down_iface: { targetIndex: 5, boundary: 'bottom', state: 'highlight' }
+                transport_mux: { boundary: 'top', state: 'glow' },
+                iface_network: { boundary: 'dividerIface', state: 'glow' },
+                mux_network: { boundary: 'dividerNet', state: 'glow' },
+                link_network: { boundary: 'dividerMux', state: 'glow' },
+                link_select: { boundary: 'dividerSelectEnd', state: 'glow' },
+                select_end: { boundary: 'dividerDown', state: 'glow' },
+                down_iface: { boundary: 'bottom', state: 'highlight' }
             },
             'physical': {
-                transport_mux: { targetIndex: 6, boundary: 'top', state: null },
-                iface_network: { targetIndex: 6, boundary: 'dividerIface', state: 'highlight' },
-                mux_network: { targetIndex: 6, boundary: 'dividerNet', state: 'highlight' },
-                link_network: { targetIndex: 6, boundary: 'dividerMux', state: 'highlight' },
-                link_select: { targetIndex: 6, boundary: 'dividerSelectEnd', state: 'highlight' },
-                select_end: { targetIndex: 6, boundary: 'dividerDown', state: 'highlight' },
-                down_iface: { targetIndex: 6, boundary: 'bottom', state: null }
+                transport_mux: { boundary: 'top', state: null },
+                iface_network: { boundary: 'dividerIface', state: 'highlight' },
+                mux_network: { boundary: 'dividerNet', state: 'highlight' },
+                link_network: { boundary: 'dividerMux', state: 'highlight' },
+                link_select: { boundary: 'dividerSelectEnd', state: 'highlight' },
+                select_end: { boundary: 'dividerDown', state: 'highlight' },
+                down_iface: { boundary: 'bottom', state: null }
             },
             'wave': {
-                transport_mux: { targetIndex: 7, boundary: 'top', state: null },
-                iface_network: { targetIndex: 7, boundary: 'dividerIface', state: 'highlight' },
-                mux_network: { targetIndex: 7, boundary: 'dividerNet', state: 'highlight' },
-                link_network: { targetIndex: 7, boundary: 'dividerMux', state: 'highlight' },
-                link_select: { targetIndex: 7, boundary: 'dividerSelectEnd', state: 'highlight' },
-                select_end: { targetIndex: 7, boundary: 'dividerDown', state: 'highlight' },
-                down_iface: { targetIndex: 7, boundary: 'bottom', state: null }
+                transport_mux: { boundary: 'top', state: null },
+                iface_network: { boundary: 'dividerIface', state: 'highlight' },
+                mux_network: { boundary: 'dividerNet', state: 'highlight' },
+                link_network: { boundary: 'dividerMux', state: 'highlight' },
+                link_select: { boundary: 'dividerSelectEnd', state: 'highlight' },
+                select_end: { boundary: 'dividerDown', state: 'highlight' },
+                down_iface: { boundary: 'bottom', state: null }
             },
             'fiber': {
-                transport_mux: { targetIndex: 8, boundary: 'top', state: null },
-                iface_network: { targetIndex: 8, boundary: 'dividerIface', state: 'highlight' },
-                mux_network: { targetIndex: 8, boundary: 'dividerNet', state: 'highlight' },
-                link_network: { targetIndex: 8, boundary: 'dividerMux', state: 'highlight' },
-                link_select: { targetIndex: 8, boundary: 'dividerSelectEnd', state: null },
-                select_end: { targetIndex: 8, boundary: 'dividerDown', state: null },
-                down_iface: { targetIndex: 8, boundary: 'bottom', state: null }
+                transport_mux: { boundary: 'top', state: null },
+                iface_network: { boundary: 'dividerIface', state: 'highlight' },
+                mux_network: { boundary: 'dividerNet', state: 'highlight' },
+                link_network: { boundary: 'dividerMux', state: 'highlight' },
+                link_select: { boundary: 'dividerSelectEnd', state: null },
+                select_end: { boundary: 'dividerDown', state: null },
+                down_iface: { boundary: 'bottom', state: null }
             },
             'wlan': {
-                transport_mux: { targetIndex: 5, boundary: 'top', state: 'glow' },
-                iface_network: { targetIndex: 5, boundary: 'dividerIface', state: 'glow' },
-                mux_network: { targetIndex: 5, boundary: 'dividerNet', state: 'glow' },
-                link_network: { targetIndex: 5, boundary: 'dividerMux', state: 'glow' },
-                link_select: { targetIndex: 5, boundary: 'dividerSelectEnd', state: 'glow' },
-                select_end: { targetIndex: 5, boundary: 'dividerDown', state: 'glow' },
-                down_iface: { targetIndex: 5, boundary: 'bottom', state: 'highlight' }
+                transport_mux: { boundary: 'top', state: 'glow' },
+                iface_network: { boundary: 'dividerIface', state: 'glow' },
+                mux_network: { boundary: 'dividerNet', state: 'glow' },
+                link_network: { boundary: 'dividerMux', state: 'glow' },
+                link_select: { boundary: 'dividerSelectEnd', state: 'glow' },
+                select_end: { boundary: 'dividerDown', state: 'glow' },
+                down_iface: { boundary: 'bottom', state: 'highlight' }
             },
             'rfmod': {
-                transport_mux: { targetIndex: 6, boundary: 'top', state: null },
-                iface_network: { targetIndex: 6, boundary: 'dividerIface', state: 'highlight' },
-                mux_network: { targetIndex: 6, boundary: 'dividerNet', state: 'highlight' },
-                link_network: { targetIndex: 6, boundary: 'dividerMux', state: 'highlight' },
-                link_select: { targetIndex: 6, boundary: 'dividerSelectEnd', state: 'highlight' },
-                select_end: { targetIndex: 6, boundary: 'dividerDown', state: 'highlight' },
-                down_iface: { targetIndex: 6, boundary: 'bottom', state: null }
+                transport_mux: { boundary: 'top', state: null },
+                iface_network: { boundary: 'dividerIface', state: 'highlight' },
+                mux_network: { boundary: 'dividerNet', state: 'highlight' },
+                link_network: { boundary: 'dividerMux', state: 'highlight' },
+                link_select: { boundary: 'dividerSelectEnd', state: 'highlight' },
+                select_end: { boundary: 'dividerDown', state: 'highlight' },
+                down_iface: { boundary: 'bottom', state: null }
             },
             'freq': {
-                transport_mux: { targetIndex: 7, boundary: 'top', state: null },
-                iface_network: { targetIndex: 7, boundary: 'dividerIface', state: 'highlight' },
-                mux_network: { targetIndex: 7, boundary: 'dividerNet', state: 'highlight' },
-                link_network: { targetIndex: 7, boundary: 'dividerMux', state: 'highlight' },
-                link_select: { targetIndex: 7, boundary: 'dividerSelectEnd', state: 'highlight' },
-                select_end: { targetIndex: 7, boundary: 'dividerDown', state: 'highlight' },
-                down_iface: { targetIndex: 7, boundary: 'bottom', state: null }
+                transport_mux: { boundary: 'top', state: null },
+                iface_network: { boundary: 'dividerIface', state: 'highlight' },
+                mux_network: { boundary: 'dividerNet', state: 'highlight' },
+                link_network: { boundary: 'dividerMux', state: 'highlight' },
+                link_select: { boundary: 'dividerSelectEnd', state: 'highlight' },
+                select_end: { boundary: 'dividerDown', state: 'highlight' },
+                down_iface: { boundary: 'bottom', state: null }
             },
             'air': {
-                transport_mux: { targetIndex: 8, boundary: 'top', state: null },
-                iface_network: { targetIndex: 8, boundary: 'dividerIface', state: 'highlight' },
-                mux_network: { targetIndex: 8, boundary: 'dividerNet', state: 'highlight' },
-                link_network: { targetIndex: 8, boundary: 'dividerMux', state: 'highlight' },
-                link_select: { targetIndex: 8, boundary: 'dividerSelectEnd', state: null },
-                select_end: { targetIndex: 8, boundary: 'dividerDown', state: null },
-                down_iface: { targetIndex: 8, boundary: 'bottom', state: null }
+                transport_mux: { boundary: 'top', state: null },
+                iface_network: { boundary: 'dividerIface', state: 'highlight' },
+                mux_network: { boundary: 'dividerNet', state: 'highlight' },
+                link_network: { boundary: 'dividerMux', state: 'highlight' },
+                link_select: { boundary: 'dividerSelectEnd', state: null },
+                select_end: { boundary: 'dividerDown', state: null },
+                down_iface: { boundary: 'bottom', state: null }
             },
             'cmod': {
-                transport_mux: { targetIndex: 6, boundary: 'top', state: null },
-                iface_network: { targetIndex: 6, boundary: 'dividerIface', state: 'highlight' },
-                mux_network: { targetIndex: 6, boundary: 'dividerNet', state: 'highlight' },
-                link_network: { targetIndex: 6, boundary: 'dividerMux', state: 'highlight' },
-                link_select: { targetIndex: 6, boundary: 'dividerSelectEnd', state: 'highlight' },
-                select_end: { targetIndex: 6, boundary: 'dividerDown', state: 'highlight' },
-                down_iface: { targetIndex: 6, boundary: 'bottom', state: null }
+                transport_mux: { boundary: 'top', state: null },
+                iface_network: { boundary: 'dividerIface', state: 'highlight' },
+                mux_network: { boundary: 'dividerNet', state: 'highlight' },
+                link_network: { boundary: 'dividerMux', state: 'highlight' },
+                link_select: { boundary: 'dividerSelectEnd', state: 'highlight' },
+                select_end: { boundary: 'dividerDown', state: 'highlight' },
+                down_iface: { boundary: 'bottom', state: null }
             },
             'coax': {
-                transport_mux: { targetIndex: 7, boundary: 'top', state: null },
-                iface_network: { targetIndex: 7, boundary: 'dividerIface', state: 'highlight' },
-                mux_network: { targetIndex: 7, boundary: 'dividerNet', state: 'highlight' },
-                link_network: { targetIndex: 7, boundary: 'dividerMux', state: 'highlight' },
-                link_select: { targetIndex: 7, boundary: 'dividerSelectEnd', state: null },
-                select_end: { targetIndex: 7, boundary: 'dividerDown', state: null },
-                down_iface: { targetIndex: 7, boundary: 'bottom', state: null }
+                transport_mux: { boundary: 'top', state: null },
+                iface_network: { boundary: 'dividerIface', state: 'highlight' },
+                mux_network: { boundary: 'dividerNet', state: 'highlight' },
+                link_network: { boundary: 'dividerMux', state: 'highlight' },
+                link_select: { boundary: 'dividerSelectEnd', state: null },
+                select_end: { boundary: 'dividerDown', state: null },
+                down_iface: { boundary: 'bottom', state: null }
             }
         };
 
@@ -2836,7 +2938,9 @@
                 const vmark = vmarks[name];
                 const cross = crosses[name];
                 const data = mapping[name];
-                const targetIdx = data.targetIndex;
+                // 目标层下标按"当前展示的协议层"在可见层集中的位置动态求得：
+                // 同一协议可能占据多个层块（隧道模式下 IP 出现两次），写死下标会错位。
+                const targetIdx = activeLayerEl ? layerEls.indexOf(activeLayerEl) : -1;
                 const boundary = data.boundary;
                 const state = data.state;
 
@@ -3541,11 +3645,11 @@
                     e.preventDefault();
                     showTab('notes');
                     break;
-                // [ / ] 左右循环切换承载模式（光纤 → 铜线 → 无线）
+                // [ / ] 左右循环切换承载模式（光纤 → 铜线 → 无线 → 隧道）
                 case '[':
                 case ']': {
                     e.preventDefault();
-                    const order = ['fiber', 'copper', 'wlan'];
+                    const order = ['fiber', 'copper', 'wlan', 'tunnel'];
                     const cur = order.indexOf(currentMode());
                     const step = e.key === ']' ? 1 : -1;
                     switchBearer(order[(cur + step + order.length) % order.length]);
@@ -3704,6 +3808,8 @@
             document.getElementById('modeBtnFiber').classList.toggle('active', m === 'fiber');
             document.getElementById('modeBtnCopper').classList.toggle('active', m === 'copper');
             document.getElementById('modeBtnWlan').classList.toggle('active', m === 'wlan');
+            document.getElementById('modeBtnTunnel').classList.toggle('active', m === 'tunnel');
+            document.body.classList.toggle('bearer-tunnel', m === 'tunnel');
             // 重测并复位标尺
             relayout(null);
         }
@@ -3723,6 +3829,7 @@
         function currentMode() {
             if (document.getElementById('modeBtnCopper').classList.contains('active')) return 'copper';
             if (document.getElementById('modeBtnWlan').classList.contains('active')) return 'wlan';
+            if (document.getElementById('modeBtnTunnel').classList.contains('active')) return 'tunnel';
             return 'fiber';
         }
 
@@ -3750,7 +3857,7 @@
             // 切换方向：按按钮顺序（光纤→铜线→无线）前/后决定滑动方向。
             // 前进（如 光纤→铜线）：旧组向左滑出、新组自右滑入；
             // 回切（如 铜线→光纤）：旧组向右滑出、新组自左滑入。
-            const order = { fiber: 0, copper: 1, wlan: 2 };
+            const order = { fiber: 0, copper: 1, wlan: 2, tunnel: 3 };
             const forward = (order[m] || 0) >= (order[currentMode()] || 0);
             const outX = forward ? '-100%' : '100%';
             const inX = forward ? '100%' : '-100%';
@@ -3855,6 +3962,7 @@
         document.getElementById('modeBtnFiber').addEventListener('click', function() { switchBearer('fiber'); });
         document.getElementById('modeBtnCopper').addEventListener('click', function() { switchBearer('copper'); });
         document.getElementById('modeBtnWlan').addEventListener('click', function() { switchBearer('wlan'); });
+        document.getElementById('modeBtnTunnel').addEventListener('click', function() { switchBearer('tunnel'); });
 
         // ============================================================
         //  初始化：自动计算最左列宽度
