@@ -2240,9 +2240,9 @@
                         </span>
                     </span>
                     `],
-                ['link', `<span class="hl">加密与完整性（WPA2 / WPA3：CCMP / GCMP）</span> <span class="hl">接入认证（802.1X / PSK）</span> <span class="hl">帧校验（FCS，检测帧损坏）</span> <span class="hl">ARQ 确认重传（单播 ACK，失败重发）</span> <span class="hl">RTS/CTS（隐藏节点预约）</span> <span class="hl">分片（抗干扰）</span> <span class="hl">省电（PSM / U-APSD）</span>`],
+                ['link', `<span class="hl">加密与完整性（WPA2 / WPA3：CCMP / GCMP）</span> <span class="hl">接入认证（802.1X / PSK）</span> <span class="hl">ARQ 确认重传（单播 ACK，失败重发）</span> <span class="hl">RTS/CTS（隐藏节点预约）</span> <span class="hl">分片（抗干扰）</span> <span class="hl">省电（PSM / U-APSD）</span> <span class="dim">（帧校验不在这里——FCS 覆盖含地址 / BSSID 的整帧，归聚合链路层）</span>`],
                 ['mux', `<span class="hl">BSS 复用（一信道多 BSS；SSID 表网络、BSSID 表 AP）</span> <span class="dim">—— 类比以太网 802.1Q：一个无线信道上经 BSSID 区分多个逻辑 WLAN；亦承载 802.1Q（无线→有线 trunk）</span>`],
-                ['aggr', `<span class="hl">A-MSDU / A-MPDU 帧聚合（多个数据单元合成一次传输）</span> <span class="hl">Block ACK（一次确认多个 MPDU）</span> <span class="dim">（整条聚合链路的传输信封——对照以太网在此处的“前导 / SFD / FCS / IFG 封装”；802.11 的帧聚合与块确认即本层收口）</span>`],
+                ['aggr', `<span class="hl">A-MSDU / A-MPDU 帧聚合（多个数据单元合成一次传输）</span> <span class="hl">Block ACK（一次确认多个 MPDU）</span> <span class="hl">帧校验（FCS：覆盖含地址 / BSSID 的整帧）</span> <span class="dim">（整条聚合链路的传输信封——对照以太网在此处的“前导 / SFD / FCS / IFG 封装”；FCS 覆盖面跨过复用键（BSSID / 地址），故与以太网 FCS 同归本层）</span>`],
                 ['send', `
                     <span class="iface-item">
                         <span class="iface-key">规划</span>
