@@ -1743,7 +1743,7 @@
                         <span class="hl">交付：IP数据报</span>
                         <span class="end-mode normal"><span class="hl">参数：目标MAC</span></span>
                         <span class="end-mode normal"><span class="hl">参数：Type（0x0800=IPv4）</span></span>
-                        <span class="end-mode tunnel"><span class="hl">参数：命中的 SA（按 SPD 选择器匹配；其外层目标即隧道端点）</span></span>
+                        <span class="end-mode tunnel"><span class="hl">参数：命中的 SA 句柄（按 SPD 选择器匹配）</span></span>
                     </span>
                     <span class="iface-item">
                         <span class="iface-key">拆链</span>
@@ -1767,7 +1767,7 @@
                     <span class="iface-item">
                         <span class="iface-key">建链</span>
                         <span class="hl">按需带外（IKEv2 协商 SA）</span>
-                        <span class="dim">（SPI / 密钥 / 算法与隧道端点都由带外约定——端点来自配置 / SPD 策略；手工配置即预置）</span>
+                        <span class="dim">（SPI / 密钥 / 算法与隧道端点都由带外约定——端点来自配置 / SPD 策略，且与内层目标无关；手工配置即预置）</span>
                     </span>
                     <span class="iface-item">
                         <span class="iface-key">通信</span>
@@ -1805,8 +1805,8 @@
                     <span class="iface-item">
                         <span class="iface-key">通信</span>
                         <span class="hl">交付：ESP 报文（协议号 50）</span>
-                        <span class="hl">参数：外层目标 IP（建链时固化进 SA，逐包自 SA 取出）</span>
-                        <span class="dim">（端点与内层目标无关——隧道里内层目标留在密文，外层只看端点；不逐包由上层提供）</span>
+                        <span class="hl">参数：SA 句柄（引用建链结果；端点、SPI、密钥随 SA 携带）</span>
+                        <span class="dim">（地址不逐包传——它是 SA 的属性）</span>
                     </span>
                     <span class="iface-item">
                         <span class="iface-key">拆链</span>
