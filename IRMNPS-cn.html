@@ -1754,7 +1754,7 @@
                     <span class="iface-item">
                         <span class="iface-key">服务承诺</span>
                         <span class="hl">机密性 / 完整性 / 源认证（一跳隧道）</span>
-                        <span class="dim">（给这条隧道<b>自己造的链路</b>加品质——加密归本层，不归被包裹的内层协议）</span>
+                        <span class="dim">（给这条隧道<b>自己造的链路</b>加品质——加密归本层，不归被包裹的内层协议。IPsec 是一套：ESP / AH 在数据面，IKEv2 属带外控制面）</span>
                     </span>
                     <span class="iface-item">
                         <span class="iface-key">规划</span>
@@ -1779,15 +1779,14 @@
                 ['link', `
                     <span class="hl">SA（SPI + 序列号 / 防重放）</span>
                     <span class="hl">加密（ESP 载荷）</span>
-                    <span class="hl">完整性校验（ICV）</span>
-                    <span class="hl">身份认证</span>
-                    <span class="dim">（加密落在<b>它自己造的这一跳</b> → 归本层单链路层；"IPsec 传输模式"才是给别人的端到端链路加品质 → 落 IP 服务接口层的服务承诺）</span>
+                    <span class="hl">完整性校验（ICV：ESP 头 + 内层整包 + 填充 + 尾）</span>
+                    <span class="hl">身份认证（ESP 载荷）</span>
+                    <span class="dim">（ICV <b>不含外层 IP 头</b>——TTL / TOS / 分片字段在途可变；一条 SA 各自加封、逐包校验，<b>不跨 SA</b>）</span>
+                    <span class="dim">（加密落在<b>它自己造的这一跳</b>上 → 归本层单链路层；"IPsec 传输模式"才是给别人的端到端链路加品质 → 落 IP 服务接口层的服务承诺）</span>
+                    <span class="dim">（对照 AH：AH 的 ICV <b>会</b>覆盖外层 IP 头的不可变字段，故 NAT 不友好；但它同样逐 SA，仍归单链路层）</span>
                     `],
                 ['mux', `<span class="hl">SPI 分用</span> <span class="dim">（同一对隧道端点之间的多条 SA 各走各的——如按内层流量或 QoS 分流）</span>`],
-                ['aggr', `
-                    <span class="hl">ESP 封装与填充（整条隧道收口）</span>
-                    <span class="dim">（加 ESP 头尾、填充对齐、ICV 覆盖整包；外层 IP 只看见"协议号 50"的一坨裸数据）</span>
-                    `],
+                ['aggr', `<span class="null-box">空</span> <span class="dim">（ESP 没有覆盖"全部 SA"的<b>整链信封</b>：每条 SA 各自加封、逐包校验——"整包"是数据单元级别的完整，"整链"才是聚合级别，二者不能混。聚合只体现为 SPI 分用（见复用层）；对比以太网 FCS / MACsec 覆盖整条聚合帧，才落聚合链路层。外层 IP 只看见"协议号 50"的一坨裸数据）</span>`],
                 ['send', `
                     <span class="iface-item">
                         <span class="iface-key">规划</span>
